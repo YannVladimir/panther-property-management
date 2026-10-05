@@ -1,0 +1,828 @@
+<title>Panther PMS Backend Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef0f3; --border:#e2e5ea;
+    --text:#1b1f27; --text-dim:#5b6270; --text-faint:#8a90a0;
+    --brand:#4f46e5; --brand-dim:#eef0fe;
+    --ok:#0f8a5f; --ok-bg:#e7f7f0;
+    --warn:#b5750a; --warn-bg:#fdf3e0;
+    --danger:#c0293c; --danger-bg:#fbe9ec;
+    --info:#1c6fd6; --info-bg:#e8f1fc;
+    --purple:#7c3aed; --purple-bg:#f1eafd;
+    --code-bg:#eef0f3;
+    --shadow: 0 1px 2px rgba(20,22,30,.04), 0 8px 24px rgba(20,22,30,.05);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#0e0f13; --surface:#161822; --surface-2:#1d202c; --border:#2a2e3c;
+      --text:#eef0f6; --text-dim:#aab0c0; --text-faint:#767c8c;
+      --brand:#8b85f7; --brand-dim:#232047;
+      --ok:#3ddc97; --ok-bg:#0f2a20;
+      --warn:#f2b84b; --warn-bg:#332506;
+      --danger:#f76a80; --danger-bg:#3a1420;
+      --info:#6ab2f8; --info-bg:#0f2540;
+      --purple:#b399f9; --purple-bg:#241a3d;
+      --code-bg:#1d202c;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e0f13; --surface:#161822; --surface-2:#1d202c; --border:#2a2e3c;
+    --text:#eef0f6; --text-dim:#aab0c0; --text-faint:#767c8c;
+    --brand:#8b85f7; --brand-dim:#232047;
+    --ok:#3ddc97; --ok-bg:#0f2a20;
+    --warn:#f2b84b; --warn-bg:#332506;
+    --danger:#f76a80; --danger-bg:#3a1420;
+    --info:#6ab2f8; --info-bg:#0f2540;
+    --purple:#b399f9; --purple-bg:#241a3d;
+    --code-bg:#1d202c;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text);
+    font: 15px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin:0; padding:0 0 6rem;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 clamp(1rem,4vw,2.5rem);}
+
+  header.hero{
+    padding: 3.2rem 0 2.2rem; border-bottom:1px solid var(--border);
+    background: linear-gradient(180deg, var(--brand-dim), transparent 70%);
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--brand); background:var(--brand-dim); border:1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+    padding:.3rem .7rem; border-radius:999px; margin-bottom:.9rem;
+  }
+  h1{font-size:clamp(1.7rem,3.4vw,2.5rem); margin:.2rem 0 .5rem; letter-spacing:-.01em;}
+  .sub{color:var(--text-dim); font-size:1rem; max-width:70ch; margin:0;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem .9rem; margin-top:1.4rem; font-size:.82rem; color:var(--text-faint);}
+  .meta-row b{color:var(--text-dim); font-weight:700;}
+
+  .layout{display:grid; grid-template-columns: 230px 1fr; gap:2.6rem; padding-top:2.4rem;}
+  @media (max-width: 900px){ .layout{grid-template-columns: 1fr;} nav.toc{position:static !important; max-height:none !important;} }
+
+  nav.toc{
+    position:sticky; top:1.2rem; align-self:start; max-height:calc(100vh - 2.4rem); overflow:auto;
+    font-size:.83rem;
+  }
+  nav.toc a{
+    display:block; padding:.4rem .6rem; border-radius:.5rem; color:var(--text-dim); text-decoration:none;
+    border-left:2px solid transparent;
+  }
+  nav.toc a:hover{ background:var(--surface-2); color:var(--text); }
+  nav.toc .toc-title{font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); padding:.4rem .6rem;}
+
+  main{min-width:0;}
+  section{margin-bottom:3.2rem; scroll-margin-top:1.2rem;}
+  h2{
+    font-size:1.4rem; margin:0 0 .3rem; padding-bottom:.6rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:baseline; gap:.6rem;
+  }
+  h2 .num{color:var(--brand); font-variant-numeric:tabular-nums;}
+  h3{font-size:1.08rem; margin:1.8rem 0 .7rem;}
+  h4{font-size:.95rem; margin:1.3rem 0 .5rem; color:var(--text-dim);}
+  p{color:var(--text-dim);}
+  a{color:var(--brand);}
+  code{background:var(--code-bg); padding:.1rem .35rem; border-radius:.35rem; font-size:.85em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+  pre{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:.8rem; padding:1rem 1.2rem;
+    overflow-x:auto; font-size:.82rem; line-height:1.55;
+  }
+  pre code{background:none; padding:0;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:1rem;
+    padding:1.3rem 1.5rem; box-shadow:var(--shadow); margin:1rem 0;
+  }
+
+  table{width:100%; border-collapse:collapse; font-size:.84rem; margin:1rem 0;}
+  .table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:.9rem; box-shadow:var(--shadow);}
+  .table-scroll table{margin:0;}
+  th, td{text-align:left; padding:.65rem .85rem; border-bottom:1px solid var(--border); vertical-align:top;}
+  thead th{
+    background:var(--surface-2); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-faint); font-weight:800; position:sticky; top:0;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td code{white-space:nowrap;}
+
+  .pill{
+    display:inline-block; font-size:.68rem; font-weight:800; letter-spacing:.02em;
+    padding:.15rem .55rem; border-radius:999px; white-space:nowrap;
+  }
+  .m-get{color:var(--info); background:var(--info-bg);}
+  .m-post{color:var(--ok); background:var(--ok-bg);}
+  .m-put,.m-patch{color:var(--warn); background:var(--warn-bg);}
+  .m-delete{color:var(--danger); background:var(--danger-bg);}
+
+  .role{display:inline-block; font-size:.68rem; font-weight:700; padding:.1rem .5rem; border-radius:.4rem; margin:.08rem; background:var(--surface-2); color:var(--text-dim); border:1px solid var(--border);}
+  .role.admin{color:var(--danger); background:var(--danger-bg); border-color:transparent;}
+  .role.operations{color:var(--info); background:var(--info-bg); border-color:transparent;}
+  .role.owner{color:var(--purple); background:var(--purple-bg); border-color:transparent;}
+  .role.household{color:var(--warn); background:var(--warn-bg); border-color:transparent;}
+  .role.client{color:var(--ok); background:var(--ok-bg); border-color:transparent;}
+  .role.public{color:var(--text-faint);}
+
+  .check{color:var(--ok); font-weight:800;}
+  .dash{color:var(--text-faint);}
+
+  .stack-badges{display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0;}
+  .stack-badge{
+    background:var(--surface); border:1px solid var(--border); border-radius:.7rem;
+    padding:.5rem .8rem; font-size:.78rem; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:.1rem; min-width:130px;
+  }
+  .stack-badge b{font-size:.83rem;}
+  .stack-badge span{color:var(--text-faint); font-size:.72rem;}
+
+  ul.checklist{list-style:none; padding:0; margin:.6rem 0;}
+  ul.checklist li{
+    position:relative; padding:.4rem .2rem .4rem 2rem; border-bottom:1px dashed var(--border); font-size:.9rem;
+  }
+  ul.checklist li:last-child{border-bottom:none;}
+  ul.checklist li::before{
+    content:""; position:absolute; left:0; top:.55rem; width:1.05rem; height:1.05rem;
+    border:1.5px solid var(--text-faint); border-radius:.3rem; background:var(--surface);
+  }
+  ul.checklist.done li{color:var(--text);}
+  ul.checklist.done li::before{
+    content:"✓"; border-color:var(--ok); background:var(--ok-bg); color:var(--ok);
+    font-size:.75rem; font-weight:800; line-height:1.05rem; text-align:center;
+  }
+
+  .phase{
+    background:var(--surface); border:1px solid var(--border); border-radius:1rem; box-shadow:var(--shadow);
+    padding:1.3rem 1.5rem 1.5rem; margin:1.2rem 0;
+  }
+  .phase-head{display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
+  .phase-head h3{margin:0; font-size:1.02rem;}
+  .phase-tag{font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--brand); background:var(--brand-dim); padding:.25rem .6rem; border-radius:999px;}
+
+  .callout{
+    border-left:3px solid var(--brand); background:var(--brand-dim); border-radius:.5rem;
+    padding:.9rem 1.1rem; font-size:.87rem; color:var(--text);
+  }
+  .callout.warn{border-color:var(--warn); background:var(--warn-bg);}
+  .callout.ok{border-color:var(--ok); background:var(--ok-bg);}
+
+  .arch{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:.9rem; padding:1.2rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.78rem; line-height:1.5;
+    overflow-x:auto; white-space:pre; color:var(--text-dim);
+  }
+
+  .qa{counter-reset:qa;}
+  .qa li{counter-increment:qa; padding:.5rem 0 .5rem 0; border-bottom:1px solid var(--border); font-size:.9rem;}
+  .qa li:last-child{border-bottom:none;}
+  .qa li::marker{color:var(--brand); font-weight:800;}
+
+  footer{padding:2.4rem 0; color:var(--text-faint); font-size:.8rem; border-top:1px solid var(--border); margin-top:3rem;}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">● Phases 0–7 complete</span>
+    <h1>Panther PMS — Backend Development Plan</h1>
+    <p class="sub">A Java Spring Boot backend plan derived directly from the existing React/TypeScript frontend — every data field, mutation, and page has a matching database table and API endpoint below.</p>
+    <div class="meta-row">
+      <span><b>Stack:</b> Spring Boot 3 · Java 21 · PostgreSQL · Maven · JWT (JSON body) · local disk storage</span>
+      <span><b>Sources analyzed:</b> types/index.ts · DataContext.tsx · AuthContext.tsx · AppRoutes.tsx · 45 pages</span>
+      <span><b>Tables:</b> ~43</span>
+      <span><b>Endpoint groups:</b> 8 domains</span>
+    </div>
+    <div class="callout ok" style="margin-top:1.2rem;">Section 9's decisions are confirmed. All 7 functional domains (Phases 0–7: bootstrap, IAM &amp; auth, property, leasing &amp; CRM, finance, facilities &amp; maintenance, HR, platform) are implemented, compiled, packaged, and smoke-tested end-to-end. Phase 8 (hardening &amp; handover) is also done: a 148-test automated suite (JUnit 5 + Testcontainers + MockMvc, run via <code>mvn verify</code>), per-IP rate limiting, an exported OpenAPI spec, an ERD, and a production deployment checklist — see <code>README.md</code> in the backend directory for how to run it. Remaining work (load-testing, broader automated coverage beyond the 5 codified flows, CI pipeline, CSV/PDF export, scheduled jobs) is explicitly deferred — see <code>PRODUCTION_CHECKLIST.md</code>.</div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <a href="#s1">1. System Overview</a>
+      <a href="#s2">2. Tech Stack</a>
+      <a href="#s3">3. Architecture</a>
+      <a href="#s4">4. Auth &amp; RBAC</a>
+      <a href="#s5">5. Database Schema</a>
+      <a href="#s6">6. REST API Catalog</a>
+      <a href="#s7">7. Frontend Coverage Matrix</a>
+      <a href="#s8">8. Cross-Cutting Concerns</a>
+      <a href="#s9">9. Open Decisions</a>
+      <a href="#s10">10. Roadmap Checklist</a>
+      <a href="#s11">11. Not Decided Yet</a>
+    </nav>
+
+    <main>
+
+      <section id="s1">
+        <h2><span class="num">1.</span> System Overview</h2>
+        <p>Panther PMS is a multi-role property management platform (estates / rooms for rent, East-Africa market). Six roles, five authenticated portals plus one public site.</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Role</th><th>Portal prefix</th><th>Summary</th></tr></thead>
+            <tbody>
+              <tr><td><span class="role public">PUBLIC</span></td><td><code>/</code></td><td>Anonymous browsing + booking inquiry + login</td></tr>
+              <tr><td><span class="role client">CLIENT</span></td><td><code>/client/*</code></td><td>Tenant self-service (lease, rent, materials, tickets)</td></tr>
+              <tr><td><span class="role operations">OPERATIONS</span></td><td><code>/operations/*</code></td><td>Day-to-day PM: bookings, clients, finance, HR, maintenance</td></tr>
+              <tr><td><span class="role owner">OWNER</span></td><td><code>/owner/*</code></td><td>Read-only executive BI / portfolio analytics</td></tr>
+              <tr><td><span class="role household">HOUSEHOLD</span></td><td><code>/household/*</code></td><td>Field staff: checklists, tasks, payslips</td></tr>
+              <tr><td><span class="role admin">ADMIN</span></td><td><code>/admin/*</code></td><td>RBAC, property/room/rental-type CRUD, system settings</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout">The frontend currently runs on mock data held in <code>DataContext.tsx</code>. That context's state shape <b>is</b> the data model, and its ~50 mutator functions (<code>addBooking</code>, <code>recordWaterMeterPayment</code>, …) <b>are</b> the required API operations. This plan turns each one into a real REST endpoint backed by a real table.</div>
+      </section>
+
+      <section id="s2">
+        <h2><span class="num">2.</span> Proposed Tech Stack</h2>
+        <div class="stack-badges">
+          <div class="stack-badge"><b>Java 21 (LTS)</b><span>Language / runtime</span></div>
+          <div class="stack-badge"><b>Spring Boot 3.3</b><span>Framework</span></div>
+          <div class="stack-badge"><b>Maven</b><span>Build tool</span></div>
+          <div class="stack-badge"><b>Spring Security 6 + JWT</b><span>Auth</span></div>
+          <div class="stack-badge"><b>Spring Data JPA / Hibernate</b><span>Persistence</span></div>
+          <div class="stack-badge"><b>PostgreSQL 16</b><span>Database</span></div>
+          <div class="stack-badge"><b>Flyway</b><span>Migrations</span></div>
+          <div class="stack-badge"><b>MapStruct</b><span>DTO mapping</span></div>
+          <div class="stack-badge"><b>Bean Validation</b><span>Input validation</span></div>
+          <div class="stack-badge"><b>springdoc-openapi</b><span>API docs / Swagger UI</span></div>
+          <div class="stack-badge"><b>S3-compatible / MinIO</b><span>File storage (prod)</span></div>
+          <div class="stack-badge"><b>JPA Specifications</b><span>Dynamic filtering</span></div>
+          <div class="stack-badge"><b>Caffeine cache</b><span>Dashboard/report caching</span></div>
+          <div class="stack-badge"><b>@Scheduled jobs</b><span>Bill rollover, leave sync</span></div>
+          <div class="stack-badge"><b>JUnit 5 + Testcontainers</b><span>Testing</span></div>
+          <div class="stack-badge"><b>Docker Compose</b><span>App + Postgres + MinIO</span></div>
+        </div>
+        <div class="callout warn"><b>Open decision:</b> the frontend's own README draft sketched MySQL-flavored SQL; this plan defaults to <b>PostgreSQL</b> for cleaner enum/array handling with Hibernate. See Section 9.</div>
+      </section>
+
+      <section id="s3">
+        <h2><span class="num">3.</span> High-Level Architecture</h2>
+        <div class="arch">┌──────────────────────────┐        HTTPS/JSON        ┌───────────────────────────────────────┐
+│  React + TS Frontend      │ ───────────────────────▶ │        Spring Boot API (this plan)      │
+│  (existing, unmodified)   │ ◀─────────────────────── │  /api/v1/**                              │
+└──────────────────────────┘        JWT bearer         │                                           │
+                                                        │  controller → service → repository      │
+                                                        │  security (JWT filter + @PreAuthorize)   │
+                                                        │  DTO (MapStruct) ↔ Entity (JPA)          │
+                                                        └───────────────────┬───────────────────────┘
+                                                                            │
+                                                          ┌─────────────────┼─────────────────┐
+                                                          ▼                 ▼                 ▼
+                                                 ┌────────────────┐ ┌─────────────┐ ┌──────────────────┐
+                                                 │ PostgreSQL 16  │ │ Object store │ │ Scheduler jobs    │
+                                                 │ (Flyway-driven)│ │ (S3/MinIO)   │ │ (bills, leaves…)  │
+                                                 └────────────────┘ └─────────────┘ └──────────────────┘</div>
+
+        <h3>Package layout (single Maven module, package-by-domain)</h3>
+        <div class="arch">com.panther.pms
+ ├─ config/            (Security, JWT, CORS, OpenAPI, Web, Scheduling)
+ ├─ common/            (BaseEntity, GlobalExceptionHandler, PageResponse&lt;T&gt;, FileStorageService, audit/ — see note below)
+ ├─ iam/                → users, auth, roles, system settings
+ ├─ property/           → properties, buildings, rooms, rental types
+ ├─ leasing/            → bookings, clients, client materials/documents, agents/commissions
+ ├─ finance/            → payments, expenses, recurring bills, payroll
+ ├─ facilities/         → technicians, work orders, preventive tasks, damage reports, water meters, maintenance issues
+ ├─ hr/                 → employees, employee documents/tasks/damages/leaves
+ └─ platform/           → notifications, dashboards/reports, global search, file uploads (+ read-only activity log controller)</div>
+        <p>Each domain package internally follows: <code>controller/</code>, <code>service/</code>, <code>service/impl/</code>, <code>repository/</code>, <code>entity/</code>, <code>dto/</code>, <code>mapper/</code>.</p>
+        <div class="callout warn"><b>Deviation from the original layout (Phase 7):</b> the activity-log entity and <code>AuditService</code> live in <code>common.audit</code>, not <code>platform</code> as first sketched. Every domain calls <code>AuditService.log(...)</code>, but <code>platform.NotificationService</code> depends on <code>iam.User</code> for its broadcast fan-out — keeping <code>AuditService</code> in <code>platform</code> would make <code>iam</code> depend on <code>platform</code> while <code>platform</code> depended back on <code>iam</code>, a circular package dependency. <code>common</code> already sits beneath every domain, so the write path (and its table) moved there; <code>platform</code> keeps the read-only <code>ActivityLogController</code>.</div>
+      </section>
+
+      <section id="s4">
+        <h2><span class="num">4.</span> Authentication &amp; Authorization</h2>
+        <ul>
+          <li><b>Login:</b> <code>POST /api/v1/auth/login</code> with email + password → <code>{ accessToken, refreshToken, user }</code>. Access token ~15 min, refresh ~7 days.</li>
+          <li><b>JWT claims:</b> <code>sub</code> (user id), <code>role</code>, <code>clientId</code>/<code>employeeId</code> (if applicable), <code>name</code>.</li>
+          <li>Every controller method is annotated <code>@PreAuthorize(...)</code> per the matrix below.</li>
+          <li><b>Row-level scoping:</b> <code>client</code> sees only <code>clientId == principal.clientId</code> records; <code>household</code> sees only own <code>employeeId</code>'s tasks/leaves/payroll.</li>
+          <li>Password reset / invite emails: stub an <code>EmailService</code> interface now, wire to a real provider later.</li>
+          <li><code>public</code> needs no token for <code>/properties</code>, <code>/property/:id</code>, <code>/room/:id</code>, or submitting a booking inquiry (rate-limited).</li>
+        </ul>
+
+        <h3>4.1 Permission matrix (by domain)</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Domain</th><th>public</th><th>client</th><th>household</th><th>operations</th><th>owner</th><th>admin</th></tr></thead>
+            <tbody>
+              <tr><td>Properties/Rooms — read</td><td class="check">✓ published</td><td class="check">✓</td><td class="dash">–</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+              <tr><td>Properties/Rooms/Buildings — write</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td></tr>
+              <tr><td>Rental Types — read</td><td class="check">✓</td><td class="check">✓</td><td class="dash">–</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+              <tr><td>Rental Types — write</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td></tr>
+              <tr><td>Bookings — create</td><td class="check">✓ self</td><td class="check">✓ self</td><td class="dash">–</td><td class="check">✓</td><td class="dash">–</td><td class="dash">–</td></tr>
+              <tr><td>Bookings — manage (status/assign)</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td class="dash">–</td><td class="dash">–</td></tr>
+              <tr><td>Clients — read/write</td><td class="dash">–</td><td>own record</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Payments — read</td><td class="dash">–</td><td>own only</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Payments — create</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td class="dash">–</td><td class="dash">–</td></tr>
+              <tr><td>Expenses / Recurring Bills</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Technicians / Work Orders</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Preventive Tasks — read/update own</td><td class="dash">–</td><td class="dash">–</td><td>assigned only</td><td>all</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Damage Reports</td><td class="dash">–</td><td>read own</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Water Meters</td><td class="dash">–</td><td>read own</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Maintenance Issues — create</td><td class="dash">–</td><td class="check">✓ self</td><td class="dash">–</td><td class="check">✓</td><td class="dash">–</td><td class="dash">–</td></tr>
+              <tr><td>Maintenance Issues — manage</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td class="dash">–</td><td class="dash">–</td></tr>
+              <tr><td>Employees / Payroll / Leaves — self</td><td class="dash">–</td><td class="dash">–</td><td>own</td><td>all</td><td class="dash">–</td><td class="dash">–</td></tr>
+              <tr><td>Agents &amp; Commissions</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="dash">–</td></tr>
+              <tr><td>Activity Log</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td><td>read-only</td><td class="check">✓</td></tr>
+              <tr><td>Notifications</td><td class="dash">–</td><td>own</td><td>own</td><td>own</td><td>own</td><td>own</td></tr>
+              <tr><td>Users &amp; Roles</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td class="check">✓</td></tr>
+              <tr><td>System Settings</td><td class="dash">–</td><td class="dash">–</td><td class="dash">–</td><td>read-only</td><td>read-only</td><td class="check">✓</td></tr>
+              <tr><td>Dashboards/Reports</td><td class="dash">–</td><td>own KPIs</td><td>own KPIs</td><td class="check">✓</td><td>financial</td><td>system</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="s5">
+        <h2><span class="num">5.</span> Database Schema</h2>
+        <p>Conventions used everywhere unless noted: every table has <code>id BIGSERIAL PK</code>, <code>created_at</code>, <code>updated_at</code>. Human-facing business numbers (<code>bookingNumber</code>, <code>invoiceNumber</code>, <code>ticketNumber</code>, <code>jobNumber</code>, <code>payrollNumber</code>) become <code>VARCHAR UNIQUE</code> columns generated server-side. Frontend string arrays (<code>amenities</code>, <code>images</code>, <code>rules</code>, <code>photos</code>, <code>certifications</code>) are normalized into child tables rather than JSON columns — the one deliberate improvement over the draft schema already sketched in <code>frontend/README.md</code>.</p>
+
+        <h3>5.1 IAM domain</h3>
+        <p><code>users</code> — id, name, email (unique), phone, password_hash, role, avatar_url, title, client_id FK, employee_id FK, status, last_login_at, must_change_password.</p>
+        <p><code>system_settings</code> <i>(new — required by Admin System Settings page)</i> — company_name, currency_code, water_rate_per_m3, default_agent_commission_pct, vat_tax_rate_pct, updated_by.</p>
+        <p><code>notification_preferences</code> <i>(new — from Profile Settings toggles)</i> — user_id PK/FK, email_notifications, sms_notifications, theme_preference.</p>
+
+        <h3>5.2 Property domain</h3>
+        <p><code>properties</code> + <code>property_images</code>, <code>property_amenities</code>. Fields: name, code, location, neighborhood, city, address, description, rating, review_count, featured, year_built, monthly_revenue_estimate, status.</p>
+        <div class="callout"><code>occupiedRooms / availableRooms / reservedRooms / maintenanceRooms / totalRooms</code> are <b>derived</b> from <code>rooms.status</code> grouped by property — a computed read model, not columns to keep manually in sync (avoids the drift risk the current mock data already has).</div>
+        <p><code>buildings</code> — property_id FK, name, floors_count, total_rooms (derived).</p>
+        <p><code>rental_types</code> + <code>rental_type_included_materials</code> + <code>rental_type_applicable_properties</code> (M:N join). Fields: name (FurnishingType enum), description, price_multiplier, status.</p>
+        <p><code>rooms</code> + <code>room_images</code>, <code>room_amenities</code>, <code>room_utilities_included</code>, <code>room_rules</code>. Fields: property_id, building_id, room_number, floor, size_sq_m, bedrooms, bathrooms, furnishing_type, monthly_rent, deposit, status, current_client_id FK, virtual_tour_url, description.</p>
+
+        <h3>5.3 Leasing / CRM domain</h3>
+        <p><code>clients</code> + <code>client_materials</code> + <code>client_documents</code>. Fields: name, email, phone, identification_number, nationality, occupation, employer, emergency_contact_*, current_room_id, current_property_id, rental_type, move_in_date, lease_expiry_date, monthly_rent, deposit_paid, payment_status, status, deactivation_reason, notes.</p>
+        <p><code>bookings</code> + <code>booking_timeline_events</code>. Fields: booking_number, client_id (nullable — inquiry may precede an account), client_name/email/phone snapshot, property_id, room_id, rental_type_id, requested_date, move_in_date, move_out_date, monthly_rent, deposit, status (9-value enum), notes, source, agent_id.</p>
+        <p><code>agents</code> + <code>agent_deals</code>. Referral counters and commission totals maintained by the service layer on each deal write, never client-editable.</p>
+
+        <h3>5.4 Finance domain</h3>
+        <p><code>payments</code> — invoice_number, client_id, property_id, room_id, amount, payment_date, due_date, type, method, reference, status, receipt_url, notes.</p>
+        <p><code>expenses</code> — property_id, category (9-value enum), description, amount, expense_date, vendor, payment_method, status, receipt_attached, notes.</p>
+        <p><code>recurring_bills</code> + <code>bill_payments</code> — name, category, vendor, amount, frequency, next_due_date, status, auto_renew, reminder_days.</p>
+        <p><code>payroll_records</code> — payroll_number, employee_id, period, basic_salary, allowances, bonuses, deductions, tax_amount, net_salary, payment_date, payment_status, payment_method.</p>
+
+        <h3>5.5 Facilities &amp; Maintenance domain</h3>
+        <p><code>technicians</code> + <code>technician_certifications</code> + <code>tech_documents</code> + <code>tech_work_orders</code> (+ <code>tech_work_order_photos</code>). Work order total_cost = labor_cost + material_cost, derived.</p>
+        <p><code>preventive_tasks</code> + <code>preventive_task_photos</code> — property_id, category (15-value enum), task_name, frequency, schedule_week, assigned_staff_id FK → employees, status, remarks, due_date.</p>
+        <p><code>damage_reports</code> + <code>damage_report_photos</code> — property_id, room_id, client_id, item, damage_type, description, estimated_cost, amount_charged, responsible_party, status, resolution_notes.</p>
+        <p><code>water_meters</code> + <code>water_meter_readings_history</code> — meter_number (unique), previous_reading, current_reading, consumption_m3 (derived), rate_per_m3, total_amount (derived), payment_status.</p>
+        <p><code>maintenance_issues</code> + <code>maintenance_issue_photos</code> <i>(tenant-reported tickets, distinct from technician work orders)</i> — ticket_number, client_id, property_id, room_id, category, priority, status, assigned_technician_id.</p>
+
+        <h3>5.6 HR domain</h3>
+        <p><code>employees</code> + <code>employee_documents</code> + <code>employee_daily_tasks</code> + <code>employee_damages</code> (+photos) + <code>employee_leaves</code>. Fields: position, department, employment_status, status, basic_salary, national_id, emergency_contact_*.</p>
+
+        <h3>5.7 Platform domain</h3>
+        <p><code>activity_logs</code> <i>(append-only audit trail)</i> — occurred_at, user_id, user_name snapshot, role, action, module, details, type. Written by an <code>AuditService</code> from every mutating service method.</p>
+        <p><code>notifications</code> + <code>notification_target_roles</code> + <code>notification_recipients</code>. The last table is <b>new</b> — needed for real per-user "read" state, since mock data only has one global <code>read: boolean</code> which doesn't scale past one demo user per role.</p>
+
+        <div class="callout ok"><b>Total: 23 primary entity tables + ~20 child/join tables ≈ 43 tables.</b> Full DDL delivered as versioned Flyway migrations during implementation — this section is the field-level spec those migrations are generated from.</div>
+      </section>
+
+      <section id="s6">
+        <h2><span class="num">6.</span> REST API Catalog</h2>
+        <p>Base path: <code>/api/v1</code>. List endpoints support <code>page</code>, <code>size</code>, <code>sort</code>, plus domain filters. Response shape: <code>{ content, page, size, totalElements, totalPages }</code>.</p>
+
+        <h3>6.1 Auth &amp; IAM</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/auth/login</code></td><td><span class="role public">public</span></td><td>Login, returns JWT pair</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/auth/refresh</code></td><td><span class="role public">public</span></td><td>New access token</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/auth/logout</code></td><td>authenticated</td><td>Invalidate refresh token</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/auth/me</code></td><td>authenticated</td><td>Current user profile</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/auth/change-password</code></td><td>authenticated</td><td>Self password change</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/auth/forgot-password</code></td><td><span class="role public">public</span></td><td>Trigger reset email</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/auth/reset-password</code></td><td><span class="role public">public</span></td><td>Complete reset</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/users</code></td><td><span class="role admin">admin</span></td><td>List/filter/search users</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/users</code></td><td><span class="role admin">admin</span></td><td>Create user (+ send invite)</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/users/{id}</code></td><td><span class="role admin">admin</span></td><td>Detail</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/users/{id}</code></td><td><span class="role admin">admin</span></td><td>Update profile/role</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/users/{id}/status</code></td><td><span class="role admin">admin</span></td><td>activate/deactivate/suspend</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/users/{id}/reset-password</code></td><td><span class="role admin">admin</span></td><td>Force-send reset link</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/users/{id}/resend-invite</code></td><td><span class="role admin">admin</span></td><td>Resend invite email</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/users/{id}</code></td><td><span class="role admin">admin</span></td><td>Hard delete</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/users/me/preferences</code></td><td>authenticated</td><td>theme/email/sms toggles</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/settings</code></td><td><span class="role operations">ops</span> <span class="role owner">owner</span> <span class="role admin">admin</span></td><td>Read system settings</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/settings</code></td><td><span class="role admin">admin</span></td><td>Update system settings</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>6.2 Property domain</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/properties</code></td><td>public/all</td><td>List (public sees only ACTIVE + published fields)</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/properties/{id}</code></td><td>public/all</td><td>Detail incl. rooms summary</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/properties</code></td><td><span class="role admin">admin</span></td><td>Create</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/properties/{id}</code></td><td><span class="role admin">admin</span></td><td>Update</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/properties/{id}</code></td><td><span class="role admin">admin</span></td><td>Delete (blocked if rooms occupied)</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/properties/{id}/images</code></td><td><span class="role admin">admin</span></td><td>Upload/attach photo</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/properties/{id}/images/{imgId}</code></td><td><span class="role admin">admin</span></td><td>Remove photo</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/properties/{id}/buildings</code></td><td>all</td><td>List buildings</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/buildings</code></td><td><span class="role admin">admin</span></td><td>Create building</td></tr>
+            <tr><td><span class="pill m-put">PUT</span>/<span class="pill m-delete">DEL</span></td><td><code>/buildings/{id}</code></td><td><span class="role admin">admin</span></td><td>Update/delete</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/rooms</code></td><td>public/all</td><td>List/filter (property, status, furnishing, price)</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/rooms/{id}</code></td><td>public/all</td><td>Detail</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/rooms</code></td><td><span class="role admin">admin</span></td><td>Create</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/rooms/{id}</code></td><td><span class="role admin">admin</span></td><td>Update</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/rooms/{id}/status</code></td><td><span class="role operations">ops</span> <span class="role admin">admin</span></td><td>Change availability status</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/rooms/{id}</code></td><td><span class="role admin">admin</span></td><td>Delete</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/rental-types</code></td><td>all</td><td>List</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/rental-types</code></td><td><span class="role admin">admin</span></td><td>Create (+ included materials template)</td></tr>
+            <tr><td><span class="pill m-put">PUT</span>/<span class="pill m-delete">DEL</span></td><td><code>/rental-types/{id}</code></td><td><span class="role admin">admin</span></td><td>Update/delete</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>6.3 Leasing / CRM</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/bookings</code></td><td><span class="role operations">ops</span></td><td>List/filter by status/property/date</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/bookings</code></td><td>public, client, ops</td><td>Create booking request</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/bookings/{id}</code></td><td>ops, owning client</td><td>Detail + timeline</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/bookings/{id}/status</code></td><td><span class="role operations">ops</span></td><td>Approve/reject/confirm/etc.</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/bookings/{id}/assign-room</code></td><td><span class="role operations">ops</span></td><td>Assign room → flips room to RESERVED</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients/me/bookings</code></td><td><span class="role client">client</span></td><td>"My Booking" status</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients</code></td><td><span class="role operations">ops</span></td><td>List/filter/search tenants</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/clients</code></td><td><span class="role operations">ops</span></td><td>Register new resident</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients/{id}</code></td><td>ops, owning client</td><td>Full dossier</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/clients/{id}</code></td><td><span class="role operations">ops</span></td><td>Update profile</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/clients/{id}/status</code></td><td><span class="role operations">ops</span></td><td>activate/suspend/deactivate/former</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/clients/{id}/documents</code></td><td>ops (write), client (read)</td><td>Contracts, ID, etc.</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/clients/{id}/documents/{docId}</code></td><td><span class="role operations">ops</span></td><td>&nbsp;</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/clients/{id}/materials</code></td><td>ops (write), client (read)</td><td>Move-in inventory</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/clients/{id}/materials/{matId}/condition</code></td><td>ops, owning client</td><td>Condition update</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/clients/{id}/materials/{matId}</code></td><td><span class="role operations">ops</span></td><td>&nbsp;</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients/me</code></td><td><span class="role client">client</span></td><td>"My Room" self profile</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/agents</code></td><td><span class="role operations">ops</span></td><td>List brokers</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/agents</code></td><td><span class="role operations">ops</span></td><td>Register broker</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/agents/{id}</code></td><td><span class="role operations">ops</span></td><td>Update</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/agents/{id}/deals</code></td><td><span class="role operations">ops</span></td><td>Commission deals</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/agents/{id}/pay-commission</code></td><td><span class="role operations">ops</span></td><td>Disburse payout</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>6.4 Finance</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/payments</code></td><td><span class="role operations">ops</span></td><td>Ledger, filters: client/property/status/type/date</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/payments</code></td><td><span class="role operations">ops</span></td><td>Record payment / generate invoice</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/payments/{id}</code></td><td>ops, owning client</td><td>Detail</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/payments/{id}/receipt</code></td><td>ops, owning client</td><td>Download receipt</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients/me/payments</code></td><td><span class="role client">client</span></td><td>My rent/utility history</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/expenses</code></td><td><span class="role operations">ops</span></td><td>List / log expense</td></tr>
+            <tr><td><span class="pill m-put">PUT</span>/<span class="pill m-delete">DEL</span></td><td><code>/expenses/{id}</code></td><td><span class="role operations">ops</span></td><td>&nbsp;</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/recurring-bills</code></td><td><span class="role operations">ops</span></td><td>Vendor contracts</td></tr>
+            <tr><td><span class="pill m-put">PUT</span>/<span class="pill m-delete">DEL</span></td><td><code>/recurring-bills/{id}</code></td><td><span class="role operations">ops</span></td><td>&nbsp;</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/recurring-bills/{id}/payments</code></td><td><span class="role operations">ops</span></td><td>Log a bill payment</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/recurring-bills/{id}/mark-paid</code></td><td><span class="role operations">ops</span></td><td>Quick mark-paid</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/payroll-records</code></td><td><span class="role operations">ops</span></td><td>Generate/list payslips</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/employees/{id}/payroll</code></td><td><span class="role operations">ops</span></td><td>History for one employee</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/employees/me/payroll</code></td><td><span class="role household">household</span></td><td>"My Salary" payslips</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>6.5 Facilities &amp; Maintenance</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/technicians</code></td><td><span class="role operations">ops</span></td><td>Contractor directory</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-put">PUT</span></td><td><code>/technicians/{id}</code></td><td><span class="role operations">ops</span></td><td>Profile</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/technicians/{id}/work-orders</code></td><td><span class="role operations">ops</span></td><td>Dispatch job</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/technicians/{id}/work-orders/{woId}</code></td><td><span class="role operations">ops</span></td><td>Update job (progress, cost, rating)</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/technicians/{id}/documents</code></td><td><span class="role operations">ops</span></td><td>Licenses/certs</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/preventive-tasks</code></td><td><span class="role operations">ops</span></td><td>All routines, filter by property</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/employees/me/preventive-tasks</code></td><td><span class="role household">household</span></td><td>My assigned checklist</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/preventive-tasks</code></td><td><span class="role operations">ops</span></td><td>Schedule new routine</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/preventive-tasks/{id}/status</code></td><td>ops, assigned household</td><td>Submit inspection result + photos</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/damages</code></td><td><span class="role operations">ops</span></td><td>Damage register</td></tr>
+            <tr><td><span class="pill m-put">PUT</span></td><td><code>/damages/{id}</code></td><td><span class="role operations">ops</span></td><td>Update</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/damages/{id}/status</code></td><td><span class="role operations">ops</span></td><td>Resolve/dispute</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/water-meters</code></td><td><span class="role operations">ops</span></td><td>All meters, active-lease tenants first</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients/me/water-meter</code></td><td><span class="role client">client</span></td><td>My consumption/history</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/water-meters</code></td><td><span class="role operations">ops</span></td><td>Assign new meter to client</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/water-meters/{id}/reading</code></td><td><span class="role operations">ops</span></td><td>Record reading → computes bill</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/water-meters/{id}/payment</code></td><td><span class="role operations">ops</span></td><td>Settle bill</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/water-meters/{id}/history</code></td><td>ops, owning client</td><td>Consumption trend</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/maintenance-issues</code></td><td><span class="role operations">ops</span></td><td>Tenant ticket queue</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/maintenance-issues</code></td><td><span class="role client">client</span></td><td>Report issue (+ photos)</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/clients/me/maintenance-issues</code></td><td><span class="role client">client</span></td><td>My tickets</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/maintenance-issues/{id}/status</code></td><td><span class="role operations">ops</span></td><td>Assign technician / resolve</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>6.6 HR</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/employees</code></td><td><span class="role operations">ops</span></td><td>Staff directory</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-put">PUT</span></td><td><code>/employees/{id}</code></td><td><span class="role operations">ops</span></td><td>Dossier</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/employees/{id}/status</code></td><td><span class="role operations">ops</span></td><td>active/on_leave/suspended/terminated</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/employees/{id}/documents</code></td><td><span class="role operations">ops</span></td><td>Compliance docs</td></tr>
+            <tr><td><span class="pill m-delete">DELETE</span></td><td><code>/employees/{id}/documents/{docId}</code></td><td><span class="role operations">ops</span></td><td>&nbsp;</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/employees/{id}/daily-tasks</code></td><td><span class="role operations">ops</span></td><td>Assign task</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/employees/{id}/daily-tasks/{taskId}</code></td><td>ops, assigned household</td><td>Progress/rating</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/employees/{id}/damages</code></td><td><span class="role operations">ops</span></td><td>Equipment damage incident</td></tr>
+            <tr><td><span class="pill m-get">GET</span>/<span class="pill m-post">POST</span></td><td><code>/employees/{id}/leaves</code></td><td>ops, household (self, create)</td><td>Leave request</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/employees/{id}/leaves/{leaveId}</code></td><td><span class="role operations">ops</span></td><td>Approve/reject → auto status sync</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/employees/me</code></td><td><span class="role household">household</span></td><td>My HR profile</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/employees/me/daily-tasks</code></td><td><span class="role household">household</span></td><td>Today's tasks</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/employees/me/history</code></td><td><span class="role household">household</span></td><td>Completed task history</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>6.7 Platform</h3>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Method</th><th>Path</th><th>Roles</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/activity-logs</code></td><td>ops, admin, owner (read)</td><td>Filter by module/type/date</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/notifications/me</code></td><td>authenticated</td><td>My feed (role + user targeted)</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/notifications/{id}/read</code></td><td>authenticated</td><td>Mark one read</td></tr>
+            <tr><td><span class="pill m-patch">PATCH</span></td><td><code>/notifications/read-all</code></td><td>authenticated</td><td>Mark all read</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/notifications</code></td><td>ops, admin</td><td>Broadcast to role(s)</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/search?q=</code></td><td>ops, admin, owner</td><td>Global search modal</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/dashboard/operations</code></td><td><span class="role operations">ops</span></td><td>KPI aggregate</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/dashboard/owner</code></td><td><span class="role owner">owner</span></td><td>Executive BI (NOI, occupancy, ROI)</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/dashboard/admin</code></td><td><span class="role admin">admin</span></td><td>System health, user counts</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/dashboard/client</code></td><td><span class="role client">client</span></td><td>Lease overview, next due date, open tickets</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/dashboard/household</code></td><td><span class="role household">household</span></td><td>Today's tasks, rating summary</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/reports/revenue-expense</code></td><td>ops, owner</td><td>Chart data</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/reports/occupancy</code></td><td>ops, owner</td><td>Chart data</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/reports/property-performance</code></td><td>ops, owner</td><td>Chart data</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/reports/water-consumption</code></td><td><span class="role operations">ops</span></td><td>Chart data</td></tr>
+            <tr><td><span class="pill m-get">GET</span></td><td><code>/reports/export</code></td><td>ops, owner</td><td>CSV/PDF export</td></tr>
+            <tr><td><span class="pill m-post">POST</span></td><td><code>/files/upload</code></td><td>authenticated</td><td>Generic upload → returns URL + metadata</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="s7">
+        <h2><span class="num">7.</span> Frontend Coverage Matrix</h2>
+        <p>Every page group mapped to the entities it touches and the endpoints that serve it — the checklist to re-verify against once the frontend is wired to the real API.</p>
+        <div class="table-scroll"><table>
+          <thead><tr><th>Page(s)</th><th>Entities / Tables</th><th>Endpoints</th></tr></thead>
+          <tbody>
+            <tr><td>HomePage, PropertiesPage, PropertyDetailPage, RoomDetailPage</td><td>properties, property_images/amenities, buildings, rooms, room_*</td><td><code>GET /properties</code>, <code>GET /properties/{id}</code>, <code>GET /rooms</code>, <code>GET /rooms/{id}</code></td></tr>
+            <tr><td>LoginPage</td><td>users</td><td><code>POST /auth/login</code></td></tr>
+            <tr><td>ClientDashboard</td><td>clients, bookings, payments, maintenance_issues, notifications</td><td><code>GET /dashboard/client</code></td></tr>
+            <tr><td>MyBookingPage</td><td>bookings, booking_timeline_events</td><td><code>GET /clients/me/bookings</code></td></tr>
+            <tr><td>MyRoomPage</td><td>clients, rooms, room_amenities/utilities/rules</td><td><code>GET /clients/me</code></td></tr>
+            <tr><td>ClientPaymentsPage</td><td>payments</td><td><code>GET /clients/me/payments</code></td></tr>
+            <tr><td>MyMaterialsPage</td><td>client_materials</td><td><code>GET /clients/{id}/materials</code>, <code>PATCH .../condition</code></td></tr>
+            <tr><td>ReportIssuePage</td><td>maintenance_issues, maintenance_issue_photos</td><td><code>POST /maintenance-issues</code>, <code>POST /files/upload</code></td></tr>
+            <tr><td>ClientNotificationsPage (all roles)</td><td>notifications, notification_recipients</td><td><code>GET /notifications/me</code>, <code>PATCH /notifications/{id}/read</code></td></tr>
+            <tr><td>OperationsDashboard</td><td>properties, bookings, payments, recurring_bills, employee_daily_tasks</td><td><code>GET /dashboard/operations</code></td></tr>
+            <tr><td>BookingsManagementPage</td><td>bookings, booking_timeline_events, clients, rooms</td><td><code>GET/POST /bookings</code>, <code>PATCH .../status</code>, <code>PATCH .../assign-room</code></td></tr>
+            <tr><td>ClientsManagementPage, ClientDetailPage</td><td>clients, client_documents, client_materials, payments, maintenance_issues, water_meters, damage_reports</td><td><code>GET/POST/PUT /clients</code>, <code>PATCH .../status</code>, docs/materials sub-resources</td></tr>
+            <tr><td>PropertiesManagementPage</td><td>properties, rooms (occupancy aggregates)</td><td><code>GET /properties</code>, <code>GET /rooms</code></td></tr>
+            <tr><td>PaymentsManagementPage</td><td>payments</td><td><code>GET/POST /payments</code></td></tr>
+            <tr><td>AgentsCommissionsPage</td><td>agents, agent_deals</td><td><code>GET/POST /agents</code>, <code>.../deals</code>, <code>.../pay-commission</code></td></tr>
+            <tr><td>ExpensesPage</td><td>expenses</td><td><code>GET/POST/PUT/DELETE /expenses</code></td></tr>
+            <tr><td>RecurringBillsPage</td><td>recurring_bills, bill_payments</td><td><code>GET/POST /recurring-bills</code>, <code>.../payments</code>, <code>.../mark-paid</code></td></tr>
+            <tr><td>TechniciansPage</td><td>technicians, certifications, work_orders, wo_photos, documents</td><td><code>GET/POST /technicians</code>, <code>.../work-orders</code>, <code>.../documents</code></td></tr>
+            <tr><td>PreventiveMaintenancePage</td><td>preventive_tasks, task_photos, employees</td><td><code>GET/POST /preventive-tasks</code>, <code>PATCH .../status</code></td></tr>
+            <tr><td>DamagesManagementPage</td><td>damage_reports, damage_photos</td><td><code>GET/POST/PUT /damages</code>, <code>PATCH .../status</code></td></tr>
+            <tr><td>WaterMetersPage</td><td>water_meters, readings_history, clients, payments</td><td><code>GET/POST /water-meters</code>, <code>.../reading</code>, <code>.../payment</code>, <code>.../history</code></td></tr>
+            <tr><td>HRPayrollPage, EmployeeDetailPage</td><td>employees, documents, daily_tasks, damages, damage_photos, leaves, payroll_records</td><td>full <code>/employees/**</code> + <code>/payroll-records</code> set</td></tr>
+            <tr><td>ActivityLogPage</td><td>activity_logs</td><td><code>GET /activity-logs</code></td></tr>
+            <tr><td>ReportsPage</td><td>payments, expenses, properties, rooms, water_meters (aggregated)</td><td><code>GET /reports/*</code></td></tr>
+            <tr><td>OwnerExecutiveDashboard</td><td>properties, payments, expenses, rooms, clients</td><td><code>GET /dashboard/owner</code></td></tr>
+            <tr><td>HouseholdDashboard</td><td>employee_daily_tasks, employees</td><td><code>GET /dashboard/household</code></td></tr>
+            <tr><td>HouseholdChecklistPage</td><td>preventive_tasks (assigned to me), task_photos</td><td><code>GET /employees/me/preventive-tasks</code>, <code>PATCH /preventive-tasks/{id}/status</code></td></tr>
+            <tr><td>HouseholdTaskHistoryPage</td><td>employee_daily_tasks (completed), preventive_tasks (history)</td><td><code>GET /employees/me/history</code></td></tr>
+            <tr><td>HouseholdSalaryPage</td><td>payroll_records</td><td><code>GET /employees/me/payroll</code></td></tr>
+            <tr><td>AdminDashboard</td><td>users, activity_logs, properties (counts)</td><td><code>GET /dashboard/admin</code></td></tr>
+            <tr><td>AdminPropertiesPage, AdminPropertyEditPage</td><td>properties, images, amenities</td><td><code>GET/POST/PUT/DELETE /properties</code>, <code>.../images</code></td></tr>
+            <tr><td>AdminBuildingsRoomsPage, AdminRoomEditPage</td><td>buildings, rooms, room_*</td><td><code>GET/POST/PUT/DELETE /buildings</code>, <code>/rooms</code></td></tr>
+            <tr><td>AdminRentalTypesPage</td><td>rental_types, included_materials, applicable_properties</td><td><code>GET/POST/PUT/DELETE /rental-types</code></td></tr>
+            <tr><td>AdminUsersRolesPage</td><td>users</td><td>full <code>/users/**</code> set</td></tr>
+            <tr><td>AdminSystemSettingsPage</td><td>system_settings</td><td><code>GET/PUT /settings</code></td></tr>
+            <tr><td>ProfileSettingsPage (all roles)</td><td>users, notification_preferences</td><td><code>PATCH /users/me/preferences</code>, <code>POST /auth/change-password</code></td></tr>
+            <tr><td>GlobalSearchModal</td><td>properties, clients, bookings, employees, technicians</td><td><code>GET /search?q=</code></td></tr>
+            <tr><td>FinancialCalendar</td><td>recurring_bills, payments (due dates)</td><td>reuses <code>/recurring-bills</code>, <code>/payments</code> filters</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout ok">✅ Every table in Section 5 is referenced by at least one row above. Every page in <code>AppRoutes.tsx</code> is referenced by at least one row above.</div>
+      </section>
+
+      <section id="s8">
+        <h2><span class="num">8.</span> Cross-Cutting Concerns</h2>
+        <ul>
+          <li><b>Business-key generation:</b> central <code>NumberGeneratorService</code> for <code>BK-YYYY-###</code>, <code>INV-YYYY-####</code>, <code>TKT-YYYY-###</code>, <code>WO-#####</code>, <code>PAY-YYYY-MM-###</code> — backed by a Postgres sequence per prefix (the current frontend mock uses <code>Date.now()</code> + <code>Math.random()</code>, unsafe under concurrency).</li>
+          <li><b>Derived fields:</b> occupancy counts, work-order <code>totalCost</code>, water-meter <code>consumption</code>/<code>totalAmount</code>, agent commission totals — computed server-side on write, never trusted from client input.</li>
+          <li><b>State-machine side effects</b> (ported from <code>DataContext.tsx</code>, now server-enforced):
+            <ul class="checklist" style="margin-top:.5rem;">
+              <li><code>assignRoomToBooking</code> → booking → <code>room_assigned</code> and room → <code>RESERVED</code></li>
+              <li>Booking <code>checked_in</code> → room → <code>OCCUPIED</code>, client's <code>current_room_id</code> set</li>
+              <li>Booking <code>completed</code> (move-out) → room → <code>AVAILABLE</code>, client → <code>FORMER</code></li>
+              <li><code>addPayment(rent, paid)</code> → client's <code>payment_status = PAID</code></li>
+              <li><code>recordWaterMeterPayment</code> → auto-creates a linked <code>payments</code> row (UTILITY)</li>
+              <li><code>addAgentDeal</code> → increments agent referral/commission totals</li>
+              <li>Employee leave approved / date-crossing → <code>employees.status</code> flips <code>ACTIVE ⇄ ON_LEAVE</code> (nightly scheduled sweep too)</li>
+              <li>Every mutating action writes an <code>activity_logs</code> row</li>
+            </ul>
+          </li>
+          <li><b>File uploads:</b> one shared <code>POST /files/upload</code> used by client/employee/technician documents, damage/issue/preventive-task photos, work-order photos, receipts, bill proofs.</li>
+          <li><b>Pagination/filtering:</b> Spring Data <code>Pageable</code> + JPA Specifications on every list endpoint.</li>
+          <li><b>Validation &amp; errors:</b> Bean Validation on DTOs; global <code>@ControllerAdvice</code> → consistent error payload.</li>
+          <li><b>Notifications (phase 1):</b> DB-stored + polled via <code>GET /notifications/me</code>. WebSocket/SSE push is a phase-2 candidate.</li>
+          <li><b>Scheduled jobs:</b> bill <code>UPCOMING → OVERDUE</code> sweep, payment <code>PENDING → OVERDUE</code> sweep, leave-status sync, due-date reminder notifications.</li>
+          <li><b>API versioning:</b> everything under <code>/api/v1</code>; breaking changes get <code>/api/v2</code>.</li>
+          <li><b>CORS:</b> explicit allow-list of frontend origins, never <code>*</code> once auth is in play.</li>
+        </ul>
+      </section>
+
+      <section id="s9">
+        <h2><span class="num">9.</span> Open Decisions</h2>
+        <h3>Confirmed</h3>
+        <ol class="qa">
+          <li><b>Database engine:</b> ✅ PostgreSQL.</li>
+          <li><b>Build tool:</b> ✅ Maven.</li>
+          <li><b>Token transport:</b> ✅ JWT returned in the JSON response body.</li>
+          <li><b>File storage for MVP:</b> ✅ Local disk — <code>FileStorageService</code> is an interface, so swapping in S3/MinIO later touches no calling code.</li>
+        </ol>
+        <h3>Still open — defaulted for now, revisit before the relevant phase</h3>
+        <ol class="qa" start="5">
+          <li><b>Payments:</b> defaulted to manual recording only (as today) — affects Phase 4.</li>
+          <li><b>Multi-currency:</b> defaulted to the single global toggle already in <code>system_settings</code> — affects Phase 2+.</li>
+          <li><b>Denormalized snapshot fields</b> (e.g. <code>propertyName</code> on Room): defaulted to JOIN at read time — affects Phase 2–6.</li>
+          <li><b>Email/SMS provider:</b> defaulted to a stub (<code>EmailService</code> + <code>LoggingEmailService</code>) — affects Phase 1 hardening onward.</li>
+        </ol>
+      </section>
+
+      <section id="s10">
+        <h2><span class="num">10.</span> Implementation Roadmap &amp; Checklist</h2>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 0 — Project Bootstrap</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li>Confirm open decisions in Section 9</li>
+            <li>Initialize Spring Boot project (Web, Security, Data JPA, Validation, Postgres driver, Flyway)</li>
+            <li>Set up package skeleton per Section 3 — <code>iam</code> implemented; others scaffolded with <code>package-info.java</code></li>
+            <li>Configure <code>application.yml</code> (dev/prod profiles; <code>test</code> profile deferred to Testcontainers work)</li>
+            <li>Docker Compose: app, postgres (no MinIO — local disk chosen)</li>
+            <li>Flyway baseline + migration naming convention (<code>V1__iam.sql</code>)</li>
+            <li>springdoc-openapi (Swagger UI) — verified reachable</li>
+            <li>Global exception handler + standard error response DTO</li>
+          </ul>
+          <ul class="checklist">
+            <li>CI pipeline skeleton (build + test on push) — not started</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 1 — IAM &amp; Security Foundation</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Core slice live</span></div>
+          <ul class="checklist done">
+            <li><code>users</code> table + entity + repository</li>
+            <li><code>system_settings</code>, <code>notification_preferences</code> tables</li>
+            <li>Spring Security config: JWT filter, password encoder, method security</li>
+            <li><code>/auth/login</code>, <code>/refresh</code>, <code>/logout</code>, <code>/me</code> — smoke-tested live</li>
+            <li><code>/auth/change-password</code>, forgot/reset password flow (email stub via <code>LoggingEmailService</code>)</li>
+            <li><code>/users/**</code> CRUD + status transitions + reset/resend-invite (admin) — create/list smoke-tested live</li>
+            <li><code>/settings</code> GET/PUT (admin) — smoke-tested live</li>
+            <li>Seed default admin user + default system settings (via <code>DataSeeder</code>, not a raw SQL password seed)</li>
+            <li>Unit + integration tests for auth flows and role guards — <code>AuthFlowIT</code> and <code>RoleAccessMatrixIT</code>, added in Phase 8</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 2 — Property Domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li><code>properties</code>, <code>property_images</code>, <code>property_amenities</code> + CRUD API</li>
+            <li><code>buildings</code> table + CRUD API</li>
+            <li><code>rooms</code> + <code>room_images/amenities/utilities/rules</code> + CRUD API</li>
+            <li><code>rental_types</code> + included materials + applicable properties + CRUD API</li>
+            <li>Occupancy aggregate read model — single grouped query per property, not N+1</li>
+            <li>Public unauthenticated reads — property list filters to <code>ACTIVE</code> only; direct GET of a non-<code>ACTIVE</code> property 404s for anonymous callers</li>
+            <li>Guard rails smoke-tested live: delete blocked while rooms exist (409); room's building must belong to its property (400); negative rent rejected (400)</li>
+          </ul>
+          <ul class="checklist">
+            <li>Room status transition guard beyond delete/mismatch checks — deferred to Phase 3 (needs the client/lease relationship to be meaningful)</li>
+            <li>Automated Testcontainers suite — manual live smoke test done; no dedicated automated suite yet (only indirectly exercised as fixture setup in Phase 8's <code>BookingLifecycleIT</code>/<code>WaterMeterBillingIT</code>/<code>RoleAccessMatrixIT</code>)</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 3 — Leasing &amp; CRM</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li><code>clients</code>, <code>client_documents</code>, <code>client_materials</code> + API</li>
+            <li><code>bookings</code>, <code>booking_timeline_events</code> + API</li>
+            <li>Booking state machine + side effects — smoke-tested live: assign-room → room <code>RESERVED</code>; <code>CHECKED_IN</code> → room <code>OCCUPIED</code> + client's room set; <code>COMPLETED</code> → room <code>AVAILABLE</code> + client → <code>FORMER</code></li>
+            <li><code>agents</code>, <code>agent_deals</code> + API + commission math — all totals computed at read time from bookings/deals (no drifting counters), full payout cycle verified live</li>
+            <li>Public unauthenticated booking inquiry endpoint — verified live</li>
+            <li>Row-level scoping (client sees/edits only own data) — verified live: own record 200, another's 403, ops-only endpoints 403 for CLIENT role</li>
+            <li>Closed a real gap found during testing: added <code>clientId</code>/<code>employeeId</code> to the Phase 1 users CRUD — without it, no login could ever be linked to a client record</li>
+            <li>Fixed a real JPA bug found live: adding a child to an already-managed parent's collection then re-<code>save()</code>-ing it triggers <code>merge()</code> instead of <code>persist()</code>, silently losing the new child's generated id. Fixed via <code>flush()</code> in <code>ClientService</code> and <code>AgentService</code>.</li>
+          </ul>
+          <ul class="checklist">
+            <li>File upload chained end-to-end with client documents — the generic upload endpoint works standalone but hasn't been tested wired together with document creation yet</li>
+            <li>Automated Testcontainers suite — <code>BookingLifecycleIT</code> (Phase 8) codifies the booking state machine walk and the anonymous inquiry endpoint; client materials/documents CRUD, agent commission accrual/payout, and row-level scoping remain manual-live-verified only</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 4 — Finance</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li><code>payments</code> + API — invoice numbering, client-scoped self-service history verified live</li>
+            <li><code>expenses</code> + API — owner read-only vs operations read/write verified live</li>
+            <li><code>recurring_bills</code>, <code>bill_payments</code> + API — bill payment flips bill status to <code>PAID</code>, verified live</li>
+            <li><code>payroll_records</code> + API — <code>netSalary</code> computed server-side, never trusted from client input; household "My Salary" self-service verified live</li>
+            <li>Client-status sync on rent payment — verified live: recording a RENT/PAID payment flips the client to <code>PAID</code></li>
+            <li>Row-level scoping: client sees only own payments, blocked from the ops ledger — verified live</li>
+          </ul>
+          <ul class="checklist">
+            <li>Shared <code>NumberGeneratorService</code> — invoice/payroll numbering still duplicate the simple count-and-retry approach inline per service rather than a proper shared component</li>
+            <li>Scheduled job: bill due-date rollover / overdue sweep — not implemented; status only changes via explicit payment/mark-paid calls</li>
+            <li>Automated Testcontainers suite — manual live smoke test done; no dedicated automated suite yet (only indirectly exercised via the UTILITY payment assertion in Phase 8's <code>WaterMeterBillingIT</code> and the finance-endpoint rows in <code>RoleAccessMatrixIT</code>)</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 5 — Facilities &amp; Maintenance</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li><code>technicians</code>, certifications, documents + API — totalJobs/totalPaid computed at read time, verified live</li>
+            <li><code>tech_work_orders</code>, photos + API + cost roll-up — totalCost derived getter, verified live</li>
+            <li><code>preventive_tasks</code>, photos + API</li>
+            <li><code>damage_reports</code>, photos + API — client-scoped read access verified live</li>
+            <li><code>water_meters</code>, readings history + API + billing calc — consumption/amount math verified exact (10m³×$1.75=$17.50); billing-cycle rollover correctly snapshots history; payment creates a linked UTILITY payment in the finance ledger</li>
+            <li><code>maintenance_issues</code>, photos + API — full lifecycle verified live: client reports → ops assigns technician → ops resolves</li>
+            <li>Household self-service scoping — needed a real fix: added <code>PreventiveTaskAccessGuard</code>, a <code>@PreAuthorize</code>-backed bean checking <code>assignedStaffId</code> against the caller's JWT before the mutation runs (not <code>@PostAuthorize</code>, which would let an unauthorized write happen first). Verified both directions live, including confirming the blocked write truly didn't mutate anything.</li>
+          </ul>
+          <ul class="checklist">
+            <li>Automated Testcontainers suite — <code>WaterMeterBillingIT</code> (Phase 8) codifies the water meter billing math and its cross-domain UTILITY payment; technician/work-order cost rollup, maintenance issue lifecycle, damage report scoping, and the preventive-task pre-authorization fix remain manual-live-verified only</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 6 — HR</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li><code>employees</code>, <code>employee_documents</code> + API</li>
+            <li><code>employee_daily_tasks</code> + API — verified live: household completes own task → ops rates it → appears in <code>/employees/me/history</code></li>
+            <li><code>employee_damages</code>, photos + API — plain <code>propertyName</code>/<code>roomNumber</code> labels (not FKs), matching the frontend type exactly</li>
+            <li><code>employee_leaves</code> + API + status-sync — verified live in all three states: ACTIVE → (pending) → ON_LEAVE (approved) → ACTIVE (completed)</li>
+            <li>Household self-service endpoints — verified live both ways: own data 200, another employee's data 403 across list/profile/leave-creation</li>
+            <li>Retrofitted real FK constraints (<code>NOT VALID</code>) from Phase 4/5's loosely-coupled <code>employeeId</code> columns onto the new <code>employees</code> table — migrated cleanly against pre-existing orphaned test data, verified live</li>
+          </ul>
+          <ul class="checklist">
+            <li>Scheduled job to auto-revert <code>on_leave</code> → <code>active</code> past end-date — not implemented, same deferral as Phase 4's bill sweep</li>
+            <li>Automated Testcontainers suite — <code>LeaveStatusSyncIT</code> (Phase 8) codifies the leave-status sync in all three states; daily task lifecycle, damage logging, self-service permission boundaries, and the FK backfill migration remain manual-live-verified only</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 7 — Platform (Cross-cutting UX)</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li><code>activity_logs</code> + <code>AuditService</code> (relocated to <code>common.audit</code> — see the package-layout note above) wired into ~25 mutation points across all 6 domains. Verified live: a real mutation produced a correctly-attributed log entry (actor, role, module, details), queryable via <code>GET /activity-logs</code>.</li>
+            <li><code>notifications</code>, target roles, recipients + API — verified live: broadcast to CLIENT+HOUSEHOLD reached the targeted client with working per-user mark-read, and was correctly invisible to an untargeted OPERATIONS user</li>
+            <li>Dashboard aggregate endpoints, all 5 roles — verified live, including owner NOI computed exactly ($317.50 − $195.00 = $122.50)</li>
+            <li>Report endpoints — revenue-expense, occupancy, property-performance implemented and verified live</li>
+            <li>Global search endpoint — fans out across properties/clients/bookings/employees/technicians, verified live</li>
+            <li>Generic file upload endpoint + storage wiring — done in Phase 1 (pulled forward)</li>
+          </ul>
+          <ul class="checklist">
+            <li><code>/reports/export</code> (CSV/PDF) and a dedicated water-consumption series — deliberately deferred, file-generation is a separate substantial feature</li>
+            <li>Automated Testcontainers suite — <code>RoleAccessMatrixIT</code> (Phase 8) codifies the full permission-boundary sweep across all 5 dashboards and every domain's list endpoints; audit trail attribution, notification targeting/read-state, and report correctness remain manual-live-verified only</li>
+          </ul>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Phase 8 — Hardening &amp; Handover</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <ul class="checklist done">
+            <li>Automated test suite (JUnit 5 + Testcontainers + MockMvc) — <strong>148 tests, all passing</strong>: <code>AuthFlowIT</code> (4 — login, <code>/auth/me</code>, refresh incl. rejecting an access token used as a refresh token, change-password), <code>RoleAccessMatrixIT</code> (138 dynamic tests — full Section 4.1 matrix: 27 endpoints × 5 roles + 3 public endpoints), <code>BookingLifecycleIT</code> (2 — full state machine walk + anonymous inquiry), <code>WaterMeterBillingIT</code> (1 — exact billing math + cross-domain payment + history snapshot), <code>LeaveStatusSyncIT</code> (1 — all three leave/status states), <code>RateLimitingFilterTest</code> (2 — plain unit test, no Spring context)</li>
+            <li>Two real bugs found and fixed while building the suite:
+              <ol style="margin:.4rem 0 .4rem 1.2rem;">
+                <li><strong>Testcontainers/Spring context-cache interaction bug</strong> — every IT subclass inherited the same <code>@DynamicPropertySource</code> method, so Spring's test-context cache reused the first class's (by-then-stale) datasource properties while <code>@Testcontainers</code>/<code>@Container</code> independently stopped/restarted a fresh container per class. Fixed with the standard "singleton container" pattern: start once in a static initializer, never stop explicitly.</li>
+                <li><strong>Anonymous <code>/auth/me</code> 500'd instead of 401/403</strong> — <code>/api/v1/auth/**</code> was entirely <code>permitAll()</code>, so an anonymous caller's <code>AnonymousAuthenticationToken</code> principal resolved to <code>null</code> for the mismatched <code>@AuthenticationPrincipal UserPrincipal</code> type, and the controller NPE'd. Fixed by narrowing <code>permitAll()</code> to only the genuinely-anonymous endpoints (login/refresh/logout/forgot-password/reset-password), letting <code>/me</code> and <code>/change-password</code> require authentication so Security rejects the request before the controller runs.</li>
+              </ol>
+            </li>
+            <li>Added <code>maven-failsafe-plugin</code> (bound to <code>integration-test</code>/<code>verify</code>) so <code>mvn verify</code> auto-discovers every <code>*IT.java</code> class — <code>mvn test</code> alone (surefire) silently skips them by Maven's default naming convention.</li>
+            <li>Full permission-matrix regression test (Section 4.1) — <code>RoleAccessMatrixIT</code>, 138 assertions</li>
+            <li>Rate limiting on public endpoints (login, booking inquiry) — <code>RateLimitingFilter</code>, fixed-window per-IP in-memory, configurable via <code>panther.security.rate-limit.*</code> (default 10 logins/min, 20 booking inquiries/min per IP); disabled in the IT profile since MockMvc requests all share one client address; would need a shared store (Redis) to survive horizontal scaling</li>
+            <li>OpenAPI spec finalized + published — exported live to <code>backend/openapi.json</code> (103 unique <code>/api/v1/**</code> paths); import directly into Postman/Insomnia rather than maintaining a separate hand-authored collection</li>
+            <li>Production deployment checklist — <code>PRODUCTION_CHECKLIST.md</code> (secrets, DB backups, HTTPS, log retention, monitoring/alerts, rollback, explicit deferrals)</li>
+            <li>Docs — README updated; ERD exported as a Mermaid diagram (<code>docs/ERD.md</code>)</li>
+          </ul>
+          <ul class="checklist">
+            <li>Load-test key list endpoints (payments, activity logs) with realistic volume — deliberately deferred; needs a real tool (k6/Gatling/JMeter) against staging, not meaningfully approximated by curl loops. See <code>PRODUCTION_CHECKLIST.md</code>.</li>
+            <li>Replace frontend <code>DataContext</code> mock state with real API client — separate frontend-side task, not in this backend plan</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="s11">
+        <h2><span class="num">11.</span> What This Plan Deliberately Does Not Decide Yet</h2>
+        <ul>
+          <li>Enum vs. lookup-table for small fixed vocabularies (e.g. <code>ExpenseCategory</code>) — defaults to Java <code>enum</code> + <code>VARCHAR</code>, matching the frontend's closed string unions, since none are user-editable today. Flag if you want them admin-editable later.</li>
+          <li>Real payment gateway / SMS / email vendor selection (Section 9, items 5 &amp; 8).</li>
+          <li>Whether <code>owner</code> role ever gets write access anywhere — current frontend is 100% read-only for owner; this plan mirrors that.</li>
+        </ul>
+      </section>
+
+      <footer>
+        This document is the plan only — no backend code has been written yet. Once Section 9's open decisions are confirmed, Phase 0 can begin. See <code>BACKEND_PLAN.md</code> in this same directory for the plain-text version.
+      </footer>
+    </main>
+  </div>
+</div>

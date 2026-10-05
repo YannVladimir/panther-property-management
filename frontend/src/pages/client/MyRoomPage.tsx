@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
+import { useMyClientQuery } from '../../api/clients';
+import { useRoomQuery } from '../../api/rooms';
+import { usePropertyQuery } from '../../api/properties';
 import {
   DoorOpen,
   Bed,
@@ -17,14 +18,15 @@ import {
 import { Badge } from '../../components/common/Badge';
 
 export const MyRoomPage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { clients, rooms, properties } = useData();
-
-  const client = clients.find((c) => c.id === currentUser?.clientId) || clients[0];
-  const room = rooms.find((r) => r.id === client.currentRoomId) || rooms[0];
-  const property = properties.find((p) => p.id === client.currentPropertyId) || properties[0];
+  const { data: client, isLoading: clientLoading } = useMyClientQuery();
+  const { data: room, isLoading: roomLoading } = useRoomQuery(client?.currentRoomId);
+  const { data: property, isLoading: propertyLoading } = usePropertyQuery(client?.currentPropertyId);
 
   const [activeImg, setActiveImg] = useState(0);
+
+  if (clientLoading || roomLoading || propertyLoading || !client || !room || !property) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your room…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

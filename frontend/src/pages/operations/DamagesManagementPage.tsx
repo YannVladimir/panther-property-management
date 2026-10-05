@@ -1,6 +1,16 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import {
+  useDamageReportsQuery,
+  useCreateDamageReportMutation,
+  useUpdateDamageReportMutation,
+  useUpdateDamageStatusMutation,
+  DamageReportInput,
+} from '../../api/damageReports';
+import { usePropertiesQuery } from '../../api/properties';
+import { useClientsQuery } from '../../api/clients';
+import { useRoomsQuery } from '../../api/rooms';
+import { useUploadFileMutation } from '../../api/files';
 import {
   AlertTriangle,
   Search,
@@ -28,16 +38,19 @@ import { Modal } from '../../components/common/Modal';
 import { DamageReport } from '../../types';
 
 export const DamagesManagementPage: React.FC = () => {
-  const {
-    damages,
-    properties,
-    clients,
-    rooms,
-    addDamageReport,
-    updateDamageReport,
-    updateDamageStatus,
-  } = useData();
-  const { success, info } = useToast();
+  const damagesQuery = useDamageReportsQuery();
+  const propertiesQuery = usePropertiesQuery();
+  const clientsQuery = useClientsQuery();
+  const createDamageMutation = useCreateDamageReportMutation();
+  const updateDamageMutation = useUpdateDamageReportMutation();
+  const updateDamageStatusMutation = useUpdateDamageStatusMutation();
+  const uploadFileMutation = useUploadFileMutation();
+  const { success, info, error } = useToast();
+
+  const damages = damagesQuery.data ?? [];
+  const properties = propertiesQuery.data ?? [];
+  const clients = clientsQuery.data ?? [];
+  const isLoading = damagesQuery.isLoading || propertiesQuery.isLoading || clientsQuery.isLoading;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'Pending Review' | 'In Repair' | 'Resolved'>('all');
@@ -51,9 +64,9 @@ export const DamagesManagementPage: React.FC = () => {
   const [editingDamageId, setEditingDamageId] = useState<string | null>(null);
 
   // Form State
-  const [propertyId, setPropertyId] = useState(properties[0]?.id || 'prop-01');
-  const [roomNumber, setRoomNumber] = useState('A-204');
-  const [clientName, setClientName] = useState('Jean-Paul Ndahiro');
+  const [propertyId, setPropertyId] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const [clientId, setClientId] = useState('');
   const [item, setItem] = useState('');
   const [damageType, setDamageType] = useState('Scratch / Dent');
   const [description, setDescription] = useState('');
@@ -61,9 +74,19 @@ export const DamagesManagementPage: React.FC = () => {
   const [amountCharged, setAmountCharged] = useState<number>(120);
   const [responsibleParty, setResponsibleParty] = useState<DamageReport['responsibleParty']>('Tenant');
   const [status, setStatus] = useState<DamageReport['status']>('Pending Review');
-  const [photos, setPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80',
-  ]);
+  const [photos, setPhotos] = useState<string[]>([]);
+
+  const roomsQuery = useRoomsQuery({ propertyId: propertyId || undefined });
+  const rooms = roomsQuery.data ?? [];
+
+  useEffect(() => {
+    if (!propertyId && properties.length > 0) setPropertyId(properties[0].id);
+  }, [properties, propertyId]);
+
+  useEffect(() => {
+    // Clear the selected room whenever it's no longer valid for the currently-selected property.
+    if (roomId && !rooms.some((r) => r.id === roomId)) setRoomId('');
+  }, [rooms, roomId]);
 
   // Resolve Confirmation Modal State
   const [confirmResolveDamage, setConfirmResolveDamage] = useState<DamageReport | null>(null);
@@ -101,9 +124,9 @@ export const DamagesManagementPage: React.FC = () => {
   const handleOpenCreateDrawer = () => {
     setIsEditing(false);
     setEditingDamageId(null);
-    setPropertyId(properties[0]?.id || 'prop-01');
-    setRoomNumber('A-204');
-    setClientName('Jean-Paul Ndahiro');
+    setPropertyId(properties[0]?.id ?? '');
+    setRoomId('');
+    setClientId('');
     setItem('');
     setDamageType('Scratch / Dent');
     setDescription('');
@@ -115,13 +138,14 @@ export const DamagesManagementPage: React.FC = () => {
     setDrawerOpen(true);
   };
 
-  // Open drawer to edit existing damage
+  // Open drawer to edit existing damage (room can't be changed after creation — the real API has
+  // no roomId field on the update request, only on create)
   const handleOpenEditDrawer = (damage: DamageReport) => {
     setIsEditing(true);
     setEditingDamageId(damage.id);
     setPropertyId(damage.propertyId);
-    setRoomNumber(damage.roomNumber);
-    setClientName(damage.clientName || '');
+    setRoomId(damage.roomId);
+    setClientId(damage.clientId ?? '');
     setItem(damage.item);
     setDamageType(damage.damageType);
     setDescription(damage.description || '');
@@ -134,67 +158,62 @@ export const DamagesManagementPage: React.FC = () => {
   };
 
   // Save damage (Create or Edit)
-  const handleSaveDamage = (e: React.FormEvent) => {
+  const handleSaveDamage = async (e: React.FormEvent) => {
     e.preventDefault();
-    const prop = properties.find((p) => p.id === propertyId) || properties[0];
-
-    if (isEditing && editingDamageId) {
-      const existing = damages.find((d) => d.id === editingDamageId);
-      if (existing) {
-        updateDamageReport({
-          ...existing,
-          propertyId: prop.id,
-          propertyName: prop.name,
-          roomNumber,
-          clientName,
-          item,
-          damageType,
-          description,
-          photos,
-          estimatedCost: Number(estimatedCost),
-          amountCharged: Number(amountCharged),
-          responsibleParty,
-          status,
-        });
-        success('Incident Updated', `Updated record for ${item} in Unit ${roomNumber}.`);
-      }
-    } else {
-      const newDmg = addDamageReport({
-        propertyId: prop.id,
-        propertyName: prop.name,
-        roomId: 'room-01',
-        roomNumber,
-        clientName,
-        item,
-        damageType,
-        description,
-        reportedDate: new Date().toISOString().split('T')[0],
-        photos,
-        estimatedCost: Number(estimatedCost),
-        amountCharged: Number(amountCharged),
-        responsibleParty,
-        status,
-      });
-      success('Damage Logged', `Recorded incident for ${newDmg.item} in Unit ${roomNumber}.`);
+    if (!isEditing && !roomId) {
+      error('Validation Error', 'Please select a unit for this damage report.');
+      return;
     }
 
-    setDrawerOpen(false);
+    const input: DamageReportInput = {
+      propertyId,
+      roomId,
+      clientId: clientId || undefined,
+      item,
+      damageType,
+      description,
+      reportedDate: isEditing ? damages.find((d) => d.id === editingDamageId)?.reportedDate ?? new Date().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      photos,
+      estimatedCost: Number(estimatedCost),
+      amountCharged: Number(amountCharged),
+      responsibleParty,
+    };
+
+    try {
+      if (isEditing && editingDamageId) {
+        await updateDamageMutation.mutateAsync({ id: editingDamageId, input });
+        // The real update endpoint has no status field (status changes go through a dedicated
+        // endpoint) — fire it separately whenever this form's status dropdown actually changed,
+        // so an edit that also changes status doesn't silently drop that part of the save.
+        const original = damages.find((d) => d.id === editingDamageId);
+        if (original && original.status !== status) {
+          await updateDamageStatusMutation.mutateAsync({ id: editingDamageId, status });
+        }
+        success('Incident Updated', `Updated record for ${item}.`);
+      } else {
+        const newDmg = await createDamageMutation.mutateAsync(input);
+        success('Damage Logged', `Recorded incident for ${newDmg.item} in Unit ${newDmg.roomNumber}.`);
+      }
+      setDrawerOpen(false);
+    } catch {
+      error('Save Failed', 'Could not save this damage report. Please try again.');
+    }
   };
 
-  // Handle Photo File Upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Photo File Upload — real upload to POST /api/v1/files (previously a FileReader-only
+  // local preview that was never actually persisted anywhere).
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          setPhotos((prev) => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of Array.from(files)) {
+      try {
+        const result = await uploadFileMutation.mutateAsync({ file, folder: 'damage-photos' });
+        setPhotos((prev) => [...prev, result.url]);
+      } catch {
+        error('Upload Failed', `Could not upload ${file.name}.`);
+      }
+    }
 
     e.target.value = '';
   };
@@ -204,17 +223,29 @@ export const DamagesManagementPage: React.FC = () => {
   };
 
   // Resolve Confirmation Handler
-  const handleConfirmResolve = (e: React.FormEvent) => {
+  const handleConfirmResolve = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!confirmResolveDamage) return;
 
-    updateDamageStatus(confirmResolveDamage.id, 'Resolved', resolutionNotes);
-    success(
-      'Incident Resolved',
-      `Marked "${confirmResolveDamage.item}" in Unit ${confirmResolveDamage.roomNumber} as Resolved.`
-    );
-    setConfirmResolveDamage(null);
+    try {
+      await updateDamageStatusMutation.mutateAsync({
+        id: confirmResolveDamage.id,
+        status: 'Resolved',
+        resolutionNotes,
+      });
+      success(
+        'Incident Resolved',
+        `Marked "${confirmResolveDamage.item}" in Unit ${confirmResolveDamage.roomNumber} as Resolved.`
+      );
+      setConfirmResolveDamage(null);
+    } catch {
+      error('Update Failed', 'Could not mark this incident resolved. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading damage reports…</div>;
+  }
 
   return (
     <div className="space-y-8 pb-16">
@@ -521,8 +552,9 @@ export const DamagesManagementPage: React.FC = () => {
                 </label>
                 <select
                   value={propertyId}
+                  disabled={isEditing}
                   onChange={(e) => setPropertyId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all disabled:opacity-60"
                 >
                   {properties.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
@@ -532,30 +564,37 @@ export const DamagesManagementPage: React.FC = () => {
 
               <div>
                 <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                  Unit / Suite Number *
+                  Unit / Suite *
                 </label>
-                <input
-                  type="text"
+                <select
                   required
-                  value={roomNumber}
-                  onChange={(e) => setRoomNumber(e.target.value)}
-                  placeholder="e.g. A-204"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-                />
+                  value={roomId}
+                  disabled={isEditing}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all disabled:opacity-60"
+                >
+                  <option value="">-- Select Unit --</option>
+                  {rooms.map((r) => (
+                    <option key={r.id} value={r.id}>Unit {r.roomNumber}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                Resident / Occupant Name
+                Resident / Occupant
               </label>
-              <input
-                type="text"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="e.g. Jean-Paul Ndahiro"
+              <select
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              >
+                <option value="">-- No resident on file --</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
           </div>
 

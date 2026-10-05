@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { usePropertiesQuery } from '../../api/properties';
+import { useRoomsQuery } from '../../api/rooms';
 import {
   Search,
   LayoutGrid,
@@ -17,7 +18,8 @@ import {
 import { Badge } from '../../components/common/Badge';
 
 export const PropertiesPage: React.FC = () => {
-  const { properties, rooms } = useData();
+  const { data: properties = [] } = usePropertiesQuery();
+  const { data: rooms = [] } = useRoomsQuery();
   const [searchParams] = useSearchParams();
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');

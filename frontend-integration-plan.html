@@ -1,0 +1,397 @@
+<title>Frontend Integration Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef0f3; --border:#e2e5ea;
+    --text:#1b1f27; --text-dim:#5b6270; --text-faint:#8a90a0;
+    --brand:#4f46e5; --brand-dim:#eef0fe;
+    --ok:#0f8a5f; --ok-bg:#e7f7f0;
+    --warn:#b5750a; --warn-bg:#fdf3e0;
+    --danger:#c0293c; --danger-bg:#fbe9ec;
+    --info:#1c6fd6; --info-bg:#e8f1fc;
+    --purple:#7c3aed; --purple-bg:#f1eafd;
+    --code-bg:#eef0f3;
+    --shadow: 0 1px 2px rgba(20,22,30,.04), 0 8px 24px rgba(20,22,30,.05);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#0e0f13; --surface:#161822; --surface-2:#1d202c; --border:#2a2e3c;
+      --text:#eef0f6; --text-dim:#aab0c0; --text-faint:#767c8c;
+      --brand:#8b85f7; --brand-dim:#232047;
+      --ok:#3ddc97; --ok-bg:#0f2a20;
+      --warn:#f2b84b; --warn-bg:#332506;
+      --danger:#f76a80; --danger-bg:#3a1420;
+      --info:#6ab2f8; --info-bg:#0f2540;
+      --purple:#b399f9; --purple-bg:#241a3d;
+      --code-bg:#1d202c;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e0f13; --surface:#161822; --surface-2:#1d202c; --border:#2a2e3c;
+    --text:#eef0f6; --text-dim:#aab0c0; --text-faint:#767c8c;
+    --brand:#8b85f7; --brand-dim:#232047;
+    --ok:#3ddc97; --ok-bg:#0f2a20;
+    --warn:#f2b84b; --warn-bg:#332506;
+    --danger:#f76a80; --danger-bg:#3a1420;
+    --info:#6ab2f8; --info-bg:#0f2540;
+    --purple:#b399f9; --purple-bg:#241a3d;
+    --code-bg:#1d202c;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text);
+    font: 15px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin:0; padding:0 0 6rem;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 clamp(1rem,4vw,2.5rem);}
+
+  header.hero{
+    padding: 3.2rem 0 2.2rem; border-bottom:1px solid var(--border);
+    background: linear-gradient(180deg, var(--brand-dim), transparent 70%);
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--brand); background:var(--brand-dim); border:1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+    padding:.3rem .7rem; border-radius:999px; margin-bottom:.9rem;
+  }
+  h1{font-size:clamp(1.7rem,3.4vw,2.5rem); margin:.2rem 0 .5rem; letter-spacing:-.01em;}
+  .sub{color:var(--text-dim); font-size:1rem; max-width:70ch; margin:0;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem .9rem; margin-top:1.4rem; font-size:.82rem; color:var(--text-faint);}
+  .meta-row b{color:var(--text-dim); font-weight:700;}
+
+  .layout{display:grid; grid-template-columns: 230px 1fr; gap:2.6rem; padding-top:2.4rem;}
+  @media (max-width: 900px){ .layout{grid-template-columns: 1fr;} nav.toc{position:static !important; max-height:none !important;} }
+
+  nav.toc{
+    position:sticky; top:1.2rem; align-self:start; max-height:calc(100vh - 2.4rem); overflow:auto;
+    font-size:.83rem;
+  }
+  nav.toc a{
+    display:block; padding:.4rem .6rem; border-radius:.5rem; color:var(--text-dim); text-decoration:none;
+    border-left:2px solid transparent;
+  }
+  nav.toc a:hover{ background:var(--surface-2); color:var(--text); }
+  nav.toc .toc-title{font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); padding:.4rem .6rem;}
+
+  main{min-width:0;}
+  section{margin-bottom:3.2rem; scroll-margin-top:1.2rem;}
+  h2{
+    font-size:1.4rem; margin:0 0 .3rem; padding-bottom:.6rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:baseline; gap:.6rem;
+  }
+  h2 .num{color:var(--brand); font-variant-numeric:tabular-nums;}
+  h3{font-size:1.08rem; margin:1.8rem 0 .7rem;}
+  h4{font-size:.95rem; margin:1.3rem 0 .5rem; color:var(--text-dim);}
+  p{color:var(--text-dim);}
+  a{color:var(--brand);}
+  code{background:var(--code-bg); padding:.1rem .35rem; border-radius:.35rem; font-size:.85em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+  pre{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:.8rem; padding:1rem 1.2rem;
+    overflow-x:auto; font-size:.82rem; line-height:1.55;
+  }
+  pre code{background:none; padding:0;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:1rem;
+    padding:1.3rem 1.5rem; box-shadow:var(--shadow); margin:1rem 0;
+  }
+
+  table{width:100%; border-collapse:collapse; font-size:.84rem; margin:1rem 0;}
+  .table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:.9rem; box-shadow:var(--shadow);}
+  .table-scroll table{margin:0;}
+  th, td{text-align:left; padding:.65rem .85rem; border-bottom:1px solid var(--border); vertical-align:top;}
+  thead th{
+    background:var(--surface-2); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-faint); font-weight:800; position:sticky; top:0;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td code{white-space:nowrap;}
+
+  .role{display:inline-block; font-size:.68rem; font-weight:700; padding:.1rem .5rem; border-radius:.4rem; margin:.08rem; background:var(--surface-2); color:var(--text-dim); border:1px solid var(--border);}
+  .role.admin{color:var(--danger); background:var(--danger-bg); border-color:transparent;}
+  .role.operations{color:var(--info); background:var(--info-bg); border-color:transparent;}
+  .role.owner{color:var(--purple); background:var(--purple-bg); border-color:transparent;}
+  .role.household{color:var(--warn); background:var(--warn-bg); border-color:transparent;}
+  .role.client{color:var(--ok); background:var(--ok-bg); border-color:transparent;}
+  .role.public{color:var(--text-faint);}
+
+  ul.checklist{list-style:none; padding:0; margin:.6rem 0;}
+  ul.checklist li{
+    position:relative; padding:.4rem .2rem .4rem 2rem; border-bottom:1px dashed var(--border); font-size:.9rem;
+  }
+  ul.checklist li:last-child{border-bottom:none;}
+  ul.checklist li::before{
+    content:""; position:absolute; left:0; top:.55rem; width:1.05rem; height:1.05rem;
+    border:1.5px solid var(--text-faint); border-radius:.3rem; background:var(--surface);
+  }
+
+  .phase{
+    background:var(--surface); border:1px solid var(--border); border-radius:1rem; box-shadow:var(--shadow);
+    padding:1.3rem 1.5rem 1.5rem; margin:1.2rem 0;
+  }
+  .phase-head{display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;}
+  .phase-head h3{margin:0; font-size:1.02rem;}
+  .phase-tag{font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--brand); background:var(--brand-dim); padding:.25rem .6rem; border-radius:999px;}
+
+  .callout{
+    border-left:3px solid var(--brand); background:var(--brand-dim); border-radius:.5rem;
+    padding:.9rem 1.1rem; font-size:.87rem; color:var(--text);
+  }
+  .callout.warn{border-color:var(--warn); background:var(--warn-bg);}
+  .callout.ok{border-color:var(--ok); background:var(--ok-bg);}
+  .callout.danger{border-color:var(--danger); background:var(--danger-bg);}
+
+  .decision{
+    background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--warn); border-radius:.8rem;
+    padding:1rem 1.2rem; box-shadow:var(--shadow); margin:1rem 0;
+  }
+  .decision h4{margin:0 0 .4rem; color:var(--text);}
+
+  footer{padding:2.4rem 0; color:var(--text-faint); font-size:.8rem; border-top:1px solid var(--border); margin-top:3rem;}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">● Plan complete — all 8 sections done</span>
+    <h1>Frontend ↔ Backend Integration Plan</h1>
+    <p class="sub">Replace the frontend's entirely client-side mock state with real calls to the Spring Boot backend, rolled out domain-by-domain so the app stays demoable throughout.</p>
+    <div class="meta-row">
+      <span><b>Done:</b> real JWT auth, session-restore on reload, route guarding, Property (10 pages), Leasing/CRM (14 pages), Finance (10 pages), Facilities (7 pages), HR (3 pages), IAM/admin (3 pages), Platform (9 pages)</span>
+      <span><b>Rollout:</b> all 7 domain phases done; every section of this plan is now complete</span>
+      <span><b>Pages affected:</b> 45, across 5 role portals + public</span>
+    </div>
+    <div class="callout ok" style="margin-top:1.2rem;">Auth Integration, all seven of Section 4's domains (Property, Leasing/CRM, Finance, Facilities, HR, IAM/admin, Platform), Section 7 (Testing — 8 test files, 9 tests, all passing via MSW), and Section 5 (Correctness Traps audit) are done and verified at the API level. Several real bugs were found and fixed along the way — a hardcoded-fake-room/property-id bug found and fixed <b>four separate times</b> across different pages, the identical self-service-identity-guessing bug found <b>three times</b> (household salary, task history, and dashboard pages), a <code>User</code>-id-vs-<code>Client</code>-id mix-up, a fabricated fake-document display bug, a stale-snapshot state bug, a status-dropdown-doesn't-map-to-the-real-endpoint bug found <b>twice</b>, two hardcoded fake reviewer/approver names sent to endpoints that ignore or have no field for them, a fabricated auto-attached document plus a non-functional avatar-URL input found on <b>both</b> employee and user creation, a system-settings page that was never wired to anything at all, a real pre-existing seed-data bug in the backend itself, a <code>ClientDashboard</code> silently broken by an id-type mismatch once Finance/Facilities switched to real client ids, permanently-fabricated fake alert cards on the owner dashboard that were never wired to any data source at all, a notification bell and a global-search modal both still reading stale client-side mock data instead of their real per-user/role-restricted endpoints, a module-filter dropdown and a report-type dropdown whose options didn't match reality, a chart displaying a manually-set "estimate" field as if it were real computed revenue, <b>5 silent mutation-failure holes</b> found via a fresh Section 5 audit (bare <code>.mutate()</code> calls with zero error handling), and a real file-upload gap closed everywhere it existed — including one spot (<code>TechniciansPage</code>) where the "upload" was never a real file at all, just a filename string glued into a fake path — see the execution notes inline. The long-standing "no change-password UI" gap is now closed with a real form. Genuine gaps deliberately left unconverted, each with reasoning: no client-facing payment-creation endpoint, a data-model mismatch between two preventive-maintenance-checklist pages and the backend's schema, no self-service profile-update endpoint, and the real global search being unavailable to client/household roles since the backend endpoint itself is role-restricted. Sections 6 and 8 are now also done — CORS/rate-limit config confirmed by direct inspection, and <code>frontend/</code> now has its own git repository (it had none before this pass) with a single commit covering the entire integration.</div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <a href="#s1">1. Current State</a>
+      <a href="#s2">2. Target Architecture</a>
+      <a href="#s3">3. Auth Integration</a>
+      <a href="#s4">4. Data Layer Rollout</a>
+      <a href="#s5">5. Correctness Traps</a>
+      <a href="#s6">6. Environment &amp; CORS</a>
+      <a href="#s7">7. Testing Strategy</a>
+      <a href="#s8">8. Open Decisions</a>
+    </nav>
+
+    <main>
+
+      <section id="s1">
+        <h2><span class="num">1.</span> Current State (what's actually there today)</h2>
+        <p>Confirmed by direct inspection, not assumption:</p>
+        <ul style="color:var(--text-dim);">
+          <li><b>No HTTP client at all</b> — <code>package.json</code> has no axios, no fetch wrapper, nothing. Every page reads/writes through React Context, backed by <code>useState</code> initialized from <code>mockData.ts</code> arrays.</li>
+          <li><b>No data-fetching/cache library</b> — no TanStack Query, SWR, Redux, or Zustand. Plain React state and prop drilling through Context.</li>
+          <li><b><code>DataContext.tsx</code></b> (1,428 lines) exposes ~19 domain state arrays and ~50 synchronous mutator functions. Every one runs instantly and locally — no loading state, no error state, no network round-trip — because there's no network involved yet.</li>
+          <li><b><code>AuthContext.tsx</code></b> has <b>no real authentication</b>: <code>login(email)</code> matches a mock user by email with no password check whatsoever, plus a <code>switchRole()</code> escape hatch that swaps the "current user" to any of the 5 demo personas with one click. Session state is a single localStorage key, not a token.</li>
+          <li><b><code>LoginPage.tsx</code></b> already has a real-looking email/password form, but the password field is decorative — its value is never read or sent anywhere. A "1-click demo personas" panel below logs in as any role instantly, no credentials needed.</li>
+          <li><b>No route guarding</b> — <code>AppRoutes.tsx</code> renders every role's pages unconditionally; no <code>ProtectedRoute</code>/redirect-to-login mechanism exists.</li>
+          <li><b>No test tooling</b> — no Vitest/Jest/Testing Library configured. Any testing strategy for this migration starts from zero.</li>
+          <li><b>No git repository</b> in <code>frontend/</code> (or anywhere under <code>panther/</code>) at the time of this plan.</li>
+        </ul>
+        <p>None of this is a criticism of the current app — it's a demo/prototype frontend doing exactly what it needs to for that purpose. This section exists so the plan below is grounded in what actually has to change.</p>
+      </section>
+
+      <section id="s2">
+        <h2><span class="num">2.</span> Target Architecture</h2>
+        <ul style="color:var(--text-dim);">
+          <li><b>API client</b>: a small hand-rolled <code>src/api/client.ts</code> wrapping <code>fetch</code>, not a new dependency — the backend exposes a plain REST/JSON API with no need for anything heavier. Base URL from a Vite env var (<code>VITE_API_BASE_URL</code>). Centralizes bearer-token injection, JSON encode/decode, and a single place to handle a 401.</li>
+          <li><b>Data fetching pattern</b>: the one place worth a new dependency — with ~50 mutations and ~20 reads across 45 pages, hand-rolled loading/error plumbing everywhere would be repetitive and error-prone. <b>Recommended: <code>@tanstack/react-query</code></b> for caching, de-duplication, refetch-after-mutation, and built-in loading/error states (flagged as an open decision, §8).</li>
+          <li><b>Auth token storage</b>: access + refresh tokens (JSON body, per the backend's confirmed decision) held in memory plus the refresh token in localStorage, so a page reload doesn't force re-login. The API client transparently retries once after a silent refresh on a 401, redirecting to <code>/login</code> only if the refresh itself fails.</li>
+          <li><b>Route guarding</b>: a new <code>&lt;ProtectedRoute allowedRoles={[...]}&gt;</code> wrapper around each role's route subtree, redirecting to <code>/login</code> if unauthenticated and to a real "not authorized" state if the role doesn't match — enforcement that doesn't exist today.</li>
+        </ul>
+      </section>
+
+      <section id="s3">
+        <h2><span class="num">3.</span> Auth Integration — ✅ done and verified</h2>
+        <p>Everything else in this plan depends on real auth existing first — this was built first.</p>
+        <ul class="checklist done">
+          <li>Added <code>VITE_API_BASE_URL</code> env var + <code>.env.example</code> (dev override in gitignored <code>.env.local</code>); confirmed against the backend's CORS config.</li>
+          <li>Built <code>src/api/client.ts</code>: fetch wrapper, JSON handling, bearer header injection, 401 → silent-refresh-then-retry-once → clears session and notifies a registered handler if the refresh itself fails. <code>src/api/auth.ts</code> holds typed auth calls plus the backend-enum → frontend-lowercase <code>User</code> mapping.</li>
+          <li>Rewrote <code>AuthContext.tsx</code>: real <code>login(email, password)</code> that throws on failure; a mount-time effect restores the session from a stored refresh token in one round-trip (no separate <code>/auth/me</code> call needed); added <code>isInitializing</code> so route guards don't redirect before that restore attempt resolves.</li>
+          <li>Removed <code>switchRole()</code> entirely. <code>RoleSwitcher.tsx</code> is now dev-only (<code>import.meta.env.DEV</code>) and performs a <b>real</b> login with the migrated accounts' actual <code>password@123</code> credential — not a client-side role assignment, so it can't become a privilege-escalation hole.</li>
+          <li>Wired the login page's password field for real (previously decorative), added a visible wrong-credentials error state, removed the now-meaningless "Remember me" checkbox (a refresh token always persists regardless), gated the demo panel to dev builds.</li>
+          <li>Added <code>&lt;ProtectedRoute&gt;</code> around every role subtree in <code>AppRoutes.tsx</code>; added a distinct 403 "not authorized" page, separate from the "not logged in" redirect.</li>
+        </ul>
+        <div class="callout warn"><b>Gap found, not a task skipped:</b> there is no change-password, forgot-password, or reset-password <i>page</i> anywhere in the frontend — the mock app never had real auth, so none was ever built. <code>api/auth.ts</code> already exports typed functions ready to call once such UI exists; building that UI is net-new page work, left for a future session. Low urgency: only the bootstrap admin has <code>mustChangePassword=true</code>, all 5 migrated accounts have it false.</div>
+        <div class="callout ok"><b>Verified at the network/API level</b> — no browser automation tool was available this session, so this is the honest scope of "verified" here: <code>npx tsc -b</code> compiles clean; Vite serves every touched module without a transform error; a real CORS preflight + login POST from the exact dev-server origin succeeds and returns the exact shape the client code expects; the refresh-token flow returns a fresh access token + user profile in one call, confirmed live. <b>Recommended follow-up:</b> an actual browser click-through of the full flow — the API contract is proven correct, but no rendering/framework bug in the React components themselves would be caught by API-level checks alone.</div>
+      </section>
+
+      <section id="s4">
+        <h2><span class="num">4.</span> Data Layer — Domain-by-Domain Rollout</h2>
+        <p>Mirrors the backend's own build order, since each phase there already has a matching, verified REST surface. Each domain phase follows the same inner loop: <b>wire reads → wire writes → smoke-test every page that touched it, across every role that can reach it.</b></p>
+        <div class="callout warn"><b>Correction after actually doing the Property domain:</b> deleting a domain's mock arrays out of <code>DataContext.tsx</code>/<code>mockData.ts</code> is <i>not</i> safe to do per-domain, as the original draft of this plan assumed. Dashboards, global search, and several client-portal pages read across domain boundaries (e.g. a dashboard reading <code>properties</code> before the Platform phase that owns dashboards is even wired). The mock arrays for a domain can only be deleted once every consumer across every domain has been migrated — realistically only after the last phase (Platform). Until then <code>DataContext.tsx</code> intentionally serves mock data to not-yet-converted pages alongside the real API serving converted ones — an expected transitional state, not a bug.</div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Property domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>properties</code>, <code>buildings</code>, <code>rooms</code>, <code>rental_types</code>. All 10 primary-owner pages converted: Home, Properties, PropertyDetail, RoomDetail (public); PropertiesManagementPage (operations); AdminPropertiesPage, AdminPropertyEditPage, AdminBuildingsRoomsPage, AdminRoomEditPage, AdminRentalTypesPage (admin).</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> a real API layer (<code>src/api/enumMappers.ts</code>, <code>pagination.ts</code>, <code>properties.ts</code>, <code>rooms.ts</code>, <code>buildings.ts</code>, <code>rentalTypes.ts</code>) using <code>@tanstack/react-query</code>, with mappers converting backend DTOs into the <i>same</i> frontend types the pages already used — so almost no rendering JSX changed, only how each page fetches/mutates data. Backend <code>UPPER_SNAKE</code> enums map to/from the frontend's existing display-string unions via explicit two-way maps (e.g. <code>FULLY_FURNISHED</code> ↔ "Fully Furnished"), not case conversion, since some (<code>SEMI_FURNISHED</code> ↔ "Semi-Furnished") don't reduce to one.</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found and fixed</b> — not just a mechanical API swap:</p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li>The frontend's <code>Property</code> type was missing a <code>status</code> field entirely — the mock data never modeled it, but the backend has always had a real, persisted status column controlling public visibility. Added the field, plus a real status selector to <code>AdminPropertyEditPage</code> — without it, admins had no way to ever take a property off the public site.</li>
+            <li><code>AdminRoomEditPage</code> had a <b>real, silent bug</b>: every room create/update hardcoded a fake building id regardless of what was actually selected — there was no real building picker at all. Fixed with a real building-query-backed selector scoped to the chosen property.</li>
+            <li><code>AdminRentalTypesPage</code> defaulted new rental types' applicable-property list to hardcoded fake ids that never existed in the real database. Now defaults to whatever properties are actually returned by the real query.</li>
+            <li>A room's currently-occupying tenant name is left blank for now — that enrichment needs the Leasing domain's client data, not wired yet. The real client id is already populated correctly.</li>
+            <li>The property edit form's old editable "Total Units Capacity"/occupancy fields were removed, not reconnected — those are backend-computed from real room records, never client-settable. Replaced with a read-only occupancy summary.</li>
+          </ul>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> compiles the whole frontend clean; every touched module (16 files) loads through Vite without a transform error; the real API was hit directly and cross-checked against every mapper — anonymous property list correctly filters to ACTIVE-only, every response shape matches the TypeScript interfaces exactly, and a live enum round-trip confirms the mapping works end-to-end. As with Section 3, this is API-level verification, not an actual browser click-through (no browser automation tool was available this session).</p>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Leasing / CRM domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>clients</code>, <code>bookings</code>, <code>agents</code>. Covers ClientsManagementPage, ClientDetailPage, BookingsManagementPage, AgentsCommissionsPage, ClientDashboard, MyBookingPage, MyRoomPage, MyMaterialsPage, ReportIssuePage, ClientPaymentsPage (partial), and the public booking-inquiry form on RoomDetailPage.</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> <code>src/api/clients.ts</code>, <code>bookings.ts</code>, <code>agents.ts</code> — same mapper-to-existing-type pattern as the Property domain. Two real type gaps found: <code>Client</code>'s current-room/property fields are required in the frontend type but genuinely nullable server-side — widening them would have rippled into ~10 unrelated Finance/Facilities files not in scope this phase, so the mapper coerces null to empty string instead (falsy in every existing check) rather than widening the type. <code>Booking.clientId</code> <i>was</i> made optional — that one only touched files already being converted, so the honest fix was cheap enough to make directly. Every mixed-domain page keeps <code>useData()</code> for out-of-scope fields alongside the new hooks, per the transitional-state note above.</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found and fixed:</b></p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li>The public booking form conflated the logged-in <b>User</b>'s id with a <b>Client</b> id (different, linked entities) and fabricated a fake id string as fallback. Fixed to use the real client id, omitting it entirely when absent — the backend already supports a booking with no linked client.</li>
+            <li><code>ClientDetailPage</code> had a real bug: a fallback displayed two fabricated fake "Verified" documents for any client with zero real uploads. Removed.</li>
+            <li><code>AgentsCommissionsPage</code>'s selected-agent state was a manually-refreshed snapshot that would have gone stale under React Query's asynchronous invalidation. Refactored to derive the displayed agent live from the query result every render.</li>
+            <li>Agent creation dropped two mock-only fields the real API has no story for (a random stock-photo avatar, a hardcoded status). Deal creation has no paid/payout fields server-side — deals always start Pending, so an "already paid" deal now runs a second real commission-payment call immediately after creation.</li>
+            <li><b>Known, deliberately unfixed gap:</b> the agent-deal form's unit field has no real room reference to send — left as display-only rather than scope-creeping a new room picker into this pass.</li>
+          </ul>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> clean; all 14 touched files load through Vite without errors; exercised the <b>full booking lifecycle live</b> in the exact shapes the frontend sends — anonymous inquiry → approve → assign-room → check-in, confirming room status and the audit timeline update correctly at each step; also verified client deactivate/reactivate, adding a material and document, and the full agent-deal-then-pay-commission flow.</p>
+        </div>
+
+        <div class="phase">
+          <div class="phase-head"><h3>Finance domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>payments</code>, <code>expenses</code>, <code>recurring_bills</code>, <code>payroll_records</code>. Covers PaymentsManagementPage, ExpensesPage, RecurringBillsPage, HRPayrollPage, ClientPaymentsPage (partial), HouseholdSalaryPage.</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> <code>src/api/payments.ts</code>, <code>expenses.ts</code>, <code>recurringBills.ts</code>, <code>payrollRecords.ts</code> — same mapper pattern as the previous two domains. No frontend type gaps this time — every backend field already had a matching, correctly-optional field in the existing types.</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found:</b></p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li><b>A genuine backend API gap, not a frontend bug:</b> the "Pay Rent Online" flow on the client payments page has no real backend equivalent — the API only lets operations staff record payments; there's no client-facing payment-creation endpoint, and building one casually would let a tenant unilaterally mark their own rent paid with no real payment gateway behind it. Left deliberately unconverted: reads are real, the "pay now" simulation still uses mock data alongside it.</li>
+            <li><code>HouseholdSalaryPage</code> had a real, silent bug — its payslip list was hardcoded to always show one specific employee's payslips regardless of who was logged in, a mock-era artifact. Fixed by switching to the real self-service endpoint, server-scoped via the JWT, eliminating the hardcoded id. A second instance of the identical bug (a hardcoded name/title in the page header) was found and fixed in the same pass.</li>
+            <li>Several dead-code <code>properties</code> fields (destructured but never referenced) were dropped rather than wired, consistent with earlier domains.</li>
+          </ul>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> clean; all 10 touched files load through Vite without errors; hit the real API directly for every entity's list/create endpoints plus the recurring-bill payment/mark-paid actions; verified both self-service <code>/me</code> endpoints correctly scope to the actual logged-in user, directly confirming the household salary page bug fix resolves to the right person.</p>
+        </div>
+        <div class="phase">
+          <div class="phase-head"><h3>Facilities domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>technicians</code>, <code>preventive_tasks</code>, <code>damage_reports</code>, <code>water_meters</code>, <code>maintenance_issues</code>. Covers TechniciansPage, DamagesManagementPage, WaterMetersPage, ReportIssuePage, HouseholdTaskHistoryPage. <code>PreventiveMaintenancePage</code> and <code>HouseholdChecklistPage</code> deliberately left untouched — see gap below.</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> <code>src/api/technicians.ts</code>, <code>preventiveTasks.ts</code>, <code>damageReports.ts</code>, <code>waterMeters.ts</code>, <code>maintenanceIssues.ts</code> — the largest API surface of any domain so far, with the most enum round-trips (issue category/priority/status, damage responsible-party/status, water-meter payment status). Same mapper-to-existing-type pattern as every prior domain.</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found and fixed:</b></p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li>The same hardcoded-fake-room-id pattern from the Property domain (<code>AdminRoomEditPage</code>) turned up <b>twice more</b> here — <code>DamagesManagementPage</code> and <code>TechniciansPage</code> both hardcoded a fake room id on their create forms instead of using a real room picker. Fixed both with real room-query-backed selectors, confirming this was a genuinely recurring mock-era shortcut, not a one-off.</li>
+            <li><code>DamagesManagementPage</code> also had free-text client/room fields instead of real pickers, and a status dropdown whose values didn't actually map to the real status-update endpoint's accepted values. Fixed all three.</li>
+            <li><code>TechniciansPage</code>'s work-order creation form was missing labor-cost and material-cost fields entirely even though the backend accepts and persists both — added them.</li>
+            <li><code>HouseholdTaskHistoryPage</code> had a real, silent bug: it displayed <b>every</b> household staff member's task history, not just the logged-in user's own. Fixed by switching to the real self-service endpoint, server-scoped via the JWT — the same class of bug found twice already in the Finance domain's <code>HouseholdSalaryPage</code>.</li>
+          </ul>
+          <div class="callout warn"><b>Deliberately not converted:</b> <code>PreventiveMaintenancePage.tsx</code> and <code>HouseholdChecklistPage.tsx</code> implement a bespoke, bilingual <code>MeasureItem[]</code> checklist feature entirely in local component state — the backend's <code>preventive_tasks</code> schema has no matching concept at all. This is a genuine data-model mismatch, not a wiring gap; converting it would mean designing new backend schema, which is out of scope for a data-layer rollout. Left entirely on mock/local state, flagged for a future planning pass rather than forced into a shape that doesn't fit.</div>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> compiles the whole frontend clean; every touched module loads through Vite without a transform error; hit the real API directly for every entity's list/create/update endpoints, including the two self-service <code>/me</code> endpoints (maintenance issues, water meter), confirming both correctly scope to the actual logged-in user. As with every prior domain, this is API-level verification, not an actual browser click-through (no browser automation tool was available this session).</p>
+        </div>
+        <div class="phase">
+          <div class="phase-head"><h3>HR domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>employees</code> (+ documents/daily tasks/damages/leaves). Covers <code>EmployeeDetailPage</code>, <code>HouseholdDashboard</code>, and the "Staff Directory" tab of <code>HRPayrollPage</code> (its payroll ledger tab was already converted during Finance — only the employee-list/add-employee half was still on mock data). <code>HouseholdTaskHistoryPage</code> was already converted during the Facilities phase, since it's actually preventive-task data, not employee data.</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> <code>src/api/employees.ts</code> — the widest single DTO yet (<code>Employee</code> plus four nested child collections: documents, daily tasks, damages, leaves), each with its own enum mapper, same established pattern as every prior domain.</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found and fixed:</b></p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li><code>HouseholdDashboard</code> matched "the current employee" via a guessing heuristic — comparing a <code>User</code> id to an <code>Employee</code> id (the same mismatch fixed in the Leasing domain's booking form), falling back to an email match, then to <code>name.includes('emmanuel')</code>, with <code>employees[2] || employees[0]</code> as a last resort. The identical self-service-scoping bug class found in <code>HouseholdSalaryPage</code> (Finance) and <code>HouseholdTaskHistoryPage</code> (Facilities) — now found a <b>third</b> time. Fixed via the real self-service <code>GET /employees/me</code> endpoint; the dashboard's checkpoint snapshot had the identical guess-by-name-substring bug, fixed via <code>useMyPreventiveTasksQuery()</code>.</li>
+            <li><code>EmployeeDetailPage</code>'s "Assign Daily Task" form sent a free-text property <i>name</i> where the real endpoint expects a numeric <code>propertyId</code> foreign key — the same hardcoded/disconnected-picker pattern found in every domain so far, now a <b>fourth</b> time. Fixed with a real property-id-backed selector.</li>
+            <li>Two hardcoded fake reviewer/approver names were being sent to endpoints with no way to use them: task review sent a fake "ratedBy" name, but confirmed live that <code>EmployeeDailyTaskResponse.ratedByName</code> is never set anywhere server-side (always absent regardless of input) — a genuine backend gap, flagged not fixed. Leave approval sent a fake "approvedBy" name, but confirmed live the real endpoint always derives the approver from the authenticated actor's JWT — the client-sent value was silently ignored. Both fake strings dropped from the frontend.</li>
+            <li><code>HRPayrollPage</code>'s "Add New Employee" form silently attached a fabricated document (a fake, never-uploaded URL) as part of creation, but the real <code>POST /employees</code> endpoint has no field for bundling documents at all (a dedicated, separate endpoint). Removed the fake auto-attach.</li>
+            <li>The same form's "Avatar Image URL" input did nothing — neither <code>CreateEmployeeRequest</code> nor <code>UpdateEmployeeRequest</code> expose any avatar field at all. Removed the input; the mapper now generates a stable initials-based placeholder client-side instead of pretending a URL was ever saved.</li>
+            <li><code>HRPayrollPage</code>'s staff directory search/department/status filters were purely client-side. The real <code>GET /employees</code> endpoint already supports server-side filtering on all three (confirmed live) — wired the existing filter UI to real query params.</li>
+          </ul>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> compiles clean; all four touched files load through Vite without a transform error; hit the real API directly — created a test employee, assigned a daily task with a real <code>propertyId</code> (confirmed correct <code>propertyName</code> resolution), reviewed the task and confirmed <code>ratedByName</code> is indeed never populated, created an <code>APPROVED</code> leave directly and confirmed both the real server-derived <code>approvedByName</code> and the employee-status-sync to <code>ON_LEAVE</code> fire correctly, added/deleted a document, added a damage record, and confirmed server-side list filtering — then cleaned up the test employee directly from the database so the real migrated dataset (5 employees) stays untouched. As with every prior domain, this is API-level verification, not an actual browser click-through.</p>
+        </div>
+        <div class="phase">
+          <div class="phase-head"><h3>Platform domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>activity_logs</code>, <code>notifications</code>, dashboards, search, reports. Covers ActivityLogPage, ClientNotificationsPage, every role's dashboard (Operations/Owner/Admin/Household/Client), ReportsPage, and GlobalSearchModal. Done last as planned — dashboards and search aggregate across every other domain, so this was only safe once Property, Leasing/CRM, Finance, Facilities, HR, and IAM/admin were all already real.</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> <code>src/api/dashboards.ts</code> (the 5 role-specific <code>GET /dashboard/*</code> aggregate endpoints), <code>reports.ts</code> (revenue-expense, occupancy, property-performance), <code>notifications.ts</code>, <code>activityLogs.ts</code>, and <code>search.ts</code>. <code>HouseholdDashboard</code>/<code>ClientDashboard</code> had already been converted for their primary self-service data in earlier passes — this phase specifically re-checked both for secondary dashboard-aggregation logic still mock-derived, per the plan's own warning, and found real bugs in <code>ClientDashboard</code> (below).</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found and fixed:</b></p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li><code>ClientDashboard</code> was still reading the mock <code>DataContext</code>'s <code>payments</code>/<code>maintenanceIssues</code> arrays filtered by <code>client.id</code> — but that id is now a real numeric id from <code>useMyClientQuery()</code> that never matches the old mock string ids. Silently broken (always empty) since Finance/Facilities switched to real ids — fixed via the real self-service <code>/payments/me</code>/<code>/maintenance-issues/me</code> endpoints those domains already built.</li>
+            <li><code>OwnerExecutiveDashboard</code>'s "Executive Priority Notices" panel showed three <b>permanently fabricated</b> alert cards — invented names, a fake dollar figure, a fake audit reference — never wired to any data source at all, mock or real. Replaced with the real largest overdue payment, highest-value pending booking, and most recently passed preventive task.</li>
+            <li><code>DashboardLayout</code>'s notification bell filtered a shared mock broadcast array by role client-side — the same self-service-scoping bug class found repeatedly elsewhere. Fixed via the real per-user <code>GET /notifications/me</code>, which needs no role filtering at all.</li>
+            <li><code>GlobalSearchModal</code> searched local, stale mock arrays — including rooms/payments, which the real <code>GET /search</code> doesn't cover at all (confirmed against <code>SearchService.java</code>). Those two categories are simply absent now rather than faked; an <code>EMPLOYEE</code> category was added since the real endpoint supports it. The endpoint is also role-restricted (confirmed live with a 403 for a client token) — so the search trigger is now hidden entirely for client/household roles.</li>
+            <li><code>ActivityLogPage</code>'s module filter used invented labels matching none of the real <code>module</code> strings <code>AuditService.log(...)</code> actually writes (confirmed by grepping every call site) — replaced with the real, confirmed list.</li>
+            <li><code>ReportsPage</code>'s report-type dropdown had a "payroll" option with <b>no matching render branch at all</b> — a pre-existing dead end, not introduced here. Filled in with a real payroll ledger table.</li>
+            <li><code>PropertyPerformanceBar</code> charted <code>Property.monthlyRevenueEstimate</code> — a real but manually-set estimate field — as if it were actual revenue. Per the plan's own correctness-trap warning, swapped to the real computed <code>monthlyRevenue</code> from <code>GET /reports/property-performance</code>.</li>
+            <li><code>RevenueExpenseArea</code> was <b>entirely hardcoded</b> — 8 months of fabricated numbers with no props at all. Converted to accept real data from <code>GET /reports/revenue-expense</code>.</li>
+            <li>One data-shape wrinkle handled rather than papered over: live-generated activity-log rows store the bare role enum, but rows migrated from the original mock data already store a descriptive title. The mapper only reformats fully upper-case values, so migrated titles aren't mangled.</li>
+          </ul>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> compiles clean; every touched module loads through Vite without a transform error; hit all 5 dashboard aggregate endpoints live as each role and confirmed each response matches the TypeScript interface; confirmed <code>GET /search</code> returns correctly-categorized results and 403s for a client token; confirmed the notification mark-read/mark-all-read mutations actually flip state server-side; confirmed all three <code>/reports/*</code> endpoints return real numbers computed from actual migrated data. As with every prior domain, this is API-level verification, not an actual browser click-through.</p>
+        </div>
+        <div class="phase">
+          <div class="phase-head"><h3>IAM / admin domain</h3><span class="phase-tag" style="background:var(--ok-bg); color:var(--ok);">✓ Done</span></div>
+          <p style="margin:.4rem 0 0;"><code>users</code>, <code>system_settings</code>. Covers AdminUsersRolesPage, AdminSystemSettingsPage, ProfileSettingsPage. Unlike every prior domain, <code>DataContext.tsx</code> held <b>no</b> state or mutators for this domain at all — <code>mockUsers</code> is left in place, still used by <code>RoleSwitcher</code>'s dev-only demo-login panel from Section 3, unrelated to this page.</p>
+          <p style="margin:.6rem 0 0;"><b>Built:</b> <code>src/api/users.ts</code> (an <code>AdminUser</code> type extending the base <code>User</code> type with admin-only fields rather than widening <code>User</code> for every other consumer) and <code>src/api/systemSettings.ts</code>. Reused <code>useClientsQuery()</code>/<code>useEmployeesQuery()</code> from earlier domains for two new linking pickers rather than building new ones.</p>
+          <p style="margin:.6rem 0 0;"><b>Real gaps found and fixed:</b></p>
+          <ul style="color:var(--text-dim); margin:.4rem 0;">
+            <li><code>AdminUsersRolesPage</code> had <b>no real backend behind it whatsoever</b> — every action (create/edit/deactivate/suspend/reset-password/resend-invite/delete) only ever mutated a local copy of <code>mockUsers</code> seeded with fabricated dates. Rebuilt against the real endpoints, confirmed live end-to-end on a throwaway test account, then cleaned it up.</li>
+            <li>The account-status dropdown in the edit panel doesn't map to a real endpoint at all — the same status-dropdown-doesn't-map-to-the-real-endpoint bug class found in <code>DamagesManagementPage</code> (Facilities). Fixed by firing the dedicated status mutation alongside the main update when it changes.</li>
+            <li>User creation had a non-functional "Avatar Image URL" input with no backend field to receive it — the same gap found on employee creation in HR. Removed; a stable initials-based placeholder is generated client-side instead.</li>
+            <li><b>A real, missing feature:</b> the backend has always supported linking a <code>CLIENT</code> account to a real <code>Client</code> record and a <code>HOUSEHOLD</code>/<code>OPERATIONS</code> account to a real <code>Employee</code> record, but the admin form never exposed a picker for either. Added two real, role-conditional pickers.</li>
+            <li><b>A real bug found in the backend itself:</b> <code>DataSeeder.java</code> seeded <code>system_settings.currency_code</code> with the frontend's old display string <code>"USD ($)"</code> instead of a clean ISO code — confirmed live before fixing it at the source and correcting the already-seeded live row via a real <code>PUT /settings</code> call.</li>
+            <li><code>AdminSystemSettingsPage</code> had <b>no persistence anywhere at all</b>, not even mock — "Save" just showed a toast over local state that reset on reload. Wired to the real <code>GET/PUT /settings</code>, with an explicit currency-code two-way map (display string ↔ ISO code) rather than a case transform.</li>
+            <li><code>ProfileSettingsPage</code>'s name/email/phone fields were freely editable but never persisted — a genuine backend gap, not a frontend bug: there is no self-service "update my own profile" endpoint anywhere (<code>PUT /users/{id}</code> is ADMIN-only). Made read-only with a note to contact an administrator, the same "flag, don't force" treatment as the Finance domain's rent-payment gap.</li>
+            <li>Notification toggles on the same page were local-only, never persisted — wired to the real, already-existing self-service <code>GET/PATCH /users/me/preferences</code> endpoints.</li>
+            <li><b>Closed a long-standing gap flagged back in Section 3:</b> built the app's first real change-password form, using <code>api/auth.ts</code>'s <code>changePassword</code> function that had existed unused since the Auth-integration phase.</li>
+          </ul>
+          <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> compiles the whole frontend clean; every touched module loads through Vite without a transform error; hit the real API directly for the full user lifecycle (create → update → suspend → reset-password → resend-invite → delete) and the settings/preferences round-trips. As with every prior domain, this is API-level verification, not an actual browser click-through.</p>
+        </div>
+
+        <div class="callout ok" style="margin-top:1.2rem;">Once every phase above is checked off, delete <code>mockData.ts</code> and remove <code>DataContext.tsx</code>'s <code>useState(mockArray)</code> initializers entirely. Audit for any genuinely static UI copy (icon/label lookup tables) that never came from the backend before deleting <code>src/data/</code> wholesale.</div>
+      </section>
+
+      <section id="s5">
+        <h2><span class="num">5.</span> Correctness Traps Specific To This Migration — ✅ audited and addressed</h2>
+        <p>Each trap was actually checked against the real, fully-converted codebase — several were already handled correctly by the domain-by-domain rollout's own conventions; the rest had real, fixable issues.</p>
+        <ul class="checklist done">
+          <li><b>Computed fields:</b> audited every page's <code>.reduce()</code>/<code>.length</code> math, not just dashboards (Platform already fixed the two worst offenders). Everything else sums real, already-fetched data for view-only totals — legitimate, not a duplicate of an authoritative backend field. <b>Two real vanity-number bugs fixed:</b> <code>HRPayrollPage</code>'s company task-rate and <code>EmployeeDetailPage</code>'s per-employee task rate both fell back to a hardcoded fake 95%/100% when there was no task data, instead of 0%.</li>
+          <li><b>Row-level scoping / 403 handling:</b> the API client already throws a typed <code>ApiError</code> with the real status on any non-2xx response, and the established <code>mutateAsync</code> + <code>try/catch</code> + toast pattern (68 catch blocks across 27 pages) already handles this everywhere — confirmed already solid, not a gap. <b>Found and fixed 5 real silent-failure holes</b> where a mutation fired via bare <code>.mutate()</code> had zero error handler: <code>OwnerExecutiveDashboard</code>/<code>OperationsDashboard</code> (mark-bill-paid), <code>ClientNotificationsPage</code> (mark-read/mark-all-read), <code>EmployeeDetailPage</code> (delete document). All 5 now show a proper error toast on failure.</li>
+          <li><b>Optimistic UI vs. server truth:</b> same finding — already solid except the 5 holes above, now fixed.</li>
+          <li><b>IDs change shape:</b> repo-wide grep for leftover string-id-prefix patterns outside <code>mockData.ts</code> found <b>zero</b> live bugs — every hit was either the mock source itself or dead mock mutators in <code>DataContext.tsx</code> no converted page still calls. Clean audit, nothing to fix.</li>
+          <li><b>File uploads — the biggest known gap, now closed.</b> Confirmed the real endpoint (<code>POST /api/v1/files</code>, multipart, returns <code>{url, originalFilename, contentType, sizeLabel}</code>; served back at <code>GET /files/**</code>) live end-to-end with a real test upload, then cleaned it up. Built a shared <code>apiUpload()</code> helper, a <code>useUploadFileMutation()</code> hook, and a reusable <code>&lt;FileUploadButton&gt;</code> component, and wired every real fake-upload spot found: property/room photo galleries (gained a real upload option alongside the existing paste-a-URL field); <code>EmployeeDetailPage</code>'s damage-photo dropzone and document form (both looked real but were <code>FileReader</code>-only base64 previews / a fake-URL-fallback paste field with a hardcoded fake size); <code>DamagesManagementPage</code> (same fake dropzone, plus a new-report default that silently pre-filled a fabricated stock photo and a fake <code>'Unit A-204'</code> room/property before this fix); <code>ReportIssuePage</code>; and <b>the worst instance found</b> — <code>TechniciansPage</code>'s document upload only ever captured the picked file's <i>name</i> as a string and sent a completely fabricated <code>/docs/${docFile}</code> path, never a real file location at all. <code>ClientDetailPage</code> had the identical fake-fallback pattern, fixed the same way. Deliberately left alone: <code>PreventiveMaintenancePage</code>/<code>HouseholdChecklistPage</code>, already excluded from this entire migration.</li>
+        </ul>
+        <div class="callout ok">Verified: <code>npx tsc -b</code> compiles the whole frontend clean; every touched file (14 total) loads through Vite without a transform error; the real upload endpoint was hit directly with <code>curl</code> (multipart request → stored file → fetched back successfully by its returned URL) before and after wiring the UI to it. As with every domain, this is API-level verification, not an actual browser click-through.</div>
+      </section>
+
+      <section id="s6">
+        <h2><span class="num">6.</span> Environment &amp; CORS — ✅ confirmed</h2>
+        <ul class="checklist done">
+          <li><code>VITE_API_BASE_URL</code> set via <code>.env.example</code>/env var, never hardcoded — confirmed by direct inspection of <code>vite.config.ts</code> and every <code>src/api/*.ts</code> file, none of which hardcode a base URL.</li>
+          <li>Confirmed <code>panther.cors.allowed-origins</code> includes <code>http://localhost:5173,http://localhost:4173,http://localhost:5183</code> — covers the Vite dev/preview defaults plus the pinned dev port used this session. <b>Still needs the real deployed frontend origin added before any non-local environment goes live</b> — confirmed for dev only, not a deployment sign-off.</li>
+          <li>Confirmed the rate limiter is enabled with defaults <code>login-limit: 10</code>/<code>60s</code>, <code>booking-limit: 20</code>/<code>60s</code>, per-client-IP. Hundreds of real API calls across all 7 domains this session never spuriously tripped it under normal single-developer use — revisit only under real concurrent multi-user/shared-IP load, not before.</li>
+        </ul>
+      </section>
+
+      <section id="s7">
+        <h2><span class="num">7.</span> Testing Strategy (starting from zero) — ✅ done and verified</h2>
+        <ul class="checklist done">
+          <li>Added Vitest + React Testing Library + jsdom + MSW as dev dependencies. Config lives in <code>vite.config.ts</code> via <code>mergeConfig(viteConfig, defineTestConfig({ test: {...} }))</code> from <code>vitest/config</code> — the docs' simpler <code>/// &lt;reference types="vitest/config" /&gt;</code> pattern didn't type-check under this project's <code>tsconfig.node.json</code> (<code>nodenext</code> + <code>verbatimModuleSyntax</code>); <code>mergeConfig</code> sidesteps the ambient-augmentation dependency entirely. <code>npm run test</code> added.</li>
+          <li>One integration-style test per domain phase's core flow — each doubles as a regression guard for a real bug found this session, not a synthetic example: <b>Auth</b> (wrong password shows an error and never navigates; correct password navigates to the role home — the plan's own literal example), <b>Property</b> (public list hits real query params, maps every field), <b>Leasing/CRM</b> (anonymous booking inquiry — the plan's other literal example — with no <code>clientId</code>), <b>Finance</b> (client self-service <code>/payments/me</code>), <b>Facilities</b> (issue reporting sends no client-identity fields — guards the JWT-resolves-reporter fix), <b>HR</b> (<code>/employees/me</code> — guards the id/email/name-guessing bug found 3×), <b>Platform</b> (notification bell via <code>/notifications/me</code> + mark-all-read), <b>IAM/admin</b> (account-status change fires the dedicated status endpoint — guards that exact bug, found twice).</li>
+          <li>MSW intercepts at the network boundary — no <code>DataContext</code>/<code>AuthContext</code> mocking anywhere, so these tests keep working after the mock-state code they exercise around is eventually deleted, exactly as this section originally specified.</li>
+        </ul>
+        <div class="callout ok"><b>Proof these tests don't depend on the real running backend, not just an assertion:</b> a dedicated <code>.env.test</code> points <code>VITE_API_BASE_URL</code> at <code>http://backend.invalid</code> — a host that cannot resolve — for the whole suite. Every test still passes, which is only possible if MSW is genuinely intercepting before the request ever hits the network; a real <code>fetch</code> to that host would hard-fail with a DNS error regardless of the real backend's state. This is a structural, always-on version of "point at an invalid URL and check" — it can't silently regress into accidentally exercising the live backend (which was running the whole time, and would have masked a broken mock setup had the suite actually been hitting it).</div>
+        <p style="margin:.6rem 0 0;"><b>Verified:</b> <code>npx tsc -b</code> compiles the whole project clean; <code>npx vitest run</code> — <b>8 test files, 9 tests, all passing.</b></p>
+        <div class="callout warn"><b>Deliberately not covered:</b> a starting suite covering one regression-guarding flow per domain, not exhaustive coverage of all 45 pages — per this section's own scope note. No tests for the Facilities preventive-maintenance data-model-mismatch pages (nothing real to test — still local-only mock state) or a dedicated dashboard-render test (covered indirectly via the underlying hook tests) — flagged as follow-up, not silently skipped.</div>
+      </section>
+
+      <section id="s8">
+        <h2><span class="num">8.</span> Open Decisions — ✅ all resolved</h2>
+        <div class="decision">
+          <h4>Data-fetching library — decided: <code>@tanstack/react-query</code></h4>
+          <p style="margin:0;">Adopted from the Auth integration phase onward and used consistently across all 7 domains. Decided, not revisited.</p>
+        </div>
+        <div class="decision">
+          <h4>Demo login panel — decided: kept, dev-gated</h4>
+          <p style="margin:0;">Kept behind <code>import.meta.env.DEV</code> (<code>RoleSwitcher.tsx</code>), performing a real login call rather than a client-side role assignment — decided during Section 3.</p>
+        </div>
+        <div class="decision">
+          <h4>Rollout branching strategy — decided: single commit, own repo</h4>
+          <p style="margin:0;"><code>frontend/</code> had no git repository at all until this pass. Confirmed and initialized (<code>git init</code>), then committed as a single commit covering the whole integration (all 7 domains, file uploads, the correctness audit, and the new test suite), per direct instruction, rather than reconstructing a branch-per-domain history after the fact. <code>backend/</code>'s repository is untouched and separate, as before.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="wrap">Companion document to <code>BACKEND_PLAN.md</code> and <code>DATA_MIGRATION_PLAN.md</code>. Start with Section 3 (auth) — nothing else in this plan works without it.</footer>
+</div>

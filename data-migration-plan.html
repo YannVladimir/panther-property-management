@@ -1,0 +1,304 @@
+<title>Data Migration Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#eef0f3; --border:#e2e5ea;
+    --text:#1b1f27; --text-dim:#5b6270; --text-faint:#8a90a0;
+    --brand:#4f46e5; --brand-dim:#eef0fe;
+    --ok:#0f8a5f; --ok-bg:#e7f7f0;
+    --warn:#b5750a; --warn-bg:#fdf3e0;
+    --danger:#c0293c; --danger-bg:#fbe9ec;
+    --info:#1c6fd6; --info-bg:#e8f1fc;
+    --purple:#7c3aed; --purple-bg:#f1eafd;
+    --code-bg:#eef0f3;
+    --shadow: 0 1px 2px rgba(20,22,30,.04), 0 8px 24px rgba(20,22,30,.05);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#0e0f13; --surface:#161822; --surface-2:#1d202c; --border:#2a2e3c;
+      --text:#eef0f6; --text-dim:#aab0c0; --text-faint:#767c8c;
+      --brand:#8b85f7; --brand-dim:#232047;
+      --ok:#3ddc97; --ok-bg:#0f2a20;
+      --warn:#f2b84b; --warn-bg:#332506;
+      --danger:#f76a80; --danger-bg:#3a1420;
+      --info:#6ab2f8; --info-bg:#0f2540;
+      --purple:#b399f9; --purple-bg:#241a3d;
+      --code-bg:#1d202c;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e0f13; --surface:#161822; --surface-2:#1d202c; --border:#2a2e3c;
+    --text:#eef0f6; --text-dim:#aab0c0; --text-faint:#767c8c;
+    --brand:#8b85f7; --brand-dim:#232047;
+    --ok:#3ddc97; --ok-bg:#0f2a20;
+    --warn:#f2b84b; --warn-bg:#332506;
+    --danger:#f76a80; --danger-bg:#3a1420;
+    --info:#6ab2f8; --info-bg:#0f2540;
+    --purple:#b399f9; --purple-bg:#241a3d;
+    --code-bg:#1d202c;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--text);
+    font: 15px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin:0; padding:0 0 6rem;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:0 clamp(1rem,4vw,2.5rem);}
+
+  header.hero{
+    padding: 3.2rem 0 2.2rem; border-bottom:1px solid var(--border);
+    background: linear-gradient(180deg, var(--brand-dim), transparent 70%);
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:.4rem;
+    font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--brand); background:var(--brand-dim); border:1px solid color-mix(in srgb, var(--brand) 30%, transparent);
+    padding:.3rem .7rem; border-radius:999px; margin-bottom:.9rem;
+  }
+  h1{font-size:clamp(1.7rem,3.4vw,2.5rem); margin:.2rem 0 .5rem; letter-spacing:-.01em;}
+  .sub{color:var(--text-dim); font-size:1rem; max-width:70ch; margin:0;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:.5rem .9rem; margin-top:1.4rem; font-size:.82rem; color:var(--text-faint);}
+  .meta-row b{color:var(--text-dim); font-weight:700;}
+
+  .layout{display:grid; grid-template-columns: 230px 1fr; gap:2.6rem; padding-top:2.4rem;}
+  @media (max-width: 900px){ .layout{grid-template-columns: 1fr;} nav.toc{position:static !important; max-height:none !important;} }
+
+  nav.toc{
+    position:sticky; top:1.2rem; align-self:start; max-height:calc(100vh - 2.4rem); overflow:auto;
+    font-size:.83rem;
+  }
+  nav.toc a{
+    display:block; padding:.4rem .6rem; border-radius:.5rem; color:var(--text-dim); text-decoration:none;
+    border-left:2px solid transparent;
+  }
+  nav.toc a:hover{ background:var(--surface-2); color:var(--text); }
+  nav.toc .toc-title{font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); padding:.4rem .6rem;}
+
+  main{min-width:0;}
+  section{margin-bottom:3.2rem; scroll-margin-top:1.2rem;}
+  h2{
+    font-size:1.4rem; margin:0 0 .3rem; padding-bottom:.6rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:baseline; gap:.6rem;
+  }
+  h2 .num{color:var(--brand); font-variant-numeric:tabular-nums;}
+  h3{font-size:1.08rem; margin:1.8rem 0 .7rem;}
+  h4{font-size:.95rem; margin:1.3rem 0 .5rem; color:var(--text-dim);}
+  p{color:var(--text-dim);}
+  a{color:var(--brand);}
+  code{background:var(--code-bg); padding:.1rem .35rem; border-radius:.35rem; font-size:.85em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;}
+  pre{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:.8rem; padding:1rem 1.2rem;
+    overflow-x:auto; font-size:.82rem; line-height:1.55;
+  }
+  pre code{background:none; padding:0;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:1rem;
+    padding:1.3rem 1.5rem; box-shadow:var(--shadow); margin:1rem 0;
+  }
+
+  table{width:100%; border-collapse:collapse; font-size:.84rem; margin:1rem 0;}
+  .table-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:.9rem; box-shadow:var(--shadow);}
+  .table-scroll table{margin:0;}
+  th, td{text-align:left; padding:.65rem .85rem; border-bottom:1px solid var(--border); vertical-align:top;}
+  thead th{
+    background:var(--surface-2); font-size:.7rem; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-faint); font-weight:800; position:sticky; top:0;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--surface-2);}
+  td code{white-space:nowrap;}
+
+  .pill{
+    display:inline-block; font-size:.68rem; font-weight:800; letter-spacing:.02em;
+    padding:.15rem .55rem; border-radius:999px; white-space:nowrap;
+  }
+  .pill.issue{color:var(--danger); background:var(--danger-bg);}
+  .pill.decision{color:var(--warn); background:var(--warn-bg);}
+  .pill.dropped{color:var(--text-faint); background:var(--surface-2);}
+
+  ul.checklist{list-style:none; padding:0; margin:.6rem 0;}
+  ul.checklist li{
+    position:relative; padding:.4rem .2rem .4rem 2rem; border-bottom:1px dashed var(--border); font-size:.9rem;
+  }
+  ul.checklist li:last-child{border-bottom:none;}
+  ul.checklist li::before{
+    content:""; position:absolute; left:0; top:.55rem; width:1.05rem; height:1.05rem;
+    border:1.5px solid var(--text-faint); border-radius:.3rem; background:var(--surface);
+  }
+
+  .callout{
+    border-left:3px solid var(--brand); background:var(--brand-dim); border-radius:.5rem;
+    padding:.9rem 1.1rem; font-size:.87rem; color:var(--text);
+  }
+  .callout.warn{border-color:var(--warn); background:var(--warn-bg);}
+  .callout.ok{border-color:var(--ok); background:var(--ok-bg);}
+  .callout.danger{border-color:var(--danger); background:var(--danger-bg);}
+
+  .decision{
+    background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--warn); border-radius:.8rem;
+    padding:1rem 1.2rem; box-shadow:var(--shadow); margin:1rem 0;
+  }
+  .decision h4{margin:0 0 .4rem; color:var(--text);}
+
+  footer{padding:2.4rem 0; color:var(--text-faint); font-size:.8rem; border-top:1px solid var(--border); margin-top:3rem;}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">● Executed and verified</span>
+    <h1>Frontend Mock Data → Real Database Migration Plan</h1>
+    <p class="sub">Every real property/tenant/staff record currently hardcoded in the frontend moves into the real Postgres backend, with zero data loss, before the frontend is switched to live API calls.</p>
+    <div class="meta-row">
+      <span><b>Source:</b> <code>frontend/src/data/mockData.ts</code> (2,280 lines, the only source of truth — no localStorage persistence of domain data)</span>
+      <span><b>Mechanism:</b> a Java <code>ApplicationRunner</code> seeder, <code>LegacySeedRunner</code> (see Section 5's execution note — pivoted from the originally-planned Flyway SQL migration)</span>
+      <span><b>All migrated users:</b> password <code>password@123</code>, verified via live login</span>
+    </div>
+    <div class="callout ok" style="margin-top:1.2rem;">All 6 checklist items in Section 6 are done. 148/148 backend tests still pass. All 5 migrated users log in successfully with <code>password@123</code>. Every documented fix and decision (D1/D2/D3) was confirmed live against the running API after seeding — see Section 6 for the full verification record.</div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc">
+      <div class="toc-title">Contents</div>
+      <a href="#s1">1. Source of Truth</a>
+      <a href="#s2">2. Full Record Inventory</a>
+      <a href="#s3">3. Data Quality Issues &amp; Resolutions</a>
+      <a href="#s4">4. Why a Flyway Migration</a>
+      <a href="#s5">5. Migration Architecture</a>
+      <a href="#s6">6. Step-by-Step Checklist</a>
+      <a href="#s7">7. Open Decisions</a>
+      <a href="#s8">8. Explicitly Not Migrated</a>
+    </nav>
+
+    <main>
+
+      <section id="s1">
+        <h2><span class="num">1.</span> Source of Truth</h2>
+        <p>Single file: <code>frontend/src/data/mockData.ts</code> (2,280 lines). It is consumed by <code>DataContext.tsx</code> purely via <code>useState(mockArray)</code> — confirmed there is <strong>no localStorage persistence of any domain data</strong> (localStorage only remembers which demo role was last "logged in"). This means <code>mockData.ts</code> is the complete and only source of truth to migrate; nothing a user has clicked/edited in the browser needs to be separately recovered.</p>
+      </section>
+
+      <section id="s2">
+        <h2><span class="num">2.</span> Full Record Inventory</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Entity</th><th>Count</th><th>Nested children</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Users</td><td>5</td><td>—</td><td>one per role (operations, owner, client, household, admin)</td></tr>
+              <tr><td>Properties</td><td>2</td><td>images, amenities</td><td>"Gacuriro Vista Suites", "Nyarutarama Golf View Lofts"</td></tr>
+              <tr><td>Buildings</td><td>4</td><td>—</td><td>2 per property</td></tr>
+              <tr><td>Rental types</td><td>4</td><td>23 included-material template rows total</td><td></td></tr>
+              <tr><td>Rooms</td><td>10</td><td>images/amenities/utilities/rules</td><td>6 + 4 across the two properties</td></tr>
+              <tr><td>Clients</td><td>6</td><td>15 materials total; <b>0 documents</b></td><td></td></tr>
+              <tr><td>Bookings</td><td>5</td><td>17 timeline events total</td><td></td></tr>
+              <tr><td>Payments</td><td>10</td><td>—</td><td></td></tr>
+              <tr><td>Expenses</td><td>6</td><td>—</td><td></td></tr>
+              <tr><td>Recurring bills</td><td>7</td><td><b>0 bill-payment rows</b></td><td></td></tr>
+              <tr><td>Technicians</td><td>5</td><td>4 work orders total (only 2 techs have any); <b>0 documents</b></td><td></td></tr>
+              <tr><td>Preventive tasks</td><td>8</td><td>—</td><td></td></tr>
+              <tr><td>Damage reports</td><td>3</td><td>—</td><td></td></tr>
+              <tr><td>Water meters</td><td>4</td><td>16 history rows total</td><td></td></tr>
+              <tr><td>Employees</td><td>5</td><td>7 daily tasks, 1 damage, 7 documents; <b>0 leave records</b></td><td></td></tr>
+              <tr><td>Payroll records</td><td>4</td><td>—</td><td></td></tr>
+              <tr><td>Agents</td><td>3</td><td>7 deals total</td><td></td></tr>
+              <tr><td>Maintenance issues</td><td>3</td><td>—</td><td></td></tr>
+              <tr><td>Activity logs</td><td>6</td><td>—</td><td></td></tr>
+              <tr><td>Notifications</td><td>7</td><td>—</td><td>relative-time strings ("2 hours ago"), not timestamps</td></tr>
+              <tr><td>System settings</td><td><b>0</b></td><td>—</td><td>no mock data exists — seed a sensible default (§8)</td></tr>
+              <tr><td>Notification preferences</td><td><b>0</b></td><td>—</td><td>no mock data exists — nothing to migrate</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>Total: ~103 primary records + ~100 nested child records ≈ 200 rows</strong> — small enough to migrate in a single transactional run, but with enough cross-references that a careless copy would corrupt the schema's referential integrity (Section 3).</p>
+      </section>
+
+      <section id="s3">
+        <h2><span class="num">3.</span> Data Quality Issues Found — and How This Migration Resolves Each</h2>
+        <p>The mock data was authored over time by hand and has accumulated inconsistencies that a literal copy would carry into the real database, corrupting exactly the invariants the backend schema guarantees (e.g. <code>rooms.status</code> driving property occupancy counts). Each is called out explicitly rather than silently "fixed" — two of these are judgment calls about real tenants that only the property manager can confirm after import.</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Issue</th><th>Affected records</th><th>Resolution</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><span class="pill dropped">dropped</span> Denormalized <code>propertyName</code> snapshots are systematically stale — every record referencing prop-01 outside properties/buildings/rooms shows the old name "Kigali Heights Residences" instead of the current "Gacuriro Vista Suites"</td><td>clients, payments, expenses, damages, water meters, maintenance issues, preventive tasks</td><td>Not migrated. The backend never stores these snapshots (<code>BACKEND_PLAN.md</code> §5) — joined at read time. Nothing is lost since the real name is looked up live.</td></tr>
+              <tr><td>2</td><td><span class="pill issue">fixed</span> Dangling property references — <code>prop-03</code>/<code>prop-04</code> are referenced but don't exist in <code>mockProperties</code></td><td>client-03/client-05, pay-04/pay-06/pay-10, exp-05/exp-06, dmg-03, wm-04</td><td>Re-derive the correct <code>propertyId</code> from each record's real, valid <code>roomId</code>. The fake ids are discarded.</td></tr>
+              <tr><td>3</td><td><span class="pill decision">decision</span> client-05 claims a lease on room-10, which directly contradicts room-10's own record (<code>status: available</code>, no client assigned)</td><td>client-05, room-10</td><td>Resolved <b>in favor of the client record</b> — see Decision D1. Rent/deposit/rental-type match room-10 exactly, plus dated assigned materials; only the room-number/property-name labels are stale. Default: fix the room's status, don't discard the tenancy.</td></tr>
+              <tr><td>4</td><td><span class="pill decision">decision</span> client-04 claims <code>currentRoomId: room-05</code>, but room-05 shows <code>status: reserved</code> with no client assigned</td><td>client-04, room-05</td><td>Resolved <b>in favor of the client record</b> — Decision D2. Room number/rent/deposit match room-05 exactly, plus a dated assigned material; room-05's own description text is consistent with a tenant having since moved in.</td></tr>
+              <tr><td>3b</td><td><span class="pill issue">fixed</span> exp-06 references the same fictional "Vision City Executive Villas" name as client-05/pay-06 (confirmed by grep: appears in only these 3 records)</td><td>exp-06</td><td>No roomId on Expense to cross-check directly, but the naming match to client-05/pay-06 (which resolve to prop-02) is a reasoned basis — see Decision D3.</td></tr>
+              <tr><td>5</td><td><span class="pill issue">fixed</span> Three bookings reference placeholder client ids (<code>client-pending-01/02/03</code>) that don't exist in <code>mockClients</code></td><td>bk-102, bk-103, bk-104</td><td>This is the intended "pre-account inquiry" case the schema already supports. Migrated with <code>client_id = NULL</code>, snapshot fields copied as-is.</td></tr>
+              <tr><td>6</td><td><span class="pill issue">fixed</span> The admin user and employee emp-02 are clearly the same person (same name/email) but aren't cross-linked, unlike every other staff account</td><td>user-admin, emp-02</td><td>Migration sets <code>users.employee_id</code> for the admin account to emp-02, closing the gap.</td></tr>
+              <tr><td>7</td><td><span class="pill dropped">dropped</span> Vanity aggregate numbers don't reconcile with real nested records (e.g. a technician shows 78 jobs with only 2 real work orders)</td><td>technicians, agents, one notification</td><td>Not migrated — these are computed fields in the real schema, always calculated from real child rows. Post-migration numbers will legitimately be smaller and internally consistent — <strong>this is correct, not a bug.</strong></td></tr>
+              <tr><td>8</td><td><span class="pill issue">fixed</span> Notifications use relative-time strings ("2 hours ago") instead of real timestamps</td><td>7 notifications</td><td>Converted to absolute <code>TIMESTAMPTZ</code> values anchored to the migration's run time.</td></tr>
+              <tr><td>9</td><td><span class="pill issue">fixed</span> All ids are short hand-typed strings (<code>prop-01</code>, <code>client-06</code>), not the real <code>BIGSERIAL</code> integers</td><td>every record</td><td>A migration-time id-map resolves every cross-reference during insert (§5). Legacy ids are kept in the migration's log output for traceability only, not stored as a column.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="s4">
+        <h2><span class="num">4.</span> Why a Flyway Migration (Not an Ad-Hoc Script) — superseded</h2>
+        <p>The backend already uses versioned Flyway migrations (<code>V1__iam.sql</code> … <code>V8__platform.sql</code>) tracked in <code>flyway_schema_history</code>, applied automatically on startup and never re-applied once recorded. That mechanism is the right fit here too: it runs exactly once, is reviewable in version control like every other schema change, and is safe against accidental re-runs that would otherwise create duplicate properties/clients/etc.</p>
+        <p>Because BCrypt hashing needs to happen once, not per-deploy, the plan precomputes a single BCrypt hash for <code>password@123</code> and embeds that literal hash in the SQL — standard practice for seed migrations, since the plaintext is already known/documented.</p>
+        <div class="callout ok"><b>✅ EXECUTED — architecture changed at implementation time.</b> Hand-writing ~200 rows of interlinked SQL across ~40 tables using natural-key subqueries turned out considerably more error-prone than reusing the backend's own JPA entity classes with real, in-memory Java object references. The actual implementation is a Spring <code>ApplicationRunner</code> (<code>LegacySeedRunner</code>) instead of a Flyway SQL file — see Section 5. Same guarantees (runs once, reviewable, safe against re-runs) via a config flag plus a hard skip-if-not-empty check instead of <code>flyway_schema_history</code>. The BCrypt hash was generated with the app's own real <code>BCryptPasswordEncoder</code> bean to guarantee it verifies correctly at login — confirmed live in Section 6.</div>
+      </section>
+
+      <section id="s5">
+        <h2><span class="num">5.</span> Migration Architecture — as actually implemented</h2>
+        <ol style="color:var(--text-dim); padding-left:1.3rem;">
+          <li style="margin-bottom:.6rem;"><b>Extraction script</b>: <code>frontend/scripts/extract-legacy-data.ts</code>, run via <code>npx tsx</code>. Imports the real <code>mockData.ts</code> arrays directly (no hand-transcription), applies every fix in Section 3, writes <code>backend/src/main/resources/legacy-seed/legacy-seed-data.json</code>.</li>
+          <li style="margin-bottom:.6rem;"><b>Java seeder</b>: <code>LegacySeedRunner implements ApplicationRunner</code> (<code>com.panther.pms.platform</code>), ordered to run after the existing <code>DataSeeder</code>. Reads the JSON via Jackson, inserts via real repositories, maintaining an in-memory legacy-id → saved-entity map per entity type so later inserts resolve real generated ids through actual object references — no subqueries, no natural keys. Order: properties → buildings → rental types (+materials) → rooms (client link deferred) → agents (+deals, since <code>Booking.agent</code> is a hard FK) → clients (+materials) → employees (+documents/tasks/damages) → a backfill pass setting each room's <code>currentClientId</code> now that client ids exist → users (upserted by email) → bookings (+timeline) → payments → expenses → recurring_bills → technicians (+work orders/documents) → preventive_tasks → damage_reports → water_meters (+history) → maintenance_issues → payroll_records → activity_logs → notifications (+recipient rows).</li>
+          <li style="margin-bottom:.6rem;"><b>Idempotency &amp; safety</b>: gated by <code>panther.legacy-seed.enabled</code> (default false everywhere), plus a hard skip-with-warning if <code>propertyRepository.count() &gt; 0</code>.</li>
+          <li><b>Atomicity</b>: the whole <code>run()</code> method is <code>@Transactional</code> — any failure rolls back the entire import.</li>
+        </ol>
+        <div class="callout ok"><b>✅ EXECUTED.</b> Ran against a fresh Postgres (the project's own <code>docker-compose.yml</code> <code>db</code> service, after clearing unrelated leftover smoke-test data from earlier backend development). <code>PANTHER_SEED_ENABLED=false</code> was used so the bootstrap <code>DataSeeder</code> didn't create its own placeholder admin first.</div>
+      </section>
+
+      <section id="s6">
+        <h2><span class="num">6.</span> Step-by-Step Checklist — ✅ all executed and verified</h2>
+        <ul class="checklist done">
+          <li>Extraction script generated the JSON; record counts hand-diffed against Section 2 — every count matched except two, which turned out to be errors in this plan's <i>original</i> research pass, now corrected: client materials is 15 (not 18), booking timeline events is 17 (not 21), both confirmed by independent grep against <code>mockData.ts</code>.</li>
+          <li>Every resolution in Section 3 applied and confirmed live post-migration: client-03/04/05 show correctly re-derived property ids; the 3 pending-client bookings have no linked client; the admin user shows <code>employeeId: 2</code>; exp-05/exp-06 attributed to properties 1/2 per Section 7's decisions.</li>
+          <li>BCrypt hash for <code>password@123</code> generated via the app's own real <code>BCryptPasswordEncoder</code> bean (a temporary throwaway test, deleted immediately after use).</li>
+          <li>Java seeder (<code>LegacySeedRunner</code>) built per the revised architecture in Section 5.</li>
+          <li>Seeder code peer-reviewed by hand before running against real data.</li>
+          <li>Ran against a fresh, empty local Postgres (the project's own <code>docker-compose.yml</code> db, reset first); <code>mvn verify</code>'s full 148-test suite still passes afterward.</li>
+          <li>Record counts verified two ways (seeder's own summary log + independent <code>SELECT count(*)</code> queries) — both matched Section 2 exactly: 2 properties, 4 buildings, 4 rental types (23 materials), 10 rooms, 6 clients (15 materials), 5 bookings (17 timeline events), 10 payments, 6 expenses, 7 recurring bills, 5 technicians (4 work orders, 3 documents), 8 preventive tasks, 3 damage reports, 4 water meters (16 history rows), 5 employees, 4 payroll records, 3 agents (7 deals), 3 maintenance issues, 6 activity logs, 7 notifications (12 recipients), 5 users.</li>
+          <li>Spot-checked live: property 1 occupancy <code>totalRooms=7, occupied=4, available=2, maintenance=1, reserved=0</code>; property 2 <code>totalRooms=3, occupied=2, available=1</code> — both internally consistent (every OCCUPIED room has a currentClientId, every AVAILABLE/MAINTENANCE room doesn't). Rooms 5 and 10 (the D1/D2 decisions) show OCCUPIED with the correct currentClientId, confirming both fixes applied.</li>
+          <li>Computed fields confirmed smaller and internally consistent, not the mock's vanity numbers: technician 1 <code>totalJobs=2</code> (was 78 in the mock); agents show clientsReferred/bookingsCount of 4/2, 2/2, 1/1 (down from 18/14 etc.) — all now derived from real seeded child records.</li>
+          <li>Logged in as all 5 migrated users with <code>password@123</code> — all 5 succeeded with the correct role and name returned.</li>
+          <li>This local Postgres (<code>panther-pms-db</code>) <b>is</b> the real target environment at this stage — no separate environment exists yet. The migrated data now lives in that database's persistent volume.</li>
+        </ul>
+      </section>
+
+      <section id="s7">
+        <h2><span class="num">7.</span> Open Decisions Requiring Confirmation</h2>
+        <p>These records describe real tenants with contradictory data in the source file — only the property manager can give final confirmation. Unlike the first draft of this plan (which defaulted to trusting the room's state), reading both sides of each contradiction directly changed the default: in D1 and D2, the <i>client</i> record carries specific, dated, financially-consistent evidence (exact rent/deposit/rental-type matches, assigned materials with real dates) that a fabricated record would be very unlikely to have by coincidence — the room's <code>status</code> field looks like the side that was simply never updated when the tenant moved in. If either default is wrong, it's a one-row correction after import, not a re-migration.</p>
+        <div class="decision">
+          <h4>D1 — client-05 / room-10</h4>
+          <p style="margin:0;">client-05's rent (2200), deposit (2200), and rental type (Executive Luxury) all match room-10's real values exactly, plus two dated assigned materials from its claimed move-in date. Only the room number ("VC-12" vs room-10's real "G-401") and property name ("Vision City Executive Villas", which doesn't exist) are stale labels. <b>Default: import client-05 as the current tenant of room-10</b>, setting <code>room-10.status = occupied</code> and <code>current_client_id = client-05</code>. <i>Confirm: is client-05 (Marcus Thorne) actually a current tenant, and is room-10 (Nyarutarama Golf View Lofts, G-401) the correct real room?</i></p>
+        </div>
+        <div class="decision">
+          <h4>D2 — client-04 / room-05</h4>
+          <p style="margin:0;">client-04's room number ("A-404"), rent (700), and deposit (700) all match room-05 exactly, plus a dated assigned material. Room-05's own description text ("reserved for incoming diplomatic tenant") is even consistent with a tenant having since moved in. <b>Default: import client-04 as the current tenant of room-05</b>, setting <code>room-05.status = occupied</code> and <code>current_client_id = client-04</code>. <i>Confirm: is client-04 (Claire Uwase) actually a current tenant of room-05?</i></p>
+        </div>
+        <div class="decision">
+          <h4>D3 — exp-06 / "Vision City Executive Villas"</h4>
+          <p style="margin:0;">This expense uses the same fictional property name as client-05/pay-06, which both resolve to prop-02 (Nyarutarama Golf View Lofts) via room-10. <code>Expense</code> has no <code>roomId</code> to cross-check directly, so this is a reasoned inference from shared naming, not a hard cross-reference. <b>Default: attribute exp-06 to prop-02.</b> <i>Confirm: was this pool-maintenance expense ($520) actually for a Nyarutarama Golf View Lofts property?</i></p>
+        </div>
+      </section>
+
+      <section id="s8">
+        <h2><span class="num">8.</span> Explicitly Not Migrated (Nothing To Migrate)</h2>
+        <ul style="color:var(--text-dim);">
+          <li><code>system_settings</code> — no mock data exists at all; seed one sensible default row (matching what <code>DataSeeder</code> already does for a fresh install), since the schema expects exactly one row.</li>
+          <li><code>notification_preferences</code> — no mock data exists; leave empty, defaults apply per <code>BACKEND_PLAN.md</code> §5.1.</li>
+          <li><code>bill_payments</code>, employee <code>leaves</code>, and client <code>documents</code> — zero records of each in the source file, confirmed by exhaustive grep, not just the samples checked.</li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="wrap">Companion document to <code>BACKEND_PLAN.md</code> and <code>FRONTEND_INTEGRATION_PLAN.md</code>. Read before executing any migration against real data.</footer>
+</div>

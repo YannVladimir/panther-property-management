@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { useRoomQuery } from '../../api/rooms';
+import { usePropertyQuery } from '../../api/properties';
+import { useRentalTypesQuery } from '../../api/rentalTypes';
+import { useCreateBookingMutation } from '../../api/bookings';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import confetti from 'canvas-confetti';
@@ -31,14 +34,15 @@ import { Drawer } from '../../components/common/Drawer';
 
 export const RoomDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { rooms, properties, rentalTypes, addBooking } = useData();
+  const createBookingMutation = useCreateBookingMutation();
+  const { data: room, isLoading: roomLoading, isError: roomError } = useRoomQuery(id);
+  const { data: property } = usePropertyQuery(room?.propertyId);
+  const { data: rentalTypes = [] } = useRentalTypesQuery();
   const { success, error } = useToast();
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const room = rooms.find((r) => r.id === id) || rooms[0];
-  const property = properties.find((p) => p.id === room.propertyId) || properties[0];
-  const matchedRentalType = rentalTypes.find((rt) => rt.name === room.furnishingType) || rentalTypes[0];
+  const matchedRentalType = rentalTypes.find((rt) => rt.name === room?.furnishingType) ?? rentalTypes[0];
 
   const [bookingDrawerOpen, setBookingDrawerOpen] = useState(false);
   const [activeImgIndex, setActiveImgIndex] = useState(0);
@@ -49,13 +53,33 @@ export const RoomDetailPage: React.FC = () => {
   const [clientPhone, setClientPhone] = useState(currentUser?.phone || '+250 788 000 111');
   const [moveInDate, setMoveInDate] = useState('2026-09-01');
   const [notes, setNotes] = useState('');
-  const [selectedRentalTypeId, setSelectedRentalTypeId] = useState(matchedRentalType.id);
+  const [selectedRentalTypeId, setSelectedRentalTypeId] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedRentalTypeObj = rentalTypes.find((rt) => rt.id === selectedRentalTypeId) || matchedRentalType;
+  if (roomLoading || !room || !property || !matchedRentalType) {
+    if (roomError) {
+      return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center space-y-4">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Room not found</h1>
+          <p className="text-sm text-slate-500">This unit may have been removed or is no longer listed.</p>
+          <Link to="/properties" className="inline-flex items-center gap-2 text-brand-600 dark:text-brand-400 font-bold hover:underline">
+            <ArrowLeft className="w-4 h-4" />
+            Back to all properties
+          </Link>
+        </div>
+      );
+    }
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center text-sm text-slate-400">
+        Loading unit…
+      </div>
+    );
+  }
+
+  const selectedRentalTypeObj = rentalTypes.find((rt) => rt.id === selectedRentalTypeId) ?? matchedRentalType;
   const calculatedRent = Math.round(room.monthlyRent * (selectedRentalTypeObj.priceMultiplier / matchedRentalType.priceMultiplier));
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName || !clientEmail || !clientPhone) {
       error('Missing Information', 'Please fill in your name, email and phone number.');
@@ -64,26 +88,26 @@ export const RoomDetailPage: React.FC = () => {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const newBooking = addBooking({
-        clientId: currentUser?.id || `client-temp-${Date.now()}`,
+    try {
+      // currentUser?.clientId (not currentUser?.id — a User and a Client are different
+      // entities). When absent (anonymous visitor, or a logged-in non-client role), omit
+      // clientId entirely — the backend supports a booking with no linked client yet,
+      // keeping just the name/email/phone snapshot fields (a pre-account inquiry).
+      const newBooking = await createBookingMutation.mutateAsync({
+        clientId: currentUser?.clientId,
         clientName,
         clientEmail,
         clientPhone,
         propertyId: property.id,
-        propertyName: property.name,
         roomId: room.id,
-        roomNumber: room.roomNumber,
         rentalTypeId: selectedRentalTypeObj.id,
-        rentalTypeName: selectedRentalTypeObj.name,
         moveInDate,
         monthlyRent: calculatedRent,
         deposit: calculatedRent,
-        status: 'requested',
         notes,
+        source: 'client_portal',
       });
 
-      setIsSubmitting(false);
       setBookingDrawerOpen(false);
 
       // Trigger Confetti Celebration
@@ -101,7 +125,11 @@ export const RoomDetailPage: React.FC = () => {
         'Booking Request Submitted!',
         `Your reservation ${newBooking.bookingNumber} for Unit ${room.roomNumber} has been received by our operations desk.`
       );
-    }, 600);
+    } catch {
+      error('Submission Failed', 'Could not submit your booking request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -395,7 +423,7 @@ export const RoomDetailPage: React.FC = () => {
                 <label
                   key={rt.id}
                   className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-all ${
-                    selectedRentalTypeId === rt.id
+                    (selectedRentalTypeId ?? matchedRentalType.id) === rt.id
                       ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/40'
                       : 'border-slate-200 dark:border-slate-800'
                   }`}
@@ -404,7 +432,7 @@ export const RoomDetailPage: React.FC = () => {
                     <input
                       type="radio"
                       name="rentalTypeOption"
-                      checked={selectedRentalTypeId === rt.id}
+                      checked={(selectedRentalTypeId ?? matchedRentalType.id) === rt.id}
                       onChange={() => setSelectedRentalTypeId(rt.id)}
                       className="mt-1 text-brand-600 focus:ring-brand-500"
                     />

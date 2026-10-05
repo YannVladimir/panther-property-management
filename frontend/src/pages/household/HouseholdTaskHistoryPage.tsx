@@ -1,14 +1,19 @@
 import React from 'react';
-import { useData } from '../../context/DataContext';
+import { useMyPreventiveTasksQuery } from '../../api/preventiveTasks';
 import { History, CheckCircle2, AlertTriangle, Camera, Clock, Building } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 
 export const HouseholdTaskHistoryPage: React.FC = () => {
-  const { preventiveTasks } = useData();
+  const tasksQuery = useMyPreventiveTasksQuery();
+  const preventiveTasks = tasksQuery.data ?? [];
 
   const completedTasks = preventiveTasks.filter(
     (t) => t.status === 'pass' || t.status === 'needs_attention' || t.status === 'failed'
   );
+
+  if (tasksQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your task history…</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

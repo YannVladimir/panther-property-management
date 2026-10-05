@@ -1,35 +1,81 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
+import { ApiError } from '../api/client';
+import { changePassword as changePasswordApi } from '../api/auth';
+import { useMyPreferencesQuery, useUpdateMyPreferencesMutation } from '../api/users';
 import {
-  User,
   Sun,
   Moon,
   Monitor,
-  Bell,
   Lock,
   Save,
-  CheckCircle2,
-  Shield,
+  KeyRound,
 } from 'lucide-react';
-import { Badge } from '../components/common/Badge';
 
 export const ProfileSettingsPage: React.FC = () => {
   const { currentUser } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { success } = useToast();
+  const { success, error } = useToast();
 
-  const [name, setName] = useState(currentUser ? currentUser.name : 'Resident / Staff');
-  const [email, setEmail] = useState(currentUser ? currentUser.email : 'user@panther.rw');
-  const [phone, setPhone] = useState(currentUser?.phone || '+250 788 123 456');
+  const preferencesQuery = useMyPreferencesQuery();
+  const updatePreferencesMutation = useUpdateMyPreferencesMutation();
 
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [smsNotifs, setSmsNotifs] = useState(true);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    const p = preferencesQuery.data;
+    if (!p) return;
+    setEmailNotifs(p.emailNotifications);
+    setSmsNotifs(p.smsNotifications);
+  }, [preferencesQuery.data]);
+
+  const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
-    success('Profile Saved', 'Personal preferences and contact info updated.');
+    try {
+      // themePreference is a required field on this endpoint — the frontend's theme is a local,
+      // per-device preference (ThemeContext/localStorage), not currently synced FROM the backend,
+      // but the current value is still sent so the field is never left meaningless server-side.
+      await updatePreferencesMutation.mutateAsync({
+        emailNotifications: emailNotifs,
+        smsNotifications: smsNotifs,
+        themePreference: theme,
+      });
+      success('Preferences Saved', 'Notification settings updated.');
+    } catch (err) {
+      error('Save Failed', err instanceof ApiError ? err.message : 'Could not save your preferences.');
+    }
+  };
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      error('Weak Password', 'New password must be at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      error('Passwords Don’t Match', 'New password and confirmation must match.');
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await changePasswordApi(currentPassword, newPassword);
+      success('Password Changed', 'Your password has been updated. Use it next time you log in.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      error('Change Failed', err instanceof ApiError ? err.message : 'Could not change your password — check your current password.');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -43,12 +89,14 @@ export const ProfileSettingsPage: React.FC = () => {
           Profile & Account Settings
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Customize your theme interface, contact credentials, and notification settings.
+          Customize your theme interface, review your account, manage notifications, and update your password.
         </p>
       </div>
 
-      <form onSubmit={handleSaveProfile} className="space-y-6 text-xs">
-        {/* Profile Card */}
+      <div className="space-y-6 text-xs">
+        {/* Profile Card — read-only. There is no self-service "update my own name/email/phone"
+            endpoint anywhere in the backend (PUT /users/{id} is ADMIN-only) — a genuine backend
+            gap, not a wiring omission. An admin can change these via Users & Roles. */}
         <div className="glass-card p-6 sm:p-7 rounded-3xl shadow-soft space-y-5">
           <div className="flex items-center gap-4">
             {currentUser && (
@@ -59,7 +107,7 @@ export const ProfileSettingsPage: React.FC = () => {
               />
             )}
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">{name}</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{currentUser?.name}</h3>
               <p className="text-xs text-brand-600 dark:text-brand-400 font-semibold capitalize">
                 {currentUser?.role} Mode
               </p>
@@ -71,38 +119,32 @@ export const ProfileSettingsPage: React.FC = () => {
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
                 Full Legal Name
               </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              <p className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs">
+                {currentUser?.name || '—'}
+              </p>
             </div>
 
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
                 Email Address
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              <p className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs">
+                {currentUser?.email || '—'}
+              </p>
             </div>
 
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                Phone Number (WhatsApp)
+                Phone Number
               </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              <p className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white text-xs">
+                {currentUser?.phone || '—'}
+              </p>
             </div>
           </div>
+          <p className="text-[10px] text-slate-400">
+            Contact your system administrator to change your name, email, or phone number.
+          </p>
         </div>
 
         {/* Theme Settings (Light / Dark / System) */}
@@ -156,8 +198,8 @@ export const ProfileSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Notifications Preference */}
-        <div className="glass-card p-6 sm:p-7 rounded-3xl shadow-soft space-y-4">
+        {/* Notifications Preference — real, self-service (GET/PATCH /users/me/preferences) */}
+        <form onSubmit={handleSavePreferences} className="glass-card p-6 sm:p-7 rounded-3xl shadow-soft space-y-4">
           <h3 className="text-base font-bold font-display text-slate-900 dark:text-white">
             Notifications & Dispatch Alerts
           </h3>
@@ -189,16 +231,79 @@ export const ProfileSettingsPage: React.FC = () => {
               />
             </label>
           </div>
-        </div>
 
-        <button
-          type="submit"
-          className="px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2"
-        >
-          <Save className="w-4 h-4" />
-          <span>Save Account Preferences</span>
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save Notification Preferences</span>
+          </button>
+        </form>
+
+        {/* Change Password — real, self-service (POST /auth/change-password). Previously there
+            was no change-password UI anywhere in the frontend at all; api/auth.ts already exported
+            a typed function for it since the Auth-integration phase, unused until now. */}
+        <form onSubmit={handleChangePassword} className="glass-card p-6 sm:p-7 rounded-3xl shadow-soft space-y-4">
+          <h3 className="text-base font-bold font-display text-slate-900 dark:text-white flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-brand-500" />
+            Change Password
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-[10px] text-slate-400 font-bold mb-1">
+                Current Password
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-400 font-bold mb-1">
+                New Password
+              </label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-400 font-bold mb-1">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={changingPassword}
+            className="px-6 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 disabled:opacity-60"
+          >
+            <Save className="w-4 h-4" />
+            <span>{changingPassword ? 'Changing…' : 'Change Password'}</span>
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

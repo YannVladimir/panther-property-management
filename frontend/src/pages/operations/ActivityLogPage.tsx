@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { useActivityLogsQuery, ACTIVITY_LOG_MODULES } from '../../api/activityLogs';
 import {
   History,
   Search,
@@ -14,12 +14,13 @@ import {
 import { Badge } from '../../components/common/Badge';
 
 export const ActivityLogPage: React.FC = () => {
-  const { activityLogs } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState<string>('all');
 
+  const logsQuery = useActivityLogsQuery({ module: moduleFilter !== 'all' ? moduleFilter : undefined });
+  const activityLogs = logsQuery.data ?? [];
+
   const filteredLogs = activityLogs.filter((log) => {
-    if (moduleFilter !== 'all' && log.module !== moduleFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -66,14 +67,9 @@ export const ActivityLogPage: React.FC = () => {
             className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
           >
             <option value="all">All System Modules</option>
-            <option value="Bookings">Bookings</option>
-            <option value="Finance">Finance & Payments</option>
-            <option value="Rooms">Rooms & Estates</option>
-            <option value="Preventive Maintenance">Preventive Maintenance</option>
-            <option value="Maintenance">Maintenance Issues</option>
-            <option value="Damages">Damages</option>
-            <option value="Water Meters">Water Meters</option>
-            <option value="Reports">Executive Reports</option>
+            {ACTIVITY_LOG_MODULES.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
           </select>
         </div>
       </div>

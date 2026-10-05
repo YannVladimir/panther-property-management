@@ -1,7 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { ApiError } from '../../api/client';
+import { useBookingsQuery, useCreateBookingMutation, useUpdateBookingStatusMutation, useAssignRoomMutation } from '../../api/bookings';
+import { useClientsQuery, useUpdateClientStatusMutation } from '../../api/clients';
+import { usePropertiesQuery } from '../../api/properties';
+import { useRoomsQuery } from '../../api/rooms';
+import { useRentalTypesQuery } from '../../api/rentalTypes';
 import {
   CalendarCheck2,
   Search,
@@ -39,17 +44,24 @@ import { Modal } from '../../components/common/Modal';
 import { Booking, BookingStatus, FurnishingType, Room } from '../../types';
 
 export const BookingsManagementPage: React.FC = () => {
-  const {
-    bookings,
-    rooms,
-    properties,
-    rentalTypes,
-    clients,
-    addBooking,
-    updateBookingStatus,
-    assignRoomToBooking,
-    updateClientStatus,
-  } = useData();
+  const bookingsQuery = useBookingsQuery();
+  const roomsQuery = useRoomsQuery();
+  const propertiesQuery = usePropertiesQuery();
+  const rentalTypesQuery = useRentalTypesQuery();
+  const clientsQuery = useClientsQuery();
+  const createBookingMutation = useCreateBookingMutation();
+  const updateBookingStatusMutation = useUpdateBookingStatusMutation();
+  const assignRoomMutation = useAssignRoomMutation();
+  const updateClientStatusMutation = useUpdateClientStatusMutation();
+
+  const bookings = bookingsQuery.data ?? [];
+  const rooms = roomsQuery.data ?? [];
+  const properties = propertiesQuery.data ?? [];
+  const rentalTypes = rentalTypesQuery.data ?? [];
+  const clients = clientsQuery.data ?? [];
+  const isLoading =
+    bookingsQuery.isLoading || roomsQuery.isLoading || propertiesQuery.isLoading || rentalTypesQuery.isLoading || clientsQuery.isLoading;
+
   const { success, info, error } = useToast();
 
   const [activeTab, setActiveTab] = useState<string>('all');
@@ -79,8 +91,8 @@ export const BookingsManagementPage: React.FC = () => {
   const [newClientEmail, setNewClientEmail] = useState('');
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientNationality, setNewClientNationality] = useState('Rwandan');
-  const [newPropertyId, setNewPropertyId] = useState(properties[0]?.id || 'prop-01');
-  const [newRentalTypeId, setNewRentalTypeId] = useState(rentalTypes[0]?.id || 'rt-01');
+  const [newPropertyId, setNewPropertyId] = useState('');
+  const [newRentalTypeId, setNewRentalTypeId] = useState('');
   const [newRoomId, setNewRoomId] = useState<string>('');
   const [newMoveInDate, setNewMoveInDate] = useState(
     new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
@@ -92,6 +104,11 @@ export const BookingsManagementPage: React.FC = () => {
   const [newDeposit, setNewDeposit] = useState<number>(850);
   const [newSource, setNewSource] = useState<'operations_manager' | 'walk_in' | 'phone_inquiry'>('operations_manager');
   const [newNotes, setNewNotes] = useState('');
+
+  useEffect(() => {
+    if (!newPropertyId && properties.length > 0) setNewPropertyId(properties[0].id);
+    if (!newRentalTypeId && rentalTypes.length > 0) setNewRentalTypeId(rentalTypes[0].id);
+  }, [properties, rentalTypes, newPropertyId, newRentalTypeId]);
 
   const statusWorkflow: { key: string; label: string; count: number }[] = [
     { key: 'all', label: 'All Bookings', count: bookings.length },
@@ -155,65 +172,83 @@ export const BookingsManagementPage: React.FC = () => {
     setConfirmApproveBooking(booking);
   };
 
-  const handleConfirmApproval = () => {
+  const handleConfirmApproval = async () => {
     if (!confirmApproveBooking) return;
     const bookingId = confirmApproveBooking.id;
 
-    updateBookingStatus(bookingId, 'approved', 'Tenancy application formally approved by Operations Manager');
-    success('Tenancy Approved', `Application for ${confirmApproveBooking.clientName} has been approved.`);
-
-    if (selectedBooking && selectedBooking.id === bookingId) {
-      setSelectedBooking((prev) => (prev ? { ...prev, status: 'approved' } : null));
-    }
-    setConfirmApproveBooking(null);
-  };
-
-  const handleReject = (bookingId: string) => {
-    updateBookingStatus(bookingId, 'rejected', 'Application declined after review');
-    info('Booking Rejected', 'Reservation status updated to rejected.');
-    if (selectedBooking && selectedBooking.id === bookingId) {
-      setSelectedBooking((prev) => (prev ? { ...prev, status: 'rejected' } : null));
-    }
-  };
-
-  const handleConfirmCheckin = (bookingId: string) => {
-    updateBookingStatus(bookingId, 'checked_in', 'Keys handed over and move-in inventory report signed');
-    success('Resident Checked In', 'Tenant successfully checked in.');
-    if (selectedBooking && selectedBooking.id === bookingId) {
-      setSelectedBooking((prev) => (prev ? { ...prev, status: 'checked_in' } : null));
+    try {
+      const updated = await updateBookingStatusMutation.mutateAsync({
+        id: bookingId,
+        status: 'approved',
+        note: 'Tenancy application formally approved by Operations Manager',
+      });
+      success('Tenancy Approved', `Application for ${confirmApproveBooking.clientName} has been approved.`);
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking(updated);
+      }
+    } catch {
+      error('Approval Failed', 'Could not approve this booking. Please try again.');
+    } finally {
+      setConfirmApproveBooking(null);
     }
   };
 
-  const handleAssignRoomSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBooking || !selectedRoomId) return;
+  const handleReject = async (bookingId: string) => {
+    try {
+      const updated = await updateBookingStatusMutation.mutateAsync({
+        id: bookingId,
+        status: 'rejected',
+        note: 'Application declined after review',
+      });
+      info('Booking Rejected', 'Reservation status updated to rejected.');
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking(updated);
+      }
+    } catch {
+      error('Update Failed', 'Could not reject this booking. Please try again.');
+    }
+  };
 
-    assignRoomToBooking(selectedBooking.id, selectedRoomId);
-    setAssignRoomModalOpen(false);
-    success('Room Assigned', `Unit assigned to ${selectedBooking.clientName}.`);
-
-    const assignedRoom = rooms.find((r) => r.id === selectedRoomId);
-    if (selectedBooking && assignedRoom) {
-      setSelectedBooking((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: 'room_assigned',
-              roomId: assignedRoom.id,
-              roomNumber: assignedRoom.roomNumber,
-            }
-          : null
+  const handleConfirmCheckin = async (bookingId: string) => {
+    try {
+      const updated = await updateBookingStatusMutation.mutateAsync({
+        id: bookingId,
+        status: 'checked_in',
+        note: 'Keys handed over and move-in inventory report signed',
+      });
+      success('Resident Checked In', 'Tenant successfully checked in and added to Clients.');
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking(updated);
+      }
+    } catch (err) {
+      error(
+        'Check-In Failed',
+        err instanceof ApiError ? err.message : 'Could not check in this tenant. Please try again.'
       );
     }
   };
 
-  const handleCreateBookingSubmit = (e: React.FormEvent) => {
+  const handleAssignRoomSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBooking || !selectedRoomId) return;
+
+    try {
+      const updated = await assignRoomMutation.mutateAsync({ id: selectedBooking.id, roomId: selectedRoomId });
+      setAssignRoomModalOpen(false);
+      success('Room Assigned', `Unit assigned to ${selectedBooking.clientName}.`);
+      setSelectedBooking(updated);
+    } catch {
+      error('Assignment Failed', 'Could not assign this unit. Please try again.');
+    }
+  };
+
+  const handleCreateBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let clientName = newClientName.trim();
     let clientEmail = newClientEmail.trim();
     let clientPhone = newClientPhone.trim();
-    let clientId = `client-new-${Date.now()}`;
+    let clientId: string | undefined;
 
     if (newClientMode === 'existing') {
       const existingClient = clients.find((c) => c.id === selectedClientId);
@@ -224,49 +259,53 @@ export const BookingsManagementPage: React.FC = () => {
         clientId = existingClient.id;
       }
     }
+    // newClientMode === 'new': no clientId sent — the backend supports a booking with no linked
+    // client yet (pre-account inquiry), keeping just the name/email/phone snapshot fields.
 
     if (!clientName || !clientEmail) {
       error('Validation Error', 'Please specify client name and email address.');
       return;
     }
 
-    const targetProp = properties.find((p) => p.id === newPropertyId) || properties[0];
-    const targetRentalType = rentalTypes.find((rt) => rt.id === newRentalTypeId) || rentalTypes[0];
     const targetRoom = rooms.find((r) => r.id === newRoomId);
 
-    const createdBooking = addBooking({
-      clientId,
-      clientName,
-      clientEmail,
-      clientPhone,
-      propertyId: targetProp.id,
-      propertyName: targetProp.name,
-      roomId: targetRoom ? targetRoom.id : undefined,
-      roomNumber: targetRoom ? targetRoom.roomNumber : undefined,
-      rentalTypeId: targetRentalType.id,
-      rentalTypeName: targetRentalType.name,
-      moveInDate: newMoveInDate,
-      moveOutDate: newMoveOutDate,
-      monthlyRent: Number(newMonthlyRent),
-      deposit: Number(newDeposit),
-      status: targetRoom ? 'room_assigned' : 'under_review',
-      notes: newNotes,
-      source: newSource,
-      agentName: 'Operations Direct Reservation',
-    });
+    try {
+      const createdBooking = await createBookingMutation.mutateAsync({
+        clientId,
+        clientName,
+        clientEmail,
+        clientPhone,
+        propertyId: newPropertyId,
+        roomId: targetRoom ? targetRoom.id : undefined,
+        rentalTypeId: newRentalTypeId,
+        moveInDate: newMoveInDate,
+        moveOutDate: newMoveOutDate,
+        monthlyRent: Number(newMonthlyRent),
+        deposit: Number(newDeposit),
+        status: targetRoom ? 'room_assigned' : 'under_review',
+        notes: newNotes,
+        source: newSource,
+      });
 
-    success(
-      'Reservation Created',
-      `New booking ${createdBooking.bookingNumber} for ${clientName} created successfully.`
-    );
+      success(
+        'Reservation Created',
+        `New booking ${createdBooking.bookingNumber} for ${clientName} created successfully.`
+      );
 
-    setCreateDrawerOpen(false);
-    // Reset form
-    setNewClientName('');
-    setNewClientEmail('');
-    setNewClientPhone('');
-    setNewNotes('');
+      setCreateDrawerOpen(false);
+      // Reset form
+      setNewClientName('');
+      setNewClientEmail('');
+      setNewClientPhone('');
+      setNewNotes('');
+    } catch {
+      error('Creation Failed', 'Could not create this reservation. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading bookings…</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -674,13 +713,17 @@ export const BookingsManagementPage: React.FC = () => {
 
                         {matchedClient.status === 'active' ? (
                           <button
-                            onClick={() => {
-                              updateClientStatus(
-                                matchedClient.id,
-                                'inactive',
-                                `Deactivated from Booking ${selectedBooking.bookingNumber}`
-                              );
-                              info('Client Deactivated', `${matchedClient.name} marked as Inactive.`);
+                            onClick={async () => {
+                              try {
+                                await updateClientStatusMutation.mutateAsync({
+                                  id: matchedClient.id,
+                                  status: 'inactive',
+                                  reason: `Deactivated from Booking ${selectedBooking.bookingNumber}`,
+                                });
+                                info('Client Deactivated', `${matchedClient.name} marked as Inactive.`);
+                              } catch {
+                                error('Update Failed', 'Could not deactivate this client.');
+                              }
                             }}
                             className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-300 text-[10px] font-bold border border-rose-200 dark:border-rose-800 transition-colors inline-flex items-center gap-1"
                           >
@@ -689,13 +732,17 @@ export const BookingsManagementPage: React.FC = () => {
                           </button>
                         ) : (
                           <button
-                            onClick={() => {
-                              updateClientStatus(
-                                matchedClient.id,
-                                'active',
-                                `Re-activated via Booking ${selectedBooking.bookingNumber}`
-                              );
-                              success('Client Reactivated', `${matchedClient.name} is now Active.`);
+                            onClick={async () => {
+                              try {
+                                await updateClientStatusMutation.mutateAsync({
+                                  id: matchedClient.id,
+                                  status: 'active',
+                                  reason: `Re-activated via Booking ${selectedBooking.bookingNumber}`,
+                                });
+                                success('Client Reactivated', `${matchedClient.name} is now Active.`);
+                              } catch {
+                                error('Update Failed', 'Could not reactivate this client.');
+                              }
                             }}
                             className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1"
                           >

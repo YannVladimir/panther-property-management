@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { useMyClientQuery } from '../../api/clients';
+import { useCreateMaintenanceIssueMutation } from '../../api/maintenanceIssues';
 import {
   Package,
   ShieldCheck,
@@ -16,30 +16,23 @@ import { Modal } from '../../components/common/Modal';
 import { ClientMaterial } from '../../types';
 
 export const MyMaterialsPage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { clients, addMaintenanceIssue } = useData();
-  const { success } = useToast();
+  const { data: client, isLoading } = useMyClientQuery();
+  const createIssueMutation = useCreateMaintenanceIssueMutation();
+  const { success, error } = useToast();
 
-  const client = clients.find((c) => c.id === currentUser?.clientId) || clients[0];
   const [selectedMaterial, setSelectedMaterial] = useState<ClientMaterial | null>(null);
   const [issueDescription, setIssueDescription] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleReportMaterialIssue = (e: React.FormEvent) => {
+  const isSubmitting = createIssueMutation.isPending;
+
+  const handleReportMaterialIssue = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMaterial) return;
+    if (!selectedMaterial || !client) return;
 
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      addMaintenanceIssue({
-        clientId: client.id,
-        clientName: client.name,
-        clientAvatar: client.avatar,
+    try {
+      await createIssueMutation.mutateAsync({
         propertyId: client.currentPropertyId,
-        propertyName: client.currentPropertyName,
         roomId: client.currentRoomId,
-        roomNumber: client.currentRoomNumber,
         category: 'Furniture',
         title: `Service Request: ${selectedMaterial.name}`,
         description: issueDescription || `Reported condition check for ${selectedMaterial.name} (SN: ${selectedMaterial.serialNumber})`,
@@ -47,12 +40,17 @@ export const MyMaterialsPage: React.FC = () => {
         photos: [],
       });
 
-      setIsSubmitting(false);
       setSelectedMaterial(null);
       setIssueDescription('');
       success('Ticket Logged', `Service request filed for ${selectedMaterial.name}.`);
-    }, 500);
+    } catch {
+      error('Submission Failed', 'Could not log this service request. Please try again.');
+    }
   };
+
+  if (isLoading || !client) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your materials…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

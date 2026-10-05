@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { usePropertiesQuery } from '../../api/properties';
+import { usePaymentsQuery } from '../../api/payments';
+import { useExpensesQuery } from '../../api/expenses';
+import { useWaterMetersQuery } from '../../api/waterMeters';
+import { usePreventiveTasksQuery } from '../../api/preventiveTasks';
 import {
   FileBarChart,
   Download,
@@ -16,9 +20,21 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
+import { usePayrollRecordsQuery } from '../../api/payrollRecords';
 
 export const ReportsPage: React.FC = () => {
-  const { properties, rooms, clients, payments, expenses, waterMeters, preventiveTasks, payrollRecords } = useData();
+  const propertiesQuery = usePropertiesQuery();
+  const properties = propertiesQuery.data ?? [];
+  const paymentsQuery = usePaymentsQuery();
+  const payments = paymentsQuery.data ?? [];
+  const expensesQuery = useExpensesQuery();
+  const expenses = expensesQuery.data ?? [];
+  const waterMetersQuery = useWaterMetersQuery();
+  const waterMeters = waterMetersQuery.data ?? [];
+  const preventiveTasksQuery = usePreventiveTasksQuery();
+  const preventiveTasks = preventiveTasksQuery.data ?? [];
+  const payrollRecordsQuery = usePayrollRecordsQuery();
+  const payrollRecords = payrollRecordsQuery.data ?? [];
   const { success, info } = useToast();
 
   const [reportType, setReportType] = useState('revenue');
@@ -257,6 +273,40 @@ export const ReportsPage: React.FC = () => {
                     <td className="py-2.5 font-bold text-sky-600">{m.consumptionM3} m³</td>
                     <td className="py-2.5">${m.ratePerM3}</td>
                     <td className="py-2.5 font-bold text-emerald-600">${m.totalAmount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* The dropdown above always had a "payroll" option, but no matching branch ever existed —
+            selecting it silently rendered a blank sheet. Real, pre-existing gap, not introduced by
+            this pass; filled in using the real payroll-records data the Finance domain already wired. */}
+        {reportType === 'payroll' && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-bold text-[10px]">
+                  <th className="py-2.5">Payroll #</th>
+                  <th className="py-2.5">Employee</th>
+                  <th className="py-2.5">Department</th>
+                  <th className="py-2.5">Period</th>
+                  <th className="py-2.5">Net Salary</th>
+                  <th className="py-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {payrollRecords.map((r) => (
+                  <tr key={r.id}>
+                    <td className="py-2.5 font-mono">{r.payrollNumber}</td>
+                    <td className="py-2.5 font-bold">{r.employeeName}</td>
+                    <td className="py-2.5">{r.department}</td>
+                    <td className="py-2.5">{r.period}</td>
+                    <td className="py-2.5 font-bold text-emerald-600">${r.netSalary.toLocaleString()}</td>
+                    <td className="py-2.5">
+                      <Badge variant={r.paymentStatus === 'Paid' ? 'success' : 'warning'} size="sm">{r.paymentStatus}</Badge>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { usePaymentsQuery, useCreatePaymentMutation } from '../../api/payments';
+import { useClientsQuery } from '../../api/clients';
 import confetti from 'canvas-confetti';
 import {
   Receipt,
@@ -21,8 +22,14 @@ import { Modal } from '../../components/common/Modal';
 import { Payment, PaymentType, PaymentMethod } from '../../types';
 
 export const PaymentsManagementPage: React.FC = () => {
-  const { payments, clients, properties, addPayment } = useData();
-  const { success } = useToast();
+  const paymentsQuery = usePaymentsQuery();
+  const clientsQuery = useClientsQuery();
+  const createPaymentMutation = useCreatePaymentMutation();
+  const { success, error } = useToast();
+
+  const payments = paymentsQuery.data ?? [];
+  const clients = clientsQuery.data ?? [];
+  const isLoading = paymentsQuery.isLoading || clientsQuery.isLoading;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -33,12 +40,16 @@ export const PaymentsManagementPage: React.FC = () => {
   const [selectedReceipt, setSelectedReceipt] = useState<Payment | null>(null);
 
   // Form State for Recording Payment
-  const [clientId, setClientId] = useState(clients[0]?.id || '');
+  const [clientId, setClientId] = useState('');
   const [amount, setAmount] = useState(850);
   const [type, setType] = useState<PaymentType>('rent');
   const [method, setMethod] = useState<PaymentMethod>('Mobile Money');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (!clientId && clients.length > 0) setClientId(clients[0].id);
+  }, [clients, clientId]);
 
   const selectedClientObj = clients.find((c) => c.id === clientId) || clients[0];
 
@@ -67,38 +78,42 @@ export const PaymentsManagementPage: React.FC = () => {
     return filteredPayments.slice(start, start + pageSize);
   }, [filteredPayments, pageIndex, pageSize]);
 
-  const handleRecordSubmit = (e: React.FormEvent) => {
+  const handleRecordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedClientObj) return;
 
-    const newPayment = addPayment({
-      clientId: selectedClientObj.id,
-      clientName: selectedClientObj.name,
-      clientAvatar: selectedClientObj.avatar,
-      propertyId: selectedClientObj.currentPropertyId,
-      propertyName: selectedClientObj.currentPropertyName,
-      roomId: selectedClientObj.currentRoomId,
-      roomNumber: selectedClientObj.currentRoomNumber,
-      amount,
-      date: new Date().toISOString().split('T')[0],
-      dueDate: new Date().toISOString().split('T')[0],
-      type,
-      method,
-      reference: reference || `REF-${Math.floor(100000 + Math.random() * 900000)}`,
-      status: 'paid',
-      notes,
-    });
-
-    setRecordModalOpen(false);
-    setReference('');
-    setNotes('');
-
     try {
-      confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
-    } catch (err) {}
+      const newPayment = await createPaymentMutation.mutateAsync({
+        clientId: selectedClientObj.id,
+        propertyId: selectedClientObj.currentPropertyId,
+        roomId: selectedClientObj.currentRoomId,
+        amount,
+        date: new Date().toISOString().split('T')[0],
+        dueDate: new Date().toISOString().split('T')[0],
+        type,
+        method,
+        reference: reference || `REF-${Math.floor(100000 + Math.random() * 900000)}`,
+        status: 'paid',
+        notes,
+      });
 
-    success('Payment Recorded', `Invoice ${newPayment.invoiceNumber} recorded for ${selectedClientObj.name}.`);
+      setRecordModalOpen(false);
+      setReference('');
+      setNotes('');
+
+      try {
+        confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
+      } catch (err) {}
+
+      success('Payment Recorded', `Invoice ${newPayment.invoiceNumber} recorded for ${selectedClientObj.name}.`);
+    } catch {
+      error('Recording Failed', 'Could not record this payment. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading payments…</div>;
+  }
 
   return (
     <div className="space-y-8">

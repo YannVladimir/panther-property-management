@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { useExpensesQuery, useCreateExpenseMutation } from '../../api/expenses';
+import { usePropertiesQuery } from '../../api/properties';
 import {
   TrendingDown,
   Search,
@@ -19,8 +20,14 @@ import { Modal } from '../../components/common/Modal';
 import { Expense, ExpenseCategory, PaymentMethod } from '../../types';
 
 export const ExpensesPage: React.FC = () => {
-  const { expenses, properties, addExpense } = useData();
-  const { success } = useToast();
+  const expensesQuery = useExpensesQuery();
+  const propertiesQuery = usePropertiesQuery();
+  const createExpenseMutation = useCreateExpenseMutation();
+  const { success, error } = useToast();
+
+  const expenses = expensesQuery.data ?? [];
+  const properties = propertiesQuery.data ?? [];
+  const isLoading = expensesQuery.isLoading || propertiesQuery.isLoading;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -29,13 +36,17 @@ export const ExpensesPage: React.FC = () => {
   const [recordModalOpen, setRecordModalOpen] = useState(false);
 
   // Form State
-  const [propertyId, setPropertyId] = useState(properties[0]?.id || '');
+  const [propertyId, setPropertyId] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('Maintenance');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(350);
   const [vendor, setVendor] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Bank Transfer');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (!propertyId && properties.length > 0) setPropertyId(properties[0].id);
+  }, [properties, propertyId]);
 
   const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
 
@@ -69,30 +80,38 @@ export const ExpensesPage: React.FC = () => {
     return filteredExpenses.slice(start, start + pageSize);
   }, [filteredExpenses, pageIndex, pageSize]);
 
-  const handleRecordExpense = (e: React.FormEvent) => {
+  const handleRecordExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     const prop = properties.find((p) => p.id === propertyId) || properties[0];
+    if (!prop) return;
 
-    const newExp = addExpense({
-      propertyId: prop.id,
-      propertyName: prop.name,
-      category,
-      description,
-      amount,
-      date: new Date().toISOString().split('T')[0],
-      vendor: vendor || 'Direct Service Vendor',
-      paymentMethod,
-      status: 'paid',
-      receiptAttached: true,
-      notes,
-    });
+    try {
+      const newExp = await createExpenseMutation.mutateAsync({
+        propertyId: prop.id,
+        category,
+        description,
+        amount,
+        date: new Date().toISOString().split('T')[0],
+        vendor: vendor || 'Direct Service Vendor',
+        paymentMethod,
+        status: 'paid',
+        receiptAttached: true,
+        notes,
+      });
 
-    setRecordModalOpen(false);
-    setDescription('');
-    setVendor('');
-    setNotes('');
-    success('Expense Logged', `Recorded $${newExp.amount} for ${newExp.category} (${newExp.propertyName}).`);
+      setRecordModalOpen(false);
+      setDescription('');
+      setVendor('');
+      setNotes('');
+      success('Expense Logged', `Recorded $${newExp.amount} for ${newExp.category} (${newExp.propertyName}).`);
+    } catch {
+      error('Recording Failed', 'Could not record this expense. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading expenses…</div>;
+  }
 
   return (
     <div className="space-y-8">

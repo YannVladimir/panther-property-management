@@ -11,6 +11,8 @@ import { PropertiesPage } from '../pages/public/PropertiesPage';
 import { PropertyDetailPage } from '../pages/public/PropertyDetailPage';
 import { RoomDetailPage } from '../pages/public/RoomDetailPage';
 import { LoginPage } from '../pages/public/LoginPage';
+import { NotAuthorizedPage } from '../pages/public/NotAuthorizedPage';
+import { ProtectedRoute } from './ProtectedRoute';
 
 // Client Portal
 import { ClientDashboard } from '../pages/client/ClientDashboard';
@@ -72,80 +74,91 @@ export const AppRoutes: React.FC = () => {
         <Route path="/property/:id" element={<PropertyDetailPage />} />
         <Route path="/room/:id" element={<RoomDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/not-authorized" element={<NotAuthorizedPage />} />
       </Route>
 
       {/* Client Portal */}
-      <Route path="/client" element={<DashboardLayout />}>
-        <Route index element={<ClientDashboard />} />
-        <Route path="my-booking" element={<MyBookingPage />} />
-        <Route path="my-room" element={<MyRoomPage />} />
-        <Route path="payments" element={<ClientPaymentsPage />} />
-        <Route path="my-materials" element={<MyMaterialsPage />} />
-        <Route path="report-issue" element={<ReportIssuePage />} />
-        <Route path="notifications" element={<ClientNotificationsPage />} />
-        <Route path="settings" element={<ProfileSettingsPage />} />
+      <Route element={<ProtectedRoute allowedRoles={['client']} />}>
+        <Route path="/client" element={<DashboardLayout />}>
+          <Route index element={<ClientDashboard />} />
+          <Route path="my-booking" element={<MyBookingPage />} />
+          <Route path="my-room" element={<MyRoomPage />} />
+          <Route path="payments" element={<ClientPaymentsPage />} />
+          <Route path="my-materials" element={<MyMaterialsPage />} />
+          <Route path="report-issue" element={<ReportIssuePage />} />
+          <Route path="notifications" element={<ClientNotificationsPage />} />
+          <Route path="settings" element={<ProfileSettingsPage />} />
+        </Route>
       </Route>
 
       {/* Operations Manager */}
-      <Route path="/operations" element={<DashboardLayout />}>
-        <Route index element={<OperationsDashboard />} />
-        <Route path="bookings" element={<BookingsManagementPage />} />
-        <Route path="clients" element={<ClientsManagementPage />} />
-        <Route path="clients/:id" element={<ClientDetailPage />} />
-        <Route path="properties" element={<PropertiesManagementPage />} />
-        <Route path="payments" element={<PaymentsManagementPage />} />
-        <Route path="agents" element={<AgentsCommissionsPage />} />
-        <Route path="expenses" element={<ExpensesPage />} />
-        <Route path="recurring-bills" element={<RecurringBillsPage />} />
-        <Route path="technicians" element={<TechniciansPage />} />
-        <Route path="preventive-maintenance" element={<PreventiveMaintenancePage />} />
-        <Route path="damages" element={<DamagesManagementPage />} />
-        <Route path="water-meters" element={<WaterMetersPage />} />
-        <Route path="hr-payroll" element={<HRPayrollPage />} />
-        <Route path="hr-payroll/:id" element={<EmployeeDetailPage />} />
-        <Route path="activity-log" element={<ActivityLogPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="notifications" element={<ClientNotificationsPage />} />
-        <Route path="settings" element={<ProfileSettingsPage />} />
+      <Route element={<ProtectedRoute allowedRoles={['operations']} />}>
+        <Route path="/operations" element={<DashboardLayout />}>
+          <Route index element={<OperationsDashboard />} />
+          <Route path="bookings" element={<BookingsManagementPage />} />
+          <Route path="clients" element={<ClientsManagementPage />} />
+          <Route path="clients/:id" element={<ClientDetailPage />} />
+          <Route path="properties" element={<PropertiesManagementPage />} />
+          <Route path="payments" element={<PaymentsManagementPage />} />
+          <Route path="agents" element={<AgentsCommissionsPage />} />
+          <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="recurring-bills" element={<RecurringBillsPage />} />
+          <Route path="technicians" element={<TechniciansPage />} />
+          <Route path="preventive-maintenance" element={<PreventiveMaintenancePage />} />
+          <Route path="damages" element={<DamagesManagementPage />} />
+          <Route path="water-meters" element={<WaterMetersPage />} />
+          <Route path="hr-payroll" element={<HRPayrollPage />} />
+          <Route path="hr-payroll/:id" element={<EmployeeDetailPage />} />
+          <Route path="activity-log" element={<ActivityLogPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="notifications" element={<ClientNotificationsPage />} />
+          <Route path="settings" element={<ProfileSettingsPage />} />
+        </Route>
       </Route>
 
       {/* Owner Executive */}
-      <Route path="/owner" element={<DashboardLayout />}>
-        <Route index element={<OwnerExecutiveDashboard />} />
-        <Route path="properties" element={<PropertiesManagementPage />} />
-        <Route path="financials" element={<ExpensesPage />} />
-        <Route path="occupancy" element={<PropertiesManagementPage />} />
-        <Route path="clients" element={<ClientsManagementPage />} />
-        <Route path="maintenance" element={<PreventiveMaintenancePage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="notifications" element={<ClientNotificationsPage />} />
-        <Route path="settings" element={<ProfileSettingsPage />} />
+      <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
+        <Route path="/owner" element={<DashboardLayout />}>
+          <Route index element={<OwnerExecutiveDashboard />} />
+          <Route path="properties" element={<PropertiesManagementPage />} />
+          <Route path="financials" element={<ExpensesPage />} />
+          <Route path="occupancy" element={<PropertiesManagementPage />} />
+          <Route path="clients" element={<ClientsManagementPage />} />
+          <Route path="maintenance" element={<PreventiveMaintenancePage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="notifications" element={<ClientNotificationsPage />} />
+          <Route path="settings" element={<ProfileSettingsPage />} />
+        </Route>
       </Route>
 
       {/* Household Staff */}
-      <Route path="/household" element={<DashboardLayout />}>
-        <Route index element={<HouseholdDashboard />} />
-        <Route path="checklist" element={<HouseholdChecklistPage />} />
-        <Route path="tasks" element={<HouseholdChecklistPage />} />
-        <Route path="history" element={<HouseholdTaskHistoryPage />} />
-        <Route path="salary" element={<HouseholdSalaryPage />} />
-        <Route path="notifications" element={<ClientNotificationsPage />} />
-        <Route path="settings" element={<ProfileSettingsPage />} />
+      <Route element={<ProtectedRoute allowedRoles={['household']} />}>
+        <Route path="/household" element={<DashboardLayout />}>
+          <Route index element={<HouseholdDashboard />} />
+          <Route path="checklist" element={<HouseholdChecklistPage />} />
+          <Route path="tasks" element={<HouseholdChecklistPage />} />
+          <Route path="history" element={<HouseholdTaskHistoryPage />} />
+          <Route path="salary" element={<HouseholdSalaryPage />} />
+          <Route path="notifications" element={<ClientNotificationsPage />} />
+          <Route path="settings" element={<ProfileSettingsPage />} />
+        </Route>
       </Route>
 
       {/* Admin */}
-      <Route path="/admin" element={<DashboardLayout />}>
-        <Route index element={<AdminDashboard />} />
-        <Route path="properties" element={<AdminPropertiesPage />} />
-        <Route path="properties/new" element={<AdminPropertyEditPage />} />
-        <Route path="properties/:id" element={<AdminPropertyEditPage />} />
-        <Route path="buildings-rooms" element={<AdminBuildingsRoomsPage />} />
-        <Route path="buildings-rooms/new" element={<AdminRoomEditPage />} />
-        <Route path="buildings-rooms/:id" element={<AdminRoomEditPage />} />
-        <Route path="rental-types" element={<AdminRentalTypesPage />} />
-        <Route path="users" element={<AdminUsersRolesPage />} />
-        <Route path="settings" element={<AdminSystemSettingsPage />} />
-        <Route path="logs" element={<ActivityLogPage />} />
+      <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+        <Route path="/admin" element={<DashboardLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="properties" element={<AdminPropertiesPage />} />
+          <Route path="properties/new" element={<AdminPropertyEditPage />} />
+          <Route path="properties/:id" element={<AdminPropertyEditPage />} />
+          <Route path="buildings-rooms" element={<AdminBuildingsRoomsPage />} />
+          <Route path="buildings-rooms/new" element={<AdminRoomEditPage />} />
+          <Route path="buildings-rooms/:id" element={<AdminRoomEditPage />} />
+          <Route path="rental-types" element={<AdminRentalTypesPage />} />
+          <Route path="users" element={<AdminUsersRolesPage />} />
+          <Route path="settings" element={<AdminSystemSettingsPage />} />
+          <Route path="logs" element={<ActivityLogPage />} />
+        </Route>
       </Route>
 
       {/* Fallback */}

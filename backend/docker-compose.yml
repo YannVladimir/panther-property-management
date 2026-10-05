@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: panther-pms-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: panther_pms
+      POSTGRES_USER: panther
+      POSTGRES_PASSWORD: panther
+    ports:
+      # Host port 5432 is already taken by other local services on dev machines;
+      # exposed on 55432 instead. The app container always talks to db:5432 internally.
+      - "55432:5432"
+    volumes:
+      - panther-pms-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U panther -d panther_pms"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: panther-pms-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: panther_pms
+      DB_USER: panther
+      DB_PASSWORD: panther
+      PANTHER_JWT_SECRET: dev-only-secret-key-change-me-please-32bytes-min
+      PANTHER_ADMIN_EMAIL: admin@panther.rw
+      PANTHER_ADMIN_PASSWORD: ChangeMe123!
+      PANTHER_UPLOAD_DIR: /data/uploads
+    ports:
+      - "8080:8080"
+    volumes:
+      - panther-pms-uploads:/data/uploads
+
+volumes:
+  panther-pms-db-data:
+  panther-pms-uploads:

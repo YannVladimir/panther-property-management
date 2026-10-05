@@ -7,7 +7,7 @@ import { RoleSwitcher } from '../components/common/RoleSwitcher';
 
 export const PublicLayout: React.FC = () => {
   const { resolvedTheme, toggleTheme } = useTheme();
-  const { currentRole, switchRole } = useAuth();
+  const { currentRole } = useAuth();
   const navigate = useNavigate();
 
   return (

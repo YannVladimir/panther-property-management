@@ -91,6 +91,7 @@ export const mockProperties: Property[] = [
     featured: true,
     yearBuilt: 2024,
     monthlyRevenueEstimate: 29400,
+    status: 'active',
     description:
       'Ultra-luxury modern hillside serviced residences situated in the prestigious Gacuriro Hillcrest neighborhood. Boasting panoramic sunset balconies, 24/7 guarded security, high-speed fiber internet, and immediate proximity to MTN Center.',
     images: [
@@ -128,6 +129,7 @@ export const mockProperties: Property[] = [
     featured: true,
     yearBuilt: 2024,
     monthlyRevenueEstimate: 32800,
+    status: 'active',
     description:
       'Contemporary duplex lofts boasting floor-to-ceiling glass architecture with lush green views overlooking the Kigali Golf Club fairway. Features private gardens, modern European finishes, and solar energy systems.',
     images: [

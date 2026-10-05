@@ -1,7 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { ApiError, resolveFileUrl } from '../../api/client';
+import {
+  useClientQuery,
+  useUpdateClientMutation,
+  useUpdateClientStatusMutation,
+  useAddClientDocumentMutation,
+  useDeleteClientDocumentMutation,
+  useAddClientMaterialMutation,
+  useDeleteClientMaterialMutation,
+  useUpdateClientMaterialConditionMutation,
+} from '../../api/clients';
+import { useDamageReportsQuery, useCreateDamageReportMutation, useUpdateDamageStatusMutation, DamageReportInput } from '../../api/damageReports';
+import { usePaymentsQuery, useCreatePaymentMutation, PaymentInput } from '../../api/payments';
+import { useMaintenanceIssuesQuery } from '../../api/maintenanceIssues';
+import { useWaterMetersQuery, useUpdateWaterMeterReadingMutation } from '../../api/waterMeters';
+import { useUploadFileMutation } from '../../api/files';
 import {
   User,
   ArrowLeft,
@@ -42,6 +57,7 @@ import {
 import { Badge } from '../../components/common/Badge';
 import { Pagination } from '../../components/common/Pagination';
 import { Modal } from '../../components/common/Modal';
+import { FileUploadButton } from '../../components/common/FileUploadButton';
 import {
   Client,
   ClientDocument,
@@ -51,32 +67,44 @@ import {
   MaintenanceIssue,
 } from '../../types';
 
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+
+function getPreviewKind(url: string): 'image' | 'pdf' | 'other' {
+  const ext = url.split(/[?#]/)[0].split('.').pop()?.toLowerCase() ?? '';
+  if (ext === 'pdf') return 'pdf';
+  if (IMAGE_EXTENSIONS.includes(ext)) return 'image';
+  return 'other';
+}
+
 export const ClientDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    clients,
-    properties,
-    rooms,
-    damages,
-    payments,
-    maintenanceIssues,
-    waterMeters,
-    updateClient,
-    updateClientStatus,
-    addClientDocument,
-    deleteClientDocument,
-    addClientMaterial,
-    deleteClientMaterial,
-    updateClientMaterialCondition,
-    addDamageReport,
-    addPayment,
-    addMaintenanceIssue,
-  } = useData();
+
+  const clientQuery = useClientQuery(id);
+  const client = clientQuery.data;
+  const updateClientMutation = useUpdateClientMutation();
+  const updateClientStatusMutation = useUpdateClientStatusMutation();
+  const addClientDocumentMutation = useAddClientDocumentMutation();
+  const deleteClientDocumentMutation = useDeleteClientDocumentMutation();
+  const addClientMaterialMutation = useAddClientMaterialMutation();
+  const deleteClientMaterialMutation = useDeleteClientMaterialMutation();
+  const updateClientMaterialConditionMutation = useUpdateClientMaterialConditionMutation();
+  // Damages, payments, maintenance issues, and water meters are all real, already-converted
+  // domains — this page just hadn't been switched over to any of them yet, which is why
+  // recording any of them from here never actually persisted.
+  const damageReportsQuery = useDamageReportsQuery({ clientId: client?.id });
+  const createDamageMutation = useCreateDamageReportMutation();
+  const updateDamageStatusMutation = useUpdateDamageStatusMutation();
+  const paymentsQuery = usePaymentsQuery({ clientId: client?.id });
+  const createPaymentMutation = useCreatePaymentMutation();
+  const maintenanceIssuesQuery = useMaintenanceIssuesQuery({ clientId: client?.id });
+  // No clientId filter exists on GET /water-meters (it's a small, effectively 1-per-resident
+  // dataset) — fetch the full list and find this client's meter, same as WaterMetersPage does.
+  const waterMetersQuery = useWaterMetersQuery();
+  const updateWaterMeterReadingMutation = useUpdateWaterMeterReadingMutation();
+  const uploadFileMutation = useUploadFileMutation();
 
   const { success, error, info } = useToast();
-
-  const client = clients.find((c) => c.id === id);
 
   // Status Change Modal State
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -90,8 +118,6 @@ export const ClientDetailPage: React.FC = () => {
 
   // Water meter state
   const [newReading, setNewReading] = useState<number>(0);
-  const [readingDate, setReadingDate] = useState(new Date().toISOString().slice(0, 10));
-  const [readingNote, setReadingNote] = useState('');
 
   // Modals state
   const [docModalOpen, setDocModalOpen] = useState(false);
@@ -104,6 +130,7 @@ export const ClientDetailPage: React.FC = () => {
   const [docName, setDocName] = useState('');
   const [docType, setDocType] = useState<ClientDocument['type']>('Tenancy Contract');
   const [docFileUrl, setDocFileUrl] = useState('');
+  const [docFileSize, setDocFileSize] = useState('');
   const [docStatus, setDocStatus] = useState<ClientDocument['status']>('Verified');
 
   // Damage Form State
@@ -113,9 +140,8 @@ export const ClientDetailPage: React.FC = () => {
   const [damageCost, setDamageCost] = useState(120);
   const [damageCharged, setDamageCharged] = useState(120);
   const [damageResponsible, setDamageResponsible] = useState<DamageReport['responsibleParty']>('Tenant');
-  const [damagePhoto, setDamagePhoto] = useState(
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80'
-  );
+  const [damageStatus, setDamageStatus] = useState<DamageReport['status']>('Pending Review');
+  const [damagePhotos, setDamagePhotos] = useState<string[]>([]);
 
   // Material Form State
   const [matName, setMatName] = useState('');
@@ -134,6 +160,7 @@ export const ClientDetailPage: React.FC = () => {
   const [editName, setEditName] = useState(client?.name || '');
   const [editEmail, setEditEmail] = useState(client?.email || '');
   const [editPhone, setEditPhone] = useState(client?.phone || '');
+  const [editAvatarUrl, setEditAvatarUrl] = useState(client?.avatar || '');
   const [editNationality, setEditNationality] = useState(client?.nationality || 'Rwandan');
   const [editIdNum, setEditIdNum] = useState(client?.identificationNumber || '');
   const [editOccupation, setEditOccupation] = useState(client?.occupation || 'Diplomatic Attaché');
@@ -148,6 +175,42 @@ export const ClientDetailPage: React.FC = () => {
   const [payPageSize, setPayPageSize] = useState(10);
   const [matPageIndex, setMatPageIndex] = useState(1);
   const [matPageSize, setMatPageSize] = useState(10);
+
+  // Client loads asynchronously now (was a synchronous mock array lookup before) — sync the
+  // edit-form/payment-form local state once the real data arrives, not just at initial mount.
+  useEffect(() => {
+    if (!client) return;
+    setEditName(client.name);
+    setEditEmail(client.email);
+    setEditPhone(client.phone);
+    setEditAvatarUrl(client.avatar || '');
+    setEditNationality(client.nationality || 'Rwandan');
+    setEditIdNum(client.identificationNumber);
+    setEditOccupation(client.occupation || 'Diplomatic Attaché');
+    setEditEmployer(client.employer || 'EU Delegation / Private');
+    setEditEmName(client.emergencyContact?.name || '');
+    setEditEmPhone(client.emergencyContact?.phone || '');
+    setEditEmRel(client.emergencyContact?.relationship || 'Spouse');
+    setEditNotes(client.notes || '');
+    setPayAmount(client.monthlyRent || 850);
+  }, [client]);
+
+  // Related Data — these must run on every render, in the same order, regardless of loading
+  // state, so they live above the early returns below (Rules of Hooks: a hook can't be skipped
+  // on some renders and called on others). Each guards internally for `client` not being loaded yet.
+  // Real data, already scoped server-side to this client — no client-side filtering needed.
+  const clientDamages = damageReportsQuery.data ?? [];
+  const clientPayments = paymentsQuery.data ?? [];
+  const clientMaintenance = maintenanceIssuesQuery.data ?? [];
+
+  const pagedPayments = useMemo(() => {
+    const start = (payPageIndex - 1) * payPageSize;
+    return clientPayments.slice(start, start + payPageSize);
+  }, [clientPayments, payPageIndex, payPageSize]);
+
+  if (clientQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading resident profile…</div>;
+  }
 
   if (!client) {
     return (
@@ -166,35 +229,9 @@ export const ClientDetailPage: React.FC = () => {
     );
   }
 
-  // Related Data
-  const clientDamages = useMemo(() => damages.filter((d) => d.clientId === client.id || d.clientName === client.name), [damages, client.id, client.name]);
-  const clientPayments = useMemo(() => payments.filter((p) => p.clientId === client.id), [payments, client.id]);
-  const clientMaintenance = useMemo(() => maintenanceIssues.filter((m) => m.clientId === client.id || m.clientName === client.name), [maintenanceIssues, client.id, client.name]);
-
-  const pagedPayments = useMemo(() => {
-    const start = (payPageIndex - 1) * payPageSize;
-    return clientPayments.slice(start, start + payPageSize);
-  }, [clientPayments, payPageIndex, payPageSize]);
-  const documentsList = client.documents || [
-    {
-      id: 'doc-01',
-      name: `Tenancy_Agreement_${client.name.replace(/\s+/g, '_')}_Signed.pdf`,
-      type: 'Tenancy Contract' as const,
-      fileUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-      uploadDate: client.moveInDate,
-      size: '2.4 MB',
-      status: 'Verified' as const,
-    },
-    {
-      id: 'doc-02',
-      name: `National_ID_Passport_Copy_${client.identificationNumber}.pdf`,
-      type: 'Passport' as const,
-      fileUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
-      uploadDate: client.moveInDate,
-      size: '1.1 MB',
-      status: 'Verified' as const,
-    },
-  ];
+  // Real clients always have a (possibly empty) documents array from the API now — no more
+  // fabricated placeholder documents standing in for ones that were never actually uploaded.
+  const documentsList = client.documents || [];
 
   const totalPaid = clientPayments
     .filter((p) => p.status === 'paid')
@@ -203,91 +240,142 @@ export const ClientDetailPage: React.FC = () => {
   const totalDamagesCost = clientDamages.reduce((acc, curr) => acc + curr.amountCharged, 0);
 
   // Handlers
-  const handleAddDocumentSubmit = (e: React.FormEvent) => {
+  const handleAddDocumentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!docName.trim()) {
       error('Validation Error', 'Document title is required.');
       return;
     }
+    if (!docFileUrl) {
+      error('No File Chosen', 'Please choose a file to upload first.');
+      return;
+    }
 
-    addClientDocument(client.id, {
-      name: docName.trim(),
-      type: docType,
-      fileUrl: docFileUrl.trim() || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-      size: '1.8 MB',
-      status: docStatus,
-    });
-
-    success('Document Uploaded', `${docName} has been saved to client dossier.`);
-    setDocModalOpen(false);
-    setDocName('');
-    setDocFileUrl('');
+    try {
+      await addClientDocumentMutation.mutateAsync({
+        clientId: client.id,
+        input: {
+          name: docName.trim(),
+          type: docType,
+          fileUrl: docFileUrl,
+          sizeLabel: docFileSize,
+          status: docStatus,
+        },
+      });
+      success('Document Uploaded', `${docName} has been saved to client dossier.`);
+      setDocModalOpen(false);
+      setDocName('');
+      setDocFileUrl('');
+      setDocFileSize('');
+    } catch {
+      error('Upload Failed', 'Could not upload this document. Please try again.');
+    }
   };
 
-  const handleAddDamageSubmit = (e: React.FormEvent) => {
+  const handleDamagePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (const file of Array.from(files)) {
+      try {
+        const result = await uploadFileMutation.mutateAsync({ file, folder: 'damage-photos' });
+        setDamagePhotos((prev) => [...prev, result.url]);
+      } catch {
+        error('Upload Failed', `Could not upload ${file.name}.`);
+      }
+    }
+    e.target.value = '';
+  };
+
+  const handleRemoveDamagePhoto = (index: number) => {
+    setDamagePhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddDamageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!damageItem.trim()) {
       error('Validation Error', 'Damage item name is required.');
       return;
     }
+    if (!client.currentRoomId || !client.currentPropertyId) {
+      error('No Unit Assigned', 'This resident has no current room assigned — cannot record a damage against no unit.');
+      return;
+    }
 
-    addDamageReport({
+    const input: DamageReportInput = {
       propertyId: client.currentPropertyId,
-      propertyName: client.currentPropertyName,
       roomId: client.currentRoomId,
-      roomNumber: client.currentRoomNumber,
       clientId: client.id,
-      clientName: client.name,
       item: damageItem,
       damageType,
       description: damageDesc,
       reportedDate: new Date().toISOString().split('T')[0],
-      photos: [damagePhoto],
+      photos: damagePhotos,
       estimatedCost: Number(damageCost),
       amountCharged: Number(damageCharged),
       responsibleParty: damageResponsible,
-      status: 'Pending Review',
-    });
+    };
 
-    success('Damage Recorded', `Recorded damage on ${damageItem}. Bill/deduction updated.`);
-    setDamageModalOpen(false);
-    setDamageItem('');
-    setDamageDesc('');
+    try {
+      const created = await createDamageMutation.mutateAsync(input);
+      // New reports always start at Pending Review server-side (the create endpoint has no
+      // status field — status changes go through a dedicated endpoint, the same pattern already
+      // fixed in DamagesManagementPage/AdminUsersRolesPage). Fire it as a second call so picking
+      // a different status in this form isn't silently ignored.
+      if (damageStatus !== 'Pending Review') {
+        await updateDamageStatusMutation.mutateAsync({ id: created.id, status: damageStatus });
+      }
+      success('Damage Recorded', `Recorded damage on ${damageItem}. Bill/deduction updated.`);
+      setDamageModalOpen(false);
+      setDamageItem('');
+      setDamageDesc('');
+      setDamageCost(120);
+      setDamageCharged(120);
+      setDamageResponsible('Tenant');
+      setDamageStatus('Pending Review');
+      setDamagePhotos([]);
+    } catch (err) {
+      error('Save Failed', err instanceof ApiError ? err.message : 'Could not save this damage report. Please try again.');
+    }
   };
 
-  const handleAddMaterialSubmit = (e: React.FormEvent) => {
+  const handleAddMaterialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!matName.trim()) {
       error('Validation Error', 'Material item name is required.');
       return;
     }
 
-    addClientMaterial(client.id, {
-      itemId: `mat-${Date.now()}`,
-      name: matName.trim(),
-      quantity: Number(matQuantity),
-      condition: matCondition,
-      assignedDate: new Date().toISOString().split('T')[0],
-      serialNumber: matSerial,
-      category: matCategory,
-    });
-
-    success('Material Assigned', `Assigned ${matName} to ${client.name}.`);
-    setMaterialModalOpen(false);
-    setMatName('');
+    try {
+      // assignedDate is stamped server-side on creation — not sent from here.
+      await addClientMaterialMutation.mutateAsync({
+        clientId: client.id,
+        input: {
+          name: matName.trim(),
+          quantity: Number(matQuantity),
+          condition: matCondition,
+          serialNumber: matSerial,
+          category: matCategory,
+        },
+      });
+      success('Material Assigned', `Assigned ${matName} to ${client.name}.`);
+      setMaterialModalOpen(false);
+      setMatName('');
+    } catch {
+      error('Assignment Failed', 'Could not assign this item. Please try again.');
+    }
   };
 
-  const handleAddPaymentSubmit = (e: React.FormEvent) => {
+  const handleAddPaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!client.currentRoomId || !client.currentPropertyId) {
+      error('No Unit Assigned', 'This resident has no current room assigned — cannot record a payment against no unit.');
+      return;
+    }
 
-    addPayment({
+    const input: PaymentInput = {
       clientId: client.id,
-      clientName: client.name,
-      clientAvatar: client.avatar,
       propertyId: client.currentPropertyId,
-      propertyName: client.currentPropertyName,
       roomId: client.currentRoomId,
-      roomNumber: client.currentRoomNumber,
       amount: Number(payAmount),
       date: new Date().toISOString().split('T')[0],
       dueDate: new Date().toISOString().split('T')[0],
@@ -296,32 +384,46 @@ export const ClientDetailPage: React.FC = () => {
       reference: payRef,
       status: 'paid',
       notes: 'Payment confirmed & verified by Operations Manager',
-    });
+    };
 
-    success('Payment Recorded', `Recorded $${payAmount} payment for ${client.name}.`);
-    setPaymentModalOpen(false);
+    try {
+      await createPaymentMutation.mutateAsync(input);
+      success('Payment Recorded', `Recorded $${payAmount} payment for ${client.name}.`);
+      setPaymentModalOpen(false);
+    } catch (err) {
+      error('Save Failed', err instanceof ApiError ? err.message : 'Could not record this payment. Please try again.');
+    }
   };
 
-  const handleProfileSave = (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateClient({
-      ...client,
-      name: editName,
-      email: editEmail,
-      phone: editPhone,
-      nationality: editNationality,
-      identificationNumber: editIdNum,
-      occupation: editOccupation,
-      employer: editEmployer,
-      emergencyContact: {
-        name: editEmName,
-        phone: editEmPhone,
-        relationship: editEmRel,
-      },
-      notes: editNotes,
-    });
-
-    success('Profile Updated', `Updated resident profile for ${editName}.`);
+    try {
+      await updateClientMutation.mutateAsync({
+        id: client.id,
+        input: {
+          name: editName,
+          email: editEmail,
+          phone: editPhone,
+          avatarUrl: editAvatarUrl,
+          identificationNumber: editIdNum,
+          nationality: editNationality,
+          occupation: editOccupation,
+          employer: editEmployer,
+          emergencyContact: { name: editEmName, phone: editEmPhone, relationship: editEmRel },
+          currentRoomId: client.currentRoomId,
+          currentPropertyId: client.currentPropertyId,
+          rentalType: client.rentalType,
+          moveInDate: client.moveInDate,
+          leaseExpiryDate: client.leaseExpiryDate,
+          monthlyRent: client.monthlyRent,
+          depositPaid: client.depositPaid,
+          notes: editNotes,
+        },
+      });
+      success('Profile Updated', `Updated resident profile for ${editName}.`);
+    } catch {
+      error('Update Failed', 'Could not update this profile. Please try again.');
+    }
   };
 
   return (
@@ -467,11 +569,21 @@ export const ClientDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
           {/* Avatar & Persona */}
           <div className="flex items-center gap-4 md:col-span-2">
-            <img
-              src={client.avatar}
-              alt={client.name}
-              className="w-20 h-20 rounded-2xl object-cover border-2 border-brand-500 shadow-md shrink-0"
-            />
+            {client.avatar ? (
+              <img
+                src={resolveFileUrl(client.avatar)}
+                alt={client.name}
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-brand-500 shadow-md shrink-0"
+              />
+            ) : (
+              <div
+                role="img"
+                aria-label={`${client.name} (no profile picture)`}
+                className="w-20 h-20 rounded-2xl border-2 border-brand-500 shadow-md shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-4xl"
+              >
+                👤
+              </div>
+            )}
             <div className="space-y-1">
               <h2 className="text-xl font-extrabold font-display text-slate-900 dark:text-white">
                 {client.name}
@@ -724,7 +836,7 @@ export const ClientDetailPage: React.FC = () => {
 
                   <div className="flex items-center gap-2">
                     <a
-                      href={doc.fileUrl}
+                      href={resolveFileUrl(doc.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       download
@@ -734,9 +846,13 @@ export const ClientDetailPage: React.FC = () => {
                       <Download className="w-3.5 h-3.5" />
                     </a>
                     <button
-                      onClick={() => {
-                        deleteClientDocument(client.id, doc.id);
-                        info('Document Deleted', 'Document removed from archive.');
+                      onClick={async () => {
+                        try {
+                          await deleteClientDocumentMutation.mutateAsync({ clientId: client.id, documentId: doc.id });
+                          info('Document Deleted', 'Document removed from archive.');
+                        } catch {
+                          error('Delete Failed', 'Could not delete this document.');
+                        }
                       }}
                       className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 text-rose-600 dark:text-rose-400 transition-colors"
                       title="Delete Document"
@@ -829,7 +945,7 @@ export const ClientDetailPage: React.FC = () => {
                     </span>
                     {dmg.photos && dmg.photos.length > 0 && (
                       <a
-                        href={dmg.photos[0]}
+                        href={resolveFileUrl(dmg.photos[0])}
                         target="_blank"
                         rel="noreferrer"
                         className="text-brand-600 dark:text-brand-400 font-bold hover:underline inline-flex items-center gap-1"
@@ -949,13 +1065,21 @@ export const ClientDetailPage: React.FC = () => {
                             <div className="relative inline-block w-full max-w-[160px]">
                               <select
                                 value={mat.condition}
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const newCondition = e.target.value as ClientMaterial['condition'];
-                                  updateClientMaterialCondition(client.id, mat.id, newCondition);
-                                  success(
-                                    'Condition Updated',
-                                    `"${mat.name}" status changed to ${newCondition}.`
-                                  );
+                                  try {
+                                    await updateClientMaterialConditionMutation.mutateAsync({
+                                      clientId: client.id,
+                                      materialId: mat.id,
+                                      condition: newCondition,
+                                    });
+                                    success(
+                                      'Condition Updated',
+                                      `"${mat.name}" status changed to ${newCondition}.`
+                                    );
+                                  } catch {
+                                    error('Update Failed', 'Could not update this item’s condition.');
+                                  }
                                 }}
                                 className={`w-full py-1.5 px-2.5 rounded-xl border text-[11px] font-extrabold cursor-pointer transition-all focus:ring-2 focus:ring-brand-500 shadow-xs ${getConditionBadgeStyle(
                                   mat.condition
@@ -984,6 +1108,8 @@ export const ClientDetailPage: React.FC = () => {
                                   onClick={() => {
                                     setDamageItem(mat.name);
                                     setDamageDesc(`Condition degraded to Needs Repair. Serial: ${mat.serialNumber}`);
+                                    setDamageStatus('Pending Review');
+                                    setDamagePhotos([]);
                                     setDamageModalOpen(true);
                                   }}
                                   title="Log Damage for this item"
@@ -993,9 +1119,13 @@ export const ClientDetailPage: React.FC = () => {
                                 </button>
                               )}
                               <button
-                                onClick={() => {
-                                  deleteClientMaterial(client.id, mat.id);
-                                  info('Inventory Removed', `Removed ${mat.name} from resident list.`);
+                                onClick={async () => {
+                                  try {
+                                    await deleteClientMaterialMutation.mutateAsync({ clientId: client.id, materialId: mat.id });
+                                    info('Inventory Removed', `Removed ${mat.name} from resident list.`);
+                                  } catch {
+                                    error('Removal Failed', 'Could not remove this item.');
+                                  }
                                 }}
                                 title="Remove asset from resident"
                                 className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-slate-800 transition-colors"
@@ -1136,6 +1266,45 @@ export const ClientDetailPage: React.FC = () => {
           <h3 className="text-base font-bold font-display text-slate-900 dark:text-white">
             Edit Resident Profile & Background
           </h3>
+
+          {/* Profile Picture */}
+          <div className="flex items-center gap-4">
+            {editAvatarUrl ? (
+              <img
+                src={resolveFileUrl(editAvatarUrl)}
+                alt={editName || client.name}
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-brand-500 shadow-md shrink-0"
+              />
+            ) : (
+              <div
+                role="img"
+                aria-label="No profile picture"
+                className="w-16 h-16 rounded-2xl border-2 border-brand-500 shadow-md shrink-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-3xl"
+              >
+                👤
+              </div>
+            )}
+            <div className="space-y-2">
+              <label className="block font-bold uppercase tracking-wider text-slate-500">Profile Picture</label>
+              <div className="flex items-center gap-2">
+                <FileUploadButton
+                  folder="client-avatars"
+                  accept="image/*"
+                  label={editAvatarUrl ? 'Change Photo' : 'Upload Photo'}
+                  onUploaded={(result) => setEditAvatarUrl(result.url)}
+                />
+                {editAvatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setEditAvatarUrl('')}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 transition-colors"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
@@ -1316,15 +1485,22 @@ export const ClientDetailPage: React.FC = () => {
 
             <div>
               <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Document URL / File Path
+                Document File
               </label>
-              <input
-                type="url"
-                placeholder="https://... or attach file link"
-                value={docFileUrl}
-                onChange={(e) => setDocFileUrl(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border"
-              />
+              <div className="flex items-center gap-2">
+                <FileUploadButton
+                  folder="client-documents"
+                  label={docFileUrl ? 'Replace File' : 'Choose File'}
+                  onUploaded={(result) => {
+                    setDocFileUrl(result.url);
+                    setDocFileSize(result.sizeLabel);
+                    if (!docName) setDocName(result.originalFilename);
+                  }}
+                />
+                {docFileUrl && (
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">File attached ✓</span>
+                )}
+              </div>
             </div>
 
             <div className="pt-2">
@@ -1348,105 +1524,183 @@ export const ClientDetailPage: React.FC = () => {
           onClose={() => setDamageModalOpen(false)}
           title="Record Damage Incident"
           subtitle={`Reporting damage for ${client.name} (Unit ${client.currentRoomNumber})`}
+          maxWidth="xl"
         >
           <form onSubmit={handleAddDamageSubmit} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Damaged Item / Facility *
+            {/* Damaged Item & Classification */}
+            <div className="space-y-3">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Damage Specifics & Classification *
               </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Master Bedroom Wall Plaster Scratch"
-                value={damageItem}
-                onChange={(e) => setDamageItem(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border font-bold"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold mb-1">Damaged Item / Asset *</label>
+                  <input
+                    type="text"
+                    required
+                    value={damageItem}
+                    onChange={(e) => setDamageItem(e.target.value)}
+                    placeholder="e.g. Hardwood Dining Table Glass Top"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold mb-1">Damage Classification *</label>
+                  <input
+                    type="text"
+                    required
+                    value={damageType}
+                    onChange={(e) => setDamageType(e.target.value)}
+                    placeholder="e.g. Deep scratch, Shattered, Water burn"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Cost & Liability */}
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Financial Assessment & Liability *
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold mb-1">Estimated Cost ($) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    value={damageCost}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setDamageCost(val);
+                      if (damageResponsible === 'Tenant') setDamageCharged(val);
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-extrabold font-mono text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold mb-1">Tenant Charged ($) *</label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    value={damageCharged}
+                    onChange={(e) => setDamageCharged(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 font-extrabold font-mono text-emerald-600 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold mb-1">Responsible Party *</label>
+                  <select
+                    value={damageResponsible}
+                    onChange={(e) => {
+                      const party = e.target.value as DamageReport['responsibleParty'];
+                      setDamageResponsible(party);
+                      if (party === 'Tenant') setDamageCharged(damageCost);
+                      else setDamageCharged(0);
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                  >
+                    <option value="Tenant">Tenant Liability</option>
+                    <option value="Property Owner">Property Owner</option>
+                    <option value="Wear & Tear">Normal Wear & Tear</option>
+                    <option value="Contractor">Contractor Fault</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Status & Circumstances */}
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Incident Status & Description
+              </label>
               <div>
-                <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Damage Type
-                </label>
+                <label className="block text-[10px] text-slate-400 font-bold mb-1">Current Incident Status *</label>
                 <select
-                  value={damageType}
-                  onChange={(e) => setDamageType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border font-bold"
+                  value={damageStatus}
+                  onChange={(e) => setDamageStatus(e.target.value as DamageReport['status'])}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
                 >
-                  <option value="Scratch / Dent">Scratch / Dent</option>
-                  <option value="Broken Appliance">Broken Appliance</option>
-                  <option value="Plumbing Leak">Plumbing Leak</option>
-                  <option value="Burn / Stain">Burn / Stain</option>
-                  <option value="Missing Item">Missing Inventory Item</option>
-                  <option value="Structural / Door">Structural / Door</option>
+                  <option value="Pending Review">Pending Review</option>
+                  <option value="In Repair">In Repair</option>
+                  <option value="Resolved">Resolved</option>
                 </select>
               </div>
-
               <div>
-                <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Responsible Party
-                </label>
-                <select
-                  value={damageResponsible}
-                  onChange={(e) => setDamageResponsible(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border font-bold"
-                >
-                  <option value="Tenant">Tenant (Charge to Deposit)</option>
-                  <option value="Property Owner">Property Owner</option>
-                  <option value="Wear & Tear">Wear & Tear (No Charge)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Estimated Repair Cost ($) *
-                </label>
-                <input
-                  type="number"
+                <label className="block text-[10px] text-slate-400 font-bold mb-1">Description & Circumstances</label>
+                <textarea
+                  rows={3}
                   required
-                  value={damageCost}
-                  onChange={(e) => setDamageCost(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border font-bold text-rose-600"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Amount Billed to Tenant ($) *
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={damageCharged}
-                  onChange={(e) => setDamageCharged(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border font-bold text-rose-600"
+                  value={damageDesc}
+                  onChange={(e) => setDamageDesc(e.target.value)}
+                  placeholder="Detail what caused the damage, parts required for repair, technician assessment..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs placeholder:text-slate-400 resize-none focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Incident Description & Assessment
+            {/* Multiple Photo Upload */}
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Damage Photos ({damagePhotos.length})
+                </label>
+                <span className="text-[10px] text-slate-400 font-bold">JPG, PNG, WebP supported</span>
+              </div>
+
+              {damagePhotos.length > 0 && (
+                <div className="grid grid-cols-3 gap-2.5 mb-3">
+                  {damagePhotos.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 group h-24 bg-slate-100 dark:bg-slate-800"
+                    >
+                      <img src={resolveFileUrl(p)} alt={`Damage photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                        <a
+                          href={resolveFileUrl(p)}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="View photo full size"
+                          className="p-1.5 rounded-lg bg-white/90 text-slate-900 hover:bg-white transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDamagePhoto(idx)}
+                          title="Remove photo"
+                          className="p-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <label className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-all cursor-pointer text-center group">
+                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform mb-1">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <span className="font-bold text-xs text-slate-700 dark:text-slate-200">
+                  Click or Drag to Upload Damage Photos
+                </span>
+                <span className="text-[10px] text-slate-400 mt-0.5">Add multiple pictures taken on-site</span>
+                <input type="file" multiple accept="image/*" className="hidden" onChange={handleDamagePhotoUpload} />
               </label>
-              <textarea
-                rows={3}
-                required
-                value={damageDesc}
-                onChange={(e) => setDamageDesc(e.target.value)}
-                placeholder="Describe how the damage occurred and repair requirements..."
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border"
-              />
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition-all"
+                disabled={createDamageMutation.isPending || uploadFileMutation.isPending}
+                className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-60 disabled:pointer-events-none"
               >
-                Log Damage & Issue Bill
+                {createDamageMutation.isPending ? 'Saving…' : 'Log Damage & Issue Bill'}
               </button>
             </div>
           </form>
@@ -1618,9 +1872,10 @@ export const ClientDetailPage: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all"
+                disabled={createPaymentMutation.isPending}
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-60 disabled:pointer-events-none"
               >
-                Confirm Payment & Issue Receipt
+                {createPaymentMutation.isPending ? 'Saving…' : 'Confirm Payment & Issue Receipt'}
               </button>
             </div>
           </form>
@@ -1631,7 +1886,7 @@ export const ClientDetailPage: React.FC = () => {
       {/* TAB 8: WATER METER READINGS                                  */}
       {/* ═══════════════════════════════════════════════════════════ */}
       {activeTab === 'water' && (() => {
-        const meter = waterMeters.find((w) => w.clientId === client.id);
+        const meter = (waterMetersQuery.data ?? []).find((w) => w.clientId === client.id);
 
         return (
           <div className="space-y-6">
@@ -1698,22 +1953,12 @@ export const ClientDetailPage: React.FC = () => {
                         />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] text-slate-400 font-bold mb-1">Reading Date</label>
-                          <input
-                            type="date"
-                            value={readingDate}
-                            onChange={(e) => setReadingDate(e.target.value)}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-                          />
+                      <div>
+                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Consumption</label>
+                        <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 font-extrabold font-mono text-amber-600 text-base">
+                          {newReading > meter.currentReading ? `${(newReading - meter.currentReading).toFixed(1)} m³` : '—'}
                         </div>
-                        <div>
-                          <label className="block text-[10px] text-slate-400 font-bold mb-1">Consumption</label>
-                          <div className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 font-extrabold font-mono text-amber-600 text-base">
-                            {newReading > meter.currentReading ? `${(newReading - meter.currentReading).toFixed(1)} m³` : '—'}
-                          </div>
-                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1">Recorded with today's date automatically.</p>
                       </div>
 
                       {newReading > meter.currentReading && (
@@ -1725,34 +1970,32 @@ export const ClientDetailPage: React.FC = () => {
                         </div>
                       )}
 
-                      <div>
-                        <label className="block text-[10px] text-slate-400 font-bold mb-1">Reading Notes (optional)</label>
-                        <textarea
-                          rows={2}
-                          value={readingNote}
-                          onChange={(e) => setReadingNote(e.target.value)}
-                          placeholder="e.g. Physical meter inspection, no leaks detected…"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs placeholder:text-slate-400 resize-none focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-                        />
-                      </div>
-
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (newReading <= meter.currentReading) {
                             error('Invalid Reading', 'New reading must be greater than the previous reading.');
                             return;
                           }
-                          const consumption = (newReading - meter.currentReading).toFixed(1);
-                          const bill = ((newReading - meter.currentReading) * meter.ratePerM3).toFixed(2);
-                          success('Reading Saved', `Meter ${meter.meterNumber}: ${consumption} m³ consumed → $${bill} bill for ${readingDate}.`);
-                          setReadingNote('');
-                          setNewReading(0);
+                          try {
+                            const updated = await updateWaterMeterReadingMutation.mutateAsync({
+                              id: meter.id,
+                              currentReading: newReading,
+                              newBillingCycle: true,
+                            });
+                            success(
+                              'Reading Saved',
+                              `Meter ${updated.meterNumber}: ${updated.consumptionM3.toFixed(1)} m³ consumed → $${updated.totalAmount.toFixed(2)} bill.`
+                            );
+                            setNewReading(0);
+                          } catch (err) {
+                            error('Save Failed', err instanceof ApiError ? err.message : 'Could not record this meter reading. Please try again.');
+                          }
                         }}
-                        disabled={newReading <= meter.currentReading}
+                        disabled={newReading <= meter.currentReading || updateWaterMeterReadingMutation.isPending}
                         className="w-full py-3 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
                       >
                         <Droplets className="w-4 h-4" />
-                        Save New Reading
+                        {updateWaterMeterReadingMutation.isPending ? 'Saving…' : 'Save New Reading'}
                       </button>
                     </div>
                   </div>
@@ -1828,32 +2071,56 @@ export const ClientDetailPage: React.FC = () => {
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* MODAL: DOCUMENT PREVIEW                                     */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      {previewDoc && (
-        <Modal
-          isOpen={Boolean(previewDoc)}
-          onClose={() => setPreviewDoc(null)}
-          title={`Document Preview: ${previewDoc.name}`}
-          subtitle={`${previewDoc.type} • Status: ${previewDoc.status}`}
-          maxWidth="2xl"
-        >
-          <div className="space-y-4 text-xs">
-            <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center border">
-              <FileText className="w-16 h-16 text-brand-500 mb-3" />
-              <p className="font-bold text-sm text-slate-900 dark:text-white">{previewDoc.name}</p>
-              <p className="text-slate-400 mt-1">Verified Digital Document Archive</p>
-              <a
-                href={previewDoc.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 px-4 py-2 rounded-xl bg-brand-600 text-white font-bold inline-flex items-center gap-1.5 shadow-sm hover:bg-brand-700 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Open / Download Full File</span>
-              </a>
+      {previewDoc && (() => {
+        const previewUrl = resolveFileUrl(previewDoc.fileUrl);
+        const kind = getPreviewKind(previewDoc.fileUrl);
+        return (
+          <Modal
+            isOpen={Boolean(previewDoc)}
+            onClose={() => setPreviewDoc(null)}
+            title={`Document Preview: ${previewDoc.name}`}
+            subtitle={`${previewDoc.type} • Status: ${previewDoc.status}`}
+            maxWidth="4xl"
+          >
+            <div className="space-y-4 text-xs">
+              {kind === 'image' ? (
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl border p-3 flex items-center justify-center">
+                  <img
+                    src={previewUrl}
+                    alt={previewDoc.name}
+                    className="max-h-[65vh] w-auto max-w-full rounded-xl object-contain"
+                  />
+                </div>
+              ) : kind === 'pdf' ? (
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl border overflow-hidden">
+                  <iframe src={previewUrl} title={previewDoc.name} className="w-full h-[65vh] bg-white" />
+                </div>
+              ) : (
+                <div className="h-80 bg-slate-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center p-6 text-center border">
+                  <FileText className="w-16 h-16 text-brand-500 mb-3" />
+                  <p className="font-bold text-sm text-slate-900 dark:text-white">{previewDoc.name}</p>
+                  <p className="text-slate-400 mt-1">No inline preview available for this file type.</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-slate-400">
+                  Uploaded: {previewDoc.uploadDate} {previewDoc.size ? `• ${previewDoc.size}` : ''}
+                </p>
+                <a
+                  href={previewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold inline-flex items-center gap-1.5 shadow-sm hover:bg-brand-700 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open in New Tab</span>
+                </a>
+              </div>
             </div>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        );
+      })()}
       {/* ═══════════════════════════════════════════════════════════ */}
       {/* MODAL: CHANGE STATUS / DEACTIVATE RESIDENT                  */}
       {/* ═══════════════════════════════════════════════════════════ */}
@@ -1865,18 +2132,26 @@ export const ClientDetailPage: React.FC = () => {
           subtitle={`${client.name} • Unit ${client.currentRoomNumber} (${client.currentPropertyName})`}
         >
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              updateClientStatus(client.id, statusTarget, statusReason);
-              if (statusTarget === 'active') {
-                success('Profile Reactivated', `${client.name}'s profile is now Active.`);
-              } else {
-                info(
-                  'Status Updated',
-                  `${client.name} marked as ${statusTarget.toUpperCase()} (${statusReason}).`
-                );
+              try {
+                await updateClientStatusMutation.mutateAsync({
+                  id: client.id,
+                  status: statusTarget,
+                  reason: statusReason,
+                });
+                if (statusTarget === 'active') {
+                  success('Profile Reactivated', `${client.name}'s profile is now Active.`);
+                } else {
+                  info(
+                    'Status Updated',
+                    `${client.name} marked as ${statusTarget.toUpperCase()} (${statusReason}).`
+                  );
+                }
+                setStatusModalOpen(false);
+              } catch {
+                error('Update Failed', 'Could not update this client’s status. Please try again.');
               }
-              setStatusModalOpen(false);
             }}
             className="space-y-4 text-xs"
           >

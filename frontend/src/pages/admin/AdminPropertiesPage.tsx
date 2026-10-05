@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
-import { useToast } from '../../context/ToastContext';
+import { usePropertiesQuery } from '../../api/properties';
 import {
   Building,
   Plus,
@@ -19,7 +18,7 @@ import { Badge } from '../../components/common/Badge';
 import { Pagination } from '../../components/common/Pagination';
 
 export const AdminPropertiesPage: React.FC = () => {
-  const { properties } = useData();
+  const { data: properties = [], isLoading } = usePropertiesQuery();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [pageIndex, setPageIndex] = useState(1);
@@ -34,6 +33,10 @@ export const AdminPropertiesPage: React.FC = () => {
     const start = (pageIndex - 1) * pageSize;
     return filteredProperties.slice(start, start + pageSize);
   }, [filteredProperties, pageIndex, pageSize]);
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading properties…</div>;
+  }
 
   return (
     <div className="space-y-8">

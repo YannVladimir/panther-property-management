@@ -40,14 +40,26 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useData } from '../context/DataContext';
+import {
+  useMyNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+} from '../api/notifications';
 import { RoleSwitcher } from '../components/common/RoleSwitcher';
 import { GlobalSearchModal } from '../components/common/GlobalSearchModal';
+
+const SEARCH_ENABLED_ROLES = ['operations', 'admin', 'owner'];
 
 export const DashboardLayout: React.FC = () => {
   const { currentRole, currentUser, logout } = useAuth();
   const { resolvedTheme, toggleTheme } = useTheme();
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useData();
+  const notificationsQuery = useMyNotificationsQuery();
+  const notifications = notificationsQuery.data ?? [];
+  const markReadMutation = useMarkNotificationReadMutation();
+  const markAllReadMutation = useMarkAllNotificationsReadMutation();
+  const markNotificationRead = (id: string) => markReadMutation.mutate(id);
+  const markAllNotificationsRead = () => markAllReadMutation.mutate();
+  const canSearch = SEARCH_ENABLED_ROLES.includes(currentRole);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('panther_sidebar_collapsed') === 'true';
   });
@@ -76,8 +88,10 @@ export const DashboardLayout: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Filter notifications for current role
-  const unreadNotifs = notifications.filter((n) => !n.read && (n.targetRoles.includes(currentRole) || n.targetRoles.includes('admin')));
+  // Real notifications are already scoped to the logged-in user server-side (GET /notifications/me) —
+  // no client-side role filtering needed (the old mock-era version filtered a shared broadcast array
+  // by currentRole, which is exactly the kind of self-service-scoping bug found in every prior domain).
+  const unreadNotifs = notifications.filter((n) => !n.read);
 
   // Navigation configs based on logged-in role
   const getNavLinks = () => {
@@ -151,8 +165,8 @@ export const DashboardLayout: React.FC = () => {
 
   const navLinks = getNavLinks();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -360,17 +374,21 @@ export const DashboardLayout: React.FC = () => {
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Quick Spotlight Search bar trigger */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs w-48 sm:w-72 transition-colors"
-            >
-              <Search className="w-4 h-4 text-slate-400" />
-              <span className="truncate">Search apartments, tenants, invoices...</span>
-              <kbd className="hidden sm:inline-block ml-auto px-1.5 py-0.5 text-[10px] font-bold bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-600">
-                ⌘K
-              </kbd>
-            </button>
+            {/* Quick Spotlight Search bar trigger — real GET /search is restricted server-side to
+                operations/admin/owner, so the trigger is hidden entirely for client/household rather
+                than shown and then 403ing on first use. */}
+            {canSearch && (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs w-48 sm:w-72 transition-colors"
+              >
+                <Search className="w-4 h-4 text-slate-400" />
+                <span className="truncate">Search apartments, tenants, invoices...</span>
+                <kbd className="hidden sm:inline-block ml-auto px-1.5 py-0.5 text-[10px] font-bold bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-600">
+                  ⌘K
+                </kbd>
+              </button>
+            )}
           </div>
 
           {/* Right actions */}
@@ -458,8 +476,8 @@ export const DashboardLayout: React.FC = () => {
         </main>
       </div>
 
-      {/* Global Search Modal */}
-      <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      {/* Global Search Modal — real search is role-restricted, see canSearch above */}
+      {canSearch && <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />}
 
       {/* Mobile Sidebar Drawer */}
       {mobileMenuOpen && (

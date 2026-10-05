@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { ApiError } from '../../api/client';
+import { useSystemSettingsQuery, useUpdateSystemSettingsMutation } from '../../api/systemSettings';
 import {
   Settings,
   Shield,
@@ -12,19 +14,51 @@ import {
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 
+/** The frontend previously showed a display string ("USD ($)"); the backend persists a plain ISO
+ * currency code ("USD"). Two-way map since these don't reduce to a case transform. */
+const CURRENCY_TO_FRONTEND: Record<string, string> = { USD: 'USD ($)', RWF: 'RWF (Frw)' };
+const CURRENCY_TO_BACKEND: Record<string, string> = { 'USD ($)': 'USD', 'RWF (Frw)': 'RWF' };
+
 export const AdminSystemSettingsPage: React.FC = () => {
-  const { success } = useToast();
+  const { success, error } = useToast();
+  const settingsQuery = useSystemSettingsQuery();
+  const updateSettingsMutation = useUpdateSystemSettingsMutation();
 
-  const [companyName, setCompanyName] = useState('Panther Living Ltd');
+  const [companyName, setCompanyName] = useState('');
   const [currency, setCurrency] = useState('USD ($)');
-  const [waterRate, setWaterRate] = useState(1.75);
-  const [commissionRate, setCommissionRate] = useState(10);
-  const [vatTaxRate, setVatTaxRate] = useState(18);
+  const [waterRate, setWaterRate] = useState(0);
+  const [commissionRate, setCommissionRate] = useState(0);
+  const [vatTaxRate, setVatTaxRate] = useState(0);
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  useEffect(() => {
+    const s = settingsQuery.data;
+    if (!s) return;
+    setCompanyName(s.companyName);
+    setCurrency(CURRENCY_TO_FRONTEND[s.currencyCode] ?? s.currencyCode);
+    setWaterRate(s.waterRatePerM3);
+    setCommissionRate(s.defaultAgentCommissionPct);
+    setVatTaxRate(s.vatTaxRatePct);
+  }, [settingsQuery.data]);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    success('System Settings Saved', 'Global platform parameters updated successfully.');
+    try {
+      await updateSettingsMutation.mutateAsync({
+        companyName,
+        currencyCode: CURRENCY_TO_BACKEND[currency] ?? currency,
+        waterRatePerM3: waterRate,
+        defaultAgentCommissionPct: commissionRate,
+        vatTaxRatePct: vatTaxRate,
+      });
+      success('System Settings Saved', 'Global platform parameters updated successfully.');
+    } catch (err) {
+      error('Save Failed', err instanceof ApiError ? err.message : 'Could not save system settings.');
+    }
   };
+
+  if (settingsQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading system settings…</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

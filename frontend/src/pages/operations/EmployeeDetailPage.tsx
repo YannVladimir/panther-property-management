@@ -1,7 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { resolveFileUrl } from '../../api/client';
+import {
+  useEmployeeQuery,
+  useUpdateEmployeeMutation,
+  useUpdateEmployeeStatusMutation,
+  useAddEmployeeDocumentMutation,
+  useDeleteEmployeeDocumentMutation,
+  useAddEmployeeDailyTaskMutation,
+  useUpdateEmployeeDailyTaskMutation,
+  useAddEmployeeDamageMutation,
+  useAddEmployeeLeaveMutation,
+  useUpdateEmployeeLeaveMutation,
+} from '../../api/employees';
+import { usePropertiesQuery } from '../../api/properties';
+import { usePayrollRecordsByEmployeeQuery, useCreatePayrollRecordMutation } from '../../api/payrollRecords';
+import { useUploadFileMutation } from '../../api/files';
+import { FileUploadButton } from '../../components/common/FileUploadButton';
 import {
   Briefcase,
   User,
@@ -51,24 +67,24 @@ import {
 export const EmployeeDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    employees,
-    properties,
-    payrollRecords,
-    updateEmployee,
-    updateEmployeeStatus,
-    addEmployeeDocument,
-    deleteEmployeeDocument,
-    addEmployeeDailyTask,
-    updateEmployeeDailyTask,
-    addEmployeeDamage,
-    addEmployeeLeave,
-    updateEmployeeLeave,
-    addPayrollRecord,
-  } = useData();
+  const employeeQuery = useEmployeeQuery(id);
+  const employee = employeeQuery.data;
+  const propertiesQuery = usePropertiesQuery();
+  const properties = propertiesQuery.data ?? [];
+  const payrollQuery = usePayrollRecordsByEmployeeQuery(id);
+  const payrollRecords = payrollQuery.data ?? [];
+  const updateEmployeeMutation = useUpdateEmployeeMutation();
+  const updateEmployeeStatusMutation = useUpdateEmployeeStatusMutation();
+  const addEmployeeDocumentMutation = useAddEmployeeDocumentMutation();
+  const deleteEmployeeDocumentMutation = useDeleteEmployeeDocumentMutation();
+  const addEmployeeDailyTaskMutation = useAddEmployeeDailyTaskMutation();
+  const updateEmployeeDailyTaskMutation = useUpdateEmployeeDailyTaskMutation();
+  const addEmployeeDamageMutation = useAddEmployeeDamageMutation();
+  const addEmployeeLeaveMutation = useAddEmployeeLeaveMutation();
+  const updateEmployeeLeaveMutation = useUpdateEmployeeLeaveMutation();
+  const createPayrollRecordMutation = useCreatePayrollRecordMutation();
+  const uploadFileMutation = useUploadFileMutation();
   const { success, error: toastError } = useToast();
-
-  const employee = employees.find((e) => e.id === id);
 
   const [activeTab, setActiveTab] = useState<'tasks' | 'payroll' | 'leaves' | 'damages' | 'documents' | 'profile'>('tasks');
 
@@ -83,8 +99,12 @@ export const EmployeeDetailPage: React.FC = () => {
   const [taskDesc, setTaskDesc] = useState('');
   const [taskPriority, setTaskPriority] = useState<EmployeeDailyTask['priority']>('Medium');
   const [taskDueDate, setTaskDueDate] = useState(new Date().toISOString().split('T')[0]);
-  const [taskProperty, setTaskProperty] = useState(properties[0]?.name || 'Kigali Heights');
+  const [taskPropertyId, setTaskPropertyId] = useState('');
   const [taskRoom, setTaskRoom] = useState('All Common Areas');
+
+  useEffect(() => {
+    if (!taskPropertyId && properties.length > 0) setTaskPropertyId(properties[0].id);
+  }, [properties, taskPropertyId]);
 
   // 2. Drawer: Task Review & Rating
   const [reviewTask, setReviewTask] = useState<EmployeeDailyTask | null>(null);
@@ -100,11 +120,9 @@ export const EmployeeDetailPage: React.FC = () => {
   const [dmgCost, setDmgCost] = useState<number>(65);
   const [dmgDeduct, setDmgDeduct] = useState<boolean>(true);
   const [dmgDeductAmount, setDmgDeductAmount] = useState<number>(30);
-  const [dmgProperty, setDmgProperty] = useState(properties[0]?.name || 'Kigali Heights Residences');
-  const [dmgRoom, setDmgRoom] = useState('Unit A-204');
-  const [dmgPhotos, setDmgPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&auto=format&fit=crop&q=80',
-  ]);
+  const [dmgProperty, setDmgProperty] = useState('');
+  const [dmgRoom, setDmgRoom] = useState('');
+  const [dmgPhotos, setDmgPhotos] = useState<string[]>([]);
 
   // 4. Drawer: Record Payroll Payment
   const [payrollDrawerOpen, setPayrollDrawerOpen] = useState(false);
@@ -145,6 +163,7 @@ export const EmployeeDetailPage: React.FC = () => {
   const [docName, setDocName] = useState('');
   const [docType, setDocType] = useState<EmployeeDocument['type']>('Employment Contract');
   const [docFileUrl, setDocFileUrl] = useState('');
+  const [docFileSize, setDocFileSize] = useState('');
 
   // Pagination states
   const [tasksPageIndex, setTasksPageIndex] = useState(1);
@@ -154,22 +173,9 @@ export const EmployeeDetailPage: React.FC = () => {
   const [leavePageIndex, setLeavePageIndex] = useState(1);
   const [leavePageSize, setLeavePageSize] = useState(10);
 
-  if (!employee) {
-    return (
-      <div className="p-12 text-center space-y-4">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Employee Not Found</h2>
-        <p className="text-slate-500 text-sm">The staff member requested could not be located in the HR registry.</p>
-        <button
-          onClick={() => navigate('/operations/hr-payroll')}
-          className="px-4 py-2 bg-brand-600 text-white font-bold rounded-xl text-xs"
-        >
-          Return to HR & Payroll
-        </button>
-      </div>
-    );
-  }
-
-  // Employee's related data
+  // Employee's related data — these must run on every render, in the same order, regardless of
+  // loading state, so they live above the early returns below (Rules of Hooks: a hook can't be
+  // skipped on some renders and called on others). Each guards internally via `employee?.`.
   const employeePayroll = useMemo(() => payrollRecords.filter((p) => p.employeeId === employee?.id), [payrollRecords, employee?.id]);
   const employeeTasks = useMemo(() => employee?.dailyTasks || [], [employee?.dailyTasks]);
   const employeeDocs = useMemo(() => employee?.documents || [], [employee?.documents]);
@@ -191,178 +197,247 @@ export const EmployeeDetailPage: React.FC = () => {
     return employeeLeaves.slice(start, start + leavePageSize);
   }, [employeeLeaves, leavePageIndex, leavePageSize]);
 
+  if (employeeQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading employee dossier…</div>;
+  }
+
+  if (!employee) {
+    return (
+      <div className="p-12 text-center space-y-4">
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Employee Not Found</h2>
+        <p className="text-slate-500 text-sm">The staff member requested could not be located in the HR registry.</p>
+        <button
+          onClick={() => navigate('/operations/hr-payroll')}
+          className="px-4 py-2 bg-brand-600 text-white font-bold rounded-xl text-xs"
+        >
+          Return to HR & Payroll
+        </button>
+      </div>
+    );
+  }
+
   const completedTasksCount = employeeTasks.filter((t) => t.status === 'Completed').length;
-  const taskRate = employeeTasks.length > 0 ? Math.round((completedTasksCount / employeeTasks.length) * 100) : 100;
+  const taskRate = employeeTasks.length > 0 ? Math.round((completedTasksCount / employeeTasks.length) * 100) : 0;
   const ratedTasks = employeeTasks.filter((t) => t.rating && t.rating > 0);
   const avgRating =
     ratedTasks.length > 0
       ? (ratedTasks.reduce((acc, t) => acc + (t.rating || 0), 0) / ratedTasks.length).toFixed(1)
       : '5.0';
 
-  // Photo Upload Handler for Staff Damage Form
-  const handleDmgPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Photo Upload Handler for Staff Damage Form — real upload to POST /api/v1/files, not a local
+  // FileReader preview (previously the "photo" was only ever a base64 data URL, never persisted).
+  const handleDmgPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          setDmgPhotos((prev) => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    for (const file of Array.from(files)) {
+      try {
+        const result = await uploadFileMutation.mutateAsync({ file, folder: 'employee-damage-photos' });
+        setDmgPhotos((prev) => [...prev, result.url]);
+      } catch {
+        toastError('Upload Failed', `Could not upload ${file.name}.`);
+      }
+    }
     e.target.value = '';
   };
 
   // Handle Status Update
-  const handleUpdateStatus = (e: React.FormEvent) => {
+  const handleUpdateStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateEmployeeStatus(employee.id, newStatus, statusReason);
-    success('Status Updated', `Staff status updated to ${newStatus.toUpperCase()}`);
-    setStatusModalOpen(false);
+    try {
+      await updateEmployeeStatusMutation.mutateAsync({ id: employee.id, status: newStatus, reason: statusReason });
+      success('Status Updated', `Staff status updated to ${newStatus.toUpperCase()}`);
+      setStatusModalOpen(false);
+    } catch {
+      toastError('Update Failed', 'Could not update employee status.');
+    }
   };
 
   // Handle Edit Profile Details (e.g. Salary, Role, Contact)
-  const handleSaveProfileEdit = (e: React.FormEvent) => {
+  const handleSaveProfileEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateEmployee({
-      ...employee,
-      name: editName,
-      position: editPosition,
-      department: editDepartment,
-      basicSalary: Number(editSalary),
-      contact: editContact,
-      email: editEmail,
-      nationalId: editNationalId,
-      address: editAddress,
-    });
-    success('Profile Updated', `Updated profile and salary settings for ${editName}.`);
-    setEditProfileOpen(false);
+    try {
+      await updateEmployeeMutation.mutateAsync({
+        id: employee.id,
+        input: {
+          name: editName,
+          position: editPosition,
+          department: editDepartment,
+          contact: editContact,
+          email: editEmail,
+          employmentStatus: employee.employmentStatus,
+          startDate: employee.startDate,
+          basicSalary: Number(editSalary),
+          nationalId: editNationalId,
+          emergencyContact: employee.emergencyContact,
+          address: editAddress,
+        },
+      });
+      success('Profile Updated', `Updated profile and salary settings for ${editName}.`);
+      setEditProfileOpen(false);
+    } catch {
+      toastError('Update Failed', 'Could not save employee profile changes.');
+    }
   };
 
   // Handle Create Daily Task
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    addEmployeeDailyTask(employee.id, {
-      title: taskTitle,
-      description: taskDesc,
-      priority: taskPriority,
-      dueDate: taskDueDate,
-      propertyName: taskProperty,
-      roomNumber: taskRoom,
-      status: 'Pending',
-    });
-    success('Task Assigned', `Assigned "${taskTitle}" to ${employee.name}`);
-    setTaskDrawerOpen(false);
-    setTaskTitle('');
-    setTaskDesc('');
+    try {
+      await addEmployeeDailyTaskMutation.mutateAsync({
+        employeeId: employee.id,
+        input: {
+          title: taskTitle,
+          description: taskDesc,
+          priority: taskPriority,
+          dueDate: taskDueDate,
+          propertyId: taskPropertyId || undefined,
+          roomNumber: taskRoom,
+        },
+      });
+      success('Task Assigned', `Assigned "${taskTitle}" to ${employee.name}`);
+      setTaskDrawerOpen(false);
+      setTaskTitle('');
+      setTaskDesc('');
+    } catch {
+      toastError('Save Failed', 'Could not assign this daily task.');
+    }
   };
 
   // Handle Review & Rank Task
-  const handleSaveTaskReview = (e: React.FormEvent) => {
+  const handleSaveTaskReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewTask) return;
 
-    updateEmployeeDailyTask(employee.id, reviewTask.id, {
-      status: reviewStatus,
-      managerComment: reviewComment,
-      rating: reviewRating,
-      ratedBy: 'Eric Manzi (Operations Director)',
-    });
-
-    success(
-      'Task Reviewed & Ranked',
-      `Confirmed status as ${reviewStatus} with a score of ${reviewRating} ★.`
-    );
-    setReviewTask(null);
+    try {
+      // No hardcoded "ratedBy" sent — the real API has no field to receive a reviewer identity
+      // at all (EmployeeDailyTaskResponse.ratedByName is never set anywhere server-side), so the
+      // mock's fabricated "Eric Manzi (Operations Director)" string was never persisted meaningfully.
+      await updateEmployeeDailyTaskMutation.mutateAsync({
+        employeeId: employee.id,
+        taskId: reviewTask.id,
+        input: { status: reviewStatus, managerComment: reviewComment, rating: reviewRating },
+      });
+      success('Task Reviewed & Ranked', `Confirmed status as ${reviewStatus} with a score of ${reviewRating} ★.`);
+      setReviewTask(null);
+    } catch {
+      toastError('Save Failed', 'Could not save the task review.');
+    }
   };
 
   // Handle Upload Document
-  const handleUploadDoc = (e: React.FormEvent) => {
+  const handleUploadDoc = async (e: React.FormEvent) => {
     e.preventDefault();
-    addEmployeeDocument(employee.id, {
-      name: docName,
-      type: docType,
-      fileUrl: docFileUrl || 'https://example.com/document.pdf',
-      size: '1.2 MB',
-      status: 'Verified',
-    });
-    success('Document Attached', `Uploaded ${docType} to employee dossier.`);
-    setDocModalOpen(false);
-    setDocName('');
-    setDocFileUrl('');
+    if (!docFileUrl) {
+      toastError('No File Chosen', 'Please choose a file to upload first.');
+      return;
+    }
+    try {
+      await addEmployeeDocumentMutation.mutateAsync({
+        employeeId: employee.id,
+        input: {
+          name: docName,
+          type: docType,
+          fileUrl: docFileUrl,
+          size: docFileSize,
+          status: 'Verified',
+        },
+      });
+      success('Document Attached', `Uploaded ${docType} to employee dossier.`);
+      setDocModalOpen(false);
+      setDocName('');
+      setDocFileUrl('');
+      setDocFileSize('');
+    } catch {
+      toastError('Upload Failed', 'Could not attach this document.');
+    }
   };
 
   // Handle Log Damage (Matching damage management with images)
-  const handleLogDamage = (e: React.FormEvent) => {
+  const handleLogDamage = async (e: React.FormEvent) => {
     e.preventDefault();
-    addEmployeeDamage(employee.id, {
-      incidentDate: new Date().toISOString().split('T')[0],
-      item: dmgItem,
-      description: `${dmgType}: ${dmgDesc}`,
-      propertyName: dmgProperty,
-      roomNumber: dmgRoom,
-      estimatedCost: Number(dmgCost),
-      deductedFromSalary: dmgDeduct,
-      deductedAmount: dmgDeduct ? Number(dmgDeductAmount) : 0,
-      status: dmgDeduct ? 'Deducted' : 'Investigating',
-      photos: dmgPhotos,
-    });
-    success('Damage Logged', `Recorded incident for ${dmgItem} with ${dmgPhotos.length} photo(s).`);
-    setDamageDrawerOpen(false);
-    setDmgItem('');
-    setDmgDesc('');
-    setDmgPhotos([]);
+    try {
+      await addEmployeeDamageMutation.mutateAsync({
+        employeeId: employee.id,
+        input: {
+          incidentDate: new Date().toISOString().split('T')[0],
+          item: dmgItem,
+          description: `${dmgType}: ${dmgDesc}`,
+          propertyName: dmgProperty,
+          roomNumber: dmgRoom,
+          estimatedCost: Number(dmgCost),
+          deductedFromSalary: dmgDeduct,
+          deductedAmount: dmgDeduct ? Number(dmgDeductAmount) : 0,
+          photos: dmgPhotos,
+        },
+      });
+      success('Damage Logged', `Recorded incident for ${dmgItem} with ${dmgPhotos.length} photo(s).`);
+      setDamageDrawerOpen(false);
+      setDmgItem('');
+      setDmgDesc('');
+      setDmgPhotos([]);
+      setDmgProperty('');
+      setDmgRoom('');
+    } catch {
+      toastError('Save Failed', 'Could not log this damage incident.');
+    }
   };
 
   // Handle Record / Disburse Payroll Payment
-  const handleRecordPayroll = (e: React.FormEvent) => {
+  const handleRecordPayroll = async (e: React.FormEvent) => {
     e.preventDefault();
     const basic = Number(payBasic);
     const tax = Math.round((basic + payAllowances + payBonuses) * 0.15);
     const net = basic + payAllowances + payBonuses - payDeductions - tax;
 
-    addPayrollRecord({
-      employeeId: employee.id,
-      employeeName: employee.name,
-      position: employee.position,
-      department: employee.department,
-      period: payPeriod,
-      basicSalary: basic,
-      allowances: Number(payAllowances),
-      bonuses: Number(payBonuses),
-      deductions: Number(payDeductions),
-      taxAmount: tax,
-      netSalary: net,
-      paymentDate: payDate,
-      paymentStatus: 'Paid',
-      paymentMethod: payMethod,
-    });
-
-    success('Payroll Recorded', `Recorded salary payout of $${net} via ${payMethod} (Ref: ${payReference}).`);
-    setPayrollDrawerOpen(false);
+    try {
+      await createPayrollRecordMutation.mutateAsync({
+        employeeId: employee.id,
+        employeeName: employee.name,
+        position: employee.position,
+        department: employee.department,
+        period: payPeriod,
+        basicSalary: basic,
+        allowances: Number(payAllowances),
+        bonuses: Number(payBonuses),
+        deductions: Number(payDeductions),
+        taxAmount: tax,
+        paymentDate: payDate,
+        paymentStatus: 'Paid',
+        paymentMethod: payMethod,
+      });
+      success('Payroll Recorded', `Recorded salary payout of $${net} via ${payMethod} (Ref: ${payReference}).`);
+      setPayrollDrawerOpen(false);
+    } catch {
+      toastError('Save Failed', 'Could not record this payroll payment.');
+    }
   };
 
   // Handle Record Employee Leave
-  const handleRecordLeave = (e: React.FormEvent) => {
+  const handleRecordLeave = async (e: React.FormEvent) => {
     e.preventDefault();
-    addEmployeeLeave(employee.id, {
-      leaveType,
-      startDate: leaveStart,
-      endDate: leaveEnd,
-      daysCount: Number(leaveDays),
-      reason: leaveReason,
-      status: leaveStatus,
-      approvedBy: 'Eric Manzi (Operations Director)',
-    });
-
-    success(
-      'Leave Recorded',
-      `Recorded ${leaveType} (${leaveDays} days). Employee status updated to ${leaveStatus === 'Approved' ? 'ON LEAVE' : 'ACTIVE'}.`
-    );
-    setLeaveDrawerOpen(false);
+    try {
+      // approvedBy is not sent — the real endpoint sets the approver name itself from the
+      // authenticated actor's JWT whenever status is APPROVED, ignoring any client-supplied name.
+      await addEmployeeLeaveMutation.mutateAsync({
+        employeeId: employee.id,
+        input: {
+          leaveType,
+          startDate: leaveStart,
+          endDate: leaveEnd,
+          daysCount: Number(leaveDays),
+          reason: leaveReason,
+          status: leaveStatus,
+        },
+      });
+      success(
+        'Leave Recorded',
+        `Recorded ${leaveType} (${leaveDays} days). Employee status updated to ${leaveStatus === 'Approved' ? 'ON LEAVE' : 'ACTIVE'}.`
+      );
+      setLeaveDrawerOpen(false);
+    } catch {
+      toastError('Save Failed', 'Could not record this leave.');
+    }
   };
 
   return (
@@ -878,6 +953,8 @@ export const EmployeeDetailPage: React.FC = () => {
             <button
               onClick={() => {
                 setDmgPhotos([]);
+                setDmgProperty('');
+                setDmgRoom('');
                 setDamageDrawerOpen(true);
               }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md"
@@ -908,12 +985,16 @@ export const EmployeeDetailPage: React.FC = () => {
                   {dmg.photos && dmg.photos.length > 0 && (
                     <div className="flex items-center gap-2 pt-1">
                       {dmg.photos.map((p, idx) => (
-                        <img
+                        <a
                           key={idx}
-                          src={p}
-                          alt="Damage photo proof"
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
-                        />
+                          href={resolveFileUrl(p)}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="View photo full size"
+                          className="block w-12 h-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:opacity-80 transition-opacity"
+                        >
+                          <img src={resolveFileUrl(p)} alt="Damage photo proof" className="w-full h-full object-cover" />
+                        </a>
                       ))}
                     </div>
                   )}
@@ -988,7 +1069,12 @@ export const EmployeeDetailPage: React.FC = () => {
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400">
                     <span>Uploaded: {doc.uploadDate}</span>
                     <button
-                      onClick={() => deleteEmployeeDocument(employee.id, doc.id)}
+                      onClick={() =>
+                        deleteEmployeeDocumentMutation.mutate(
+                          { employeeId: employee.id, documentId: doc.id },
+                          { onError: () => toastError('Delete Failed', 'Could not delete this document.') }
+                        )
+                      }
                       className="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors"
                       title="Delete document"
                     >
@@ -1198,12 +1284,12 @@ export const EmployeeDetailPage: React.FC = () => {
                   Estate Location
                 </label>
                 <select
-                  value={taskProperty}
-                  onChange={(e) => setTaskProperty(e.target.value)}
+                  value={taskPropertyId}
+                  onChange={(e) => setTaskPropertyId(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
                 >
                   {properties.map((p) => (
-                    <option key={p.id} value={p.name}>{p.name}</option>
+                    <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
               </div>
@@ -1431,10 +1517,12 @@ export const EmployeeDetailPage: React.FC = () => {
                 Property Estate *
               </label>
               <select
+                required
                 value={dmgProperty}
                 onChange={(e) => setDmgProperty(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border font-bold"
               >
+                <option value="">Select a property…</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.name}>{p.name}</option>
                 ))}
@@ -1558,11 +1646,20 @@ export const EmployeeDetailPage: React.FC = () => {
                     className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 group h-24 bg-slate-100 dark:bg-slate-800"
                   >
                     <img
-                      src={p}
+                      src={resolveFileUrl(p)}
                       alt={`Damage photo ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-1">
+                    <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                      <a
+                        href={resolveFileUrl(p)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="View photo full size"
+                        className="p-1.5 rounded-lg bg-white/90 text-slate-900 hover:bg-white transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </a>
                       <button
                         type="button"
                         onClick={() => setDmgPhotos((prev) => prev.filter((_, i) => i !== idx))}
@@ -2250,15 +2347,24 @@ export const EmployeeDetailPage: React.FC = () => {
 
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                Document URL / Path
+                Document File
               </label>
-              <input
-                type="text"
-                value={docFileUrl}
-                onChange={(e) => setDocFileUrl(e.target.value)}
-                placeholder="https://example.com/contract.pdf"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              <div className="flex items-center gap-2">
+                <FileUploadButton
+                  folder="employee-documents"
+                  label={docFileUrl ? 'Replace File' : 'Choose File'}
+                  onUploaded={(result) => {
+                    setDocFileUrl(result.url);
+                    setDocFileSize(result.sizeLabel);
+                    if (!docName) setDocName(result.originalFilename);
+                  }}
+                />
+                {docFileUrl && (
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                    File attached ✓
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

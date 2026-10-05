@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { useAdminDashboardQuery } from '../../api/dashboards';
+import { useRentalTypesQuery } from '../../api/rentalTypes';
+import { useRoomsQuery } from '../../api/rooms';
 import {
   Shield,
   Building,
@@ -20,7 +22,12 @@ import { StatCard } from '../../components/common/StatCard';
 import { Badge } from '../../components/common/Badge';
 
 export const AdminDashboard: React.FC = () => {
-  const { properties, rooms, clients, rentalTypes } = useData();
+  const statsQuery = useAdminDashboardQuery();
+  const stats = statsQuery.data;
+  const rentalTypesQuery = useRentalTypesQuery();
+  const rentalTypes = rentalTypesQuery.data ?? [];
+  const roomsQuery = useRoomsQuery();
+  const rooms = roomsQuery.data ?? [];
   const navigate = useNavigate();
 
   return (
@@ -45,8 +52,8 @@ export const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
           title="Managed Estates"
-          value={`${properties.length} Estates`}
-          subtitle="5 Kigali locations"
+          value={`${stats?.totalProperties ?? 0} Estates`}
+          subtitle="Kigali locations"
           icon={Building}
           accentColor="brand"
           onClick={() => navigate('/admin/properties')}
@@ -69,7 +76,7 @@ export const AdminDashboard: React.FC = () => {
         />
         <StatCard
           title="System Users"
-          value="5 Accounts"
+          value={`${stats?.totalUsers ?? 0} Accounts`}
           subtitle="RBAC role guards active"
           icon={Users}
           accentColor="sky"

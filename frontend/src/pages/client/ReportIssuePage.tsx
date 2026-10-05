@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { useMyClientQuery } from '../../api/clients';
+import { useMyMaintenanceIssuesQuery, useCreateMaintenanceIssueMutation } from '../../api/maintenanceIssues';
 import {
   Wrench,
   AlertTriangle,
@@ -15,15 +15,16 @@ import {
   Image,
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
+import { FileUploadButton } from '../../components/common/FileUploadButton';
 import { MaintenanceIssue, IssuePriority } from '../../types';
 
 export const ReportIssuePage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { clients, maintenanceIssues, addMaintenanceIssue } = useData();
+  const { data: client, isLoading: clientLoading } = useMyClientQuery();
+  const issuesQuery = useMyMaintenanceIssuesQuery();
+  const createIssueMutation = useCreateMaintenanceIssueMutation();
   const { success, error } = useToast();
 
-  const client = clients.find((c) => c.id === currentUser?.clientId) || clients[0];
-  const clientIssues = maintenanceIssues.filter((i) => i.clientId === client.id);
+  const clientIssues = issuesQuery.data ?? [];
 
   // Form State
   const [category, setCategory] = useState<MaintenanceIssue['category']>('Plumbing');
@@ -31,26 +32,21 @@ export const ReportIssuePage: React.FC = () => {
   const [priority, setPriority] = useState<IssuePriority>('Medium');
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitIssue = (e: React.FormEvent) => {
+  const isSubmitting = createIssueMutation.isPending;
+
+  const handleSubmitIssue = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!client) return;
     if (!title || !description) {
       error('Incomplete form', 'Please provide a title and detailed description.');
       return;
     }
 
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      const newIssue = addMaintenanceIssue({
-        clientId: client.id,
-        clientName: client.name,
-        clientAvatar: client.avatar,
+    try {
+      const newIssue = await createIssueMutation.mutateAsync({
         propertyId: client.currentPropertyId,
-        propertyName: client.currentPropertyName,
         roomId: client.currentRoomId,
-        roomNumber: client.currentRoomNumber,
         category,
         title,
         description,
@@ -58,13 +54,18 @@ export const ReportIssuePage: React.FC = () => {
         photos: photoUrl ? [photoUrl] : [],
       });
 
-      setIsSubmitting(false);
       setTitle('');
       setDescription('');
       setPhotoUrl('');
       success('Issue Reported', `Ticket ${newIssue.ticketNumber} logged. Operations team notified.`);
-    }, 500);
+    } catch {
+      error('Submission Failed', 'Could not log this issue. Please try again.');
+    }
   };
+
+  if (clientLoading || issuesQuery.isLoading || !client) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your profile…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -159,15 +160,19 @@ export const ReportIssuePage: React.FC = () => {
 
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                Photo URL / Attachment (Optional)
+                Photo Attachment (Optional)
               </label>
-              <input
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="https://example.com/damage-photo.jpg"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              <div className="flex items-center gap-2">
+                <FileUploadButton
+                  folder="maintenance-issue-photos"
+                  accept="image/*"
+                  label={photoUrl ? 'Replace Photo' : 'Attach Photo'}
+                  onUploaded={(result) => setPhotoUrl(result.url)}
+                />
+                {photoUrl && (
+                  <img src={photoUrl} alt="Attached" className="w-10 h-10 rounded-lg object-cover border" />
+                )}
+              </div>
             </div>
 
             <button

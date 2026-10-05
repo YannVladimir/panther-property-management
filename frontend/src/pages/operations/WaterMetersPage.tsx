@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
 import {
   Droplets,
@@ -29,6 +28,13 @@ import { Pagination } from '../../components/common/Pagination';
 import { Modal } from '../../components/common/Modal';
 import { WaterConsumptionTrend } from '../../components/charts/WaterConsumptionTrend';
 import { WaterMeterRecord, Client, PaymentMethod } from '../../types';
+import { useClientsQuery } from '../../api/clients';
+import {
+  useWaterMetersQuery,
+  useUpdateWaterMeterReadingMutation,
+  useRecordWaterMeterPaymentMutation,
+  useAssignWaterMeterMutation,
+} from '../../api/waterMeters';
 
 interface ClientWithMeter {
   client: Client;
@@ -36,14 +42,17 @@ interface ClientWithMeter {
 }
 
 export const WaterMetersPage: React.FC = () => {
-  const {
-    clients,
-    waterMeters,
-    updateWaterMeterReading,
-    recordWaterMeterPayment,
-    assignWaterMeter,
-  } = useData();
-  const { success, info } = useToast();
+  const clientsQuery = useClientsQuery();
+  const waterMetersQuery = useWaterMetersQuery();
+  const updateReadingMutation = useUpdateWaterMeterReadingMutation();
+  const recordPaymentMutation = useRecordWaterMeterPaymentMutation();
+  const assignMeterMutation = useAssignWaterMeterMutation();
+
+  const clients = clientsQuery.data ?? [];
+  const waterMeters = waterMetersQuery.data ?? [];
+  const isLoading = clientsQuery.isLoading || waterMetersQuery.isLoading;
+
+  const { success, info, error } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'unpaid' | 'paid' | 'active_clients'>('all');
@@ -120,49 +129,77 @@ export const WaterMetersPage: React.FC = () => {
     .reduce((acc, m) => acc + m.totalAmount, 0);
 
   // Handle Recording New Meter Reading
-  const handleSaveNewReading = (e: React.FormEvent) => {
+  const handleSaveNewReading = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!readingModalClient || !readingModalClient.meter) return;
 
-    updateWaterMeterReading(readingModalClient.meter.id, Number(newReadingVal), isNewCycle);
-    success(
-      'Reading Recorded & Bill Generated',
-      `Meter ${readingModalClient.meter.meterNumber} updated to ${newReadingVal} m³. Generated charge for ${readingModalClient.client.name}.`
-    );
-    setReadingModalClient(null);
+    try {
+      await updateReadingMutation.mutateAsync({
+        id: readingModalClient.meter.id,
+        currentReading: Number(newReadingVal),
+        newBillingCycle: isNewCycle,
+      });
+      success(
+        'Reading Recorded & Bill Generated',
+        `Meter ${readingModalClient.meter.meterNumber} updated to ${newReadingVal} m³. Generated charge for ${readingModalClient.client.name}.`
+      );
+      setReadingModalClient(null);
+    } catch {
+      error('Save Failed', 'Could not record this meter reading. Please try again.');
+    }
   };
 
   // Handle Recording Payment for Water Bill
-  const handleRecordPaymentSubmit = (e: React.FormEvent) => {
+  const handleRecordPaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!paymentModalClient || !paymentModalClient.meter) return;
 
-    recordWaterMeterPayment(
-      paymentModalClient.meter.id,
-      paymentMethod,
-      paymentReference || `MOMO-WTR-${Date.now().toString().slice(-5)}`
-    );
-    success(
-      'Payment Recorded',
-      `Marked water bill of $${paymentModalClient.meter.totalAmount} as PAID for ${paymentModalClient.client.name}.`
-    );
-    setPaymentModalClient(null);
+    try {
+      await recordPaymentMutation.mutateAsync({
+        id: paymentModalClient.meter.id,
+        paymentMethod,
+        reference: paymentReference || `MOMO-WTR-${Date.now().toString().slice(-5)}`,
+      });
+      success(
+        'Payment Recorded',
+        `Marked water bill of $${paymentModalClient.meter.totalAmount} as PAID for ${paymentModalClient.client.name}.`
+      );
+      setPaymentModalClient(null);
+    } catch {
+      error('Payment Failed', 'Could not record this payment. Please try again.');
+    }
   };
 
   // Handle Assigning Meter to Client
-  const handleAssignMeterSubmit = (e: React.FormEvent) => {
+  const handleAssignMeterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignModalClient) return;
 
-    assignWaterMeter(assignModalClient.id, assignMeterNum, Number(assignStartReading));
-    success(
-      'Meter Assigned',
-      `Assigned meter ${assignMeterNum} to ${assignModalClient.name} with start reading ${assignStartReading} m³.`
-    );
-    setAssignModalClient(null);
-    setAssignMeterNum('');
-    setAssignStartReading(0);
+    try {
+      await assignMeterMutation.mutateAsync({
+        clientId: assignModalClient.id,
+        meterNumber: assignMeterNum,
+        initialReading: Number(assignStartReading),
+      });
+      success(
+        'Meter Assigned',
+        `Assigned meter ${assignMeterNum} to ${assignModalClient.name} with start reading ${assignStartReading} m³.`
+      );
+      setAssignModalClient(null);
+      setAssignMeterNum('');
+      setAssignStartReading(0);
+    } catch {
+      error('Assignment Failed', 'Could not assign this water meter. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-sm text-slate-400">
+        Loading water meter ledger...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-16">

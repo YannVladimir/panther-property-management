@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { useMyEmployeeQuery, useUpdateEmployeeDailyTaskMutation } from '../../api/employees';
+import { useMyPreventiveTasksQuery } from '../../api/preventiveTasks';
 import {
   ClipboardCheck,
   CheckCircle2,
@@ -25,44 +25,38 @@ import {
 import { Badge } from '../../components/common/Badge';
 
 export const HouseholdDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { employees, preventiveTasks, payrollRecords, updateEmployeeDailyTask } = useData();
-  const { success } = useToast();
+  const employeeQuery = useMyEmployeeQuery();
+  const currentEmployee = employeeQuery.data;
+  const preventiveTasksQuery = useMyPreventiveTasksQuery();
+  const myPreventiveTasks = preventiveTasksQuery.data ?? [];
+  const updateEmployeeDailyTaskMutation = useUpdateEmployeeDailyTaskMutation();
+  const { success, error: toastError } = useToast();
   const navigate = useNavigate();
 
-  // Match current staff profile (default to Emmanuel Habimana / emp-03 for household role)
-  const currentEmployee =
-    employees.find(
-      (e) =>
-        e.id === currentUser?.id ||
-        e.email === currentUser?.email ||
-        e.name.toLowerCase().includes('emmanuel')
-    ) || employees[2] || employees[0];
-
   const myDailyTasks = currentEmployee?.dailyTasks || [];
-  const myPayrolls = payrollRecords.filter((p) => p.employeeId === currentEmployee?.id);
-  const myPreventiveTasks = preventiveTasks.filter(
-    (t) =>
-      t.assignedStaffId === currentEmployee?.id ||
-      t.assignedStaffName?.toLowerCase().includes(currentEmployee?.name?.toLowerCase() || '')
-  );
 
   const pendingDailyTasks = myDailyTasks.filter((t) => t.status !== 'Completed');
   const completedDailyTasks = myDailyTasks.filter((t) => t.status === 'Completed');
 
   // Handle Mark Daily Task as Completed / In Progress
-  const handleToggleTaskStatus = (taskId: string, currentStatus: string) => {
+  const handleToggleTaskStatus = async (taskId: string, currentStatus: string) => {
     if (!currentEmployee) return;
     const nextStatus = currentStatus === 'Completed' ? 'In Progress' : 'Completed';
-    updateEmployeeDailyTask(currentEmployee.id, taskId, {
-      status: nextStatus as any,
-    });
-    success(
-      'Task Updated',
-      nextStatus === 'Completed'
-        ? 'Marked task as completed! Supervisor notified.'
-        : 'Task marked in progress.'
-    );
+    try {
+      await updateEmployeeDailyTaskMutation.mutateAsync({
+        employeeId: currentEmployee.id,
+        taskId,
+        input: { status: nextStatus as any },
+      });
+      success(
+        'Task Updated',
+        nextStatus === 'Completed'
+          ? 'Marked task as completed! Supervisor notified.'
+          : 'Task marked in progress.'
+      );
+    } catch {
+      toastError('Update Failed', 'Could not update this task.');
+    }
   };
 
   return (

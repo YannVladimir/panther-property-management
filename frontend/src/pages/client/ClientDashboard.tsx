@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { useMyClientQuery } from '../../api/clients';
+import { useMyPaymentsQuery } from '../../api/payments';
+import { useMyMaintenanceIssuesQuery } from '../../api/maintenanceIssues';
 import confetti from 'canvas-confetti';
 import {
   DoorOpen,
@@ -24,24 +26,36 @@ import { StatCard } from '../../components/common/StatCard';
 import { Modal } from '../../components/common/Modal';
 
 export const ClientDashboard: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { clients, rooms, payments, maintenanceIssues, addPayment } = useData();
+  // addPayment is the one remaining deliberate gap from the Finance domain pass: there is no
+  // real client-facing payment-creation endpoint, so the "Pay Monthly Rent" button still simulates
+  // via mock state rather than actually persisting. Reads (payments, issues below) are all real.
+  const { addPayment } = useData();
   const { success } = useToast();
   const navigate = useNavigate();
 
-  // Find active client record (defaults to Jean-Paul Ndahiro)
-  const client = clients.find((c) => c.id === currentUser?.clientId) || clients[0];
-  const clientRoom = rooms.find((r) => r.id === client.currentRoomId) || rooms[0];
-  const clientPayments = payments.filter((p) => p.clientId === client.id);
-  const clientIssues = maintenanceIssues.filter((i) => i.clientId === client.id);
+  const { data: client, isLoading } = useMyClientQuery();
+  // Real self-service reads — the previous version filtered the mock DataContext's payments/
+  // maintenanceIssues arrays by client.id, but client.id is now a real numeric id that never
+  // matches the old mock string ids (e.g. "client-04"), so this was silently broken (always empty)
+  // once the Finance/Facilities domains were converted to real client ids. Fixed by switching to
+  // the real self-service endpoints those domains already built.
+  const paymentsQuery = useMyPaymentsQuery();
+  const clientPayments = paymentsQuery.data ?? [];
+  const issuesQuery = useMyMaintenanceIssuesQuery();
+  const clientIssues = issuesQuery.data ?? [];
 
   const [payModalOpen, setPayModalOpen] = useState(false);
-  const [payAmount, setPayAmount] = useState(client.monthlyRent);
+  const [payAmount, setPayAmount] = useState(0);
   const [payMethod, setPayMethod] = useState<'Mobile Money' | 'Bank Transfer' | 'Credit Card'>('Mobile Money');
   const [isProcessingPay, setIsProcessingPay] = useState(false);
 
+  useEffect(() => {
+    if (client) setPayAmount(client.monthlyRent);
+  }, [client]);
+
   const handleSimulatePayment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!client) return;
     setIsProcessingPay(true);
 
     setTimeout(() => {
@@ -73,6 +87,10 @@ export const ClientDashboard: React.FC = () => {
       success('Payment Successful!', `Recorded payment of $${payAmount} via ${payMethod}. Receipt generated.`);
     }, 600);
   };
+
+  if (isLoading || !client) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your dashboard…</div>;
+  }
 
   return (
     <div className="space-y-8">

@@ -1,11 +1,24 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
+import { useToast } from '../../context/ToastContext';
+import {
+  useMyNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+} from '../../api/notifications';
 import { Bell, CheckCircle2, Shield, Calendar, DollarSign, Wrench } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 
 export const ClientNotificationsPage: React.FC = () => {
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useData();
+  const { error: toastError } = useToast();
+  const notificationsQuery = useMyNotificationsQuery();
+  const notifications = notificationsQuery.data ?? [];
+  const markReadMutation = useMarkNotificationReadMutation();
+  const markAllReadMutation = useMarkAllNotificationsReadMutation();
+  const markNotificationRead = (id: string) =>
+    markReadMutation.mutate(id, { onError: () => toastError('Failed', 'Could not mark this notification as read.') });
+  const markAllNotificationsRead = () =>
+    markAllReadMutation.mutate(undefined, { onError: () => toastError('Failed', 'Could not mark all notifications as read.') });
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">

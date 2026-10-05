@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { useData } from '../../context/DataContext';
+import { usePropertiesQuery } from '../../api/properties';
+import {
+  useRentalTypesQuery,
+  useCreateRentalTypeMutation,
+  useUpdateRentalTypeMutation,
+  RentalTypeInput,
+} from '../../api/rentalTypes';
 import { useToast } from '../../context/ToastContext';
 import {
   Layers,
   Plus,
-  Package,
-  DollarSign,
   CheckCircle2,
-  Edit,
-  Trash2,
-  Sparkles,
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
-import { RentalTypeConfig, IncludedMaterialItem, FurnishingType } from '../../types';
+import { RentalTypeConfig, FurnishingType } from '../../types';
 
 export const AdminRentalTypesPage: React.FC = () => {
-  const { rentalTypes, addRentalType, updateRentalType } = useData();
-  const { success } = useToast();
+  const { data: rentalTypes = [] } = useRentalTypesQuery();
+  const { data: properties = [] } = usePropertiesQuery();
+  const createRentalType = useCreateRentalTypeMutation();
+  const updateRentalType = useUpdateRentalTypeMutation();
+  const { success, error } = useToast();
+  const saving = createRentalType.isPending || updateRentalType.isPending;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingType, setEditingType] = useState<RentalTypeConfig | null>(null);
@@ -33,6 +38,7 @@ export const AdminRentalTypesPage: React.FC = () => {
     setName('Semi-Furnished');
     setDescription('Custom furnishing configuration with appliances and master bedroom set.');
     setPriceMultiplier(1.15);
+    setStatus('active');
     setModalOpen(true);
   };
 
@@ -45,33 +51,41 @@ export const AdminRentalTypesPage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingType) {
-      updateRentalType({
-        ...editingType,
-        name,
-        description,
-        priceMultiplier,
-        status,
-      });
-      success('Rental Package Updated', `Saved updates for ${name}.`);
-    } else {
-      addRentalType({
-        name,
-        description,
-        priceMultiplier,
-        status,
-        applicablePropertyIds: ['prop-01', 'prop-02', 'prop-03', 'prop-04', 'prop-05'],
-        includedMaterials: [
-          { id: `mat-new-${Date.now()}`, name: 'Bed Frame & Orthopedic Mattress', quantity: 1, condition: 'Excellent', category: 'Bedroom' },
-          { id: `mat-new-${Date.now() + 1}`, name: 'Double-Door Refrigerator', quantity: 1, condition: 'Excellent', category: 'Kitchen' },
-        ],
-      });
-      success('Rental Package Created', `Configured new rental type: ${name}.`);
+    try {
+      if (editingType) {
+        const payload: RentalTypeInput = {
+          name,
+          description,
+          priceMultiplier,
+          status,
+          applicablePropertyIds: editingType.applicablePropertyIds,
+          includedMaterials: editingType.includedMaterials.map(({ id: _id, ...rest }) => rest),
+        };
+        await updateRentalType.mutateAsync({ id: editingType.id, input: payload });
+        success('Rental Package Updated', `Saved updates for ${name}.`);
+      } else {
+        const payload: RentalTypeInput = {
+          name,
+          description,
+          priceMultiplier,
+          status,
+          // Defaults to every currently-real property — this form has no per-property picker.
+          applicablePropertyIds: properties.map((p) => p.id),
+          includedMaterials: [
+            { name: 'Bed Frame & Orthopedic Mattress', quantity: 1, condition: 'Excellent', category: 'Bedroom' },
+            { name: 'Double-Door Refrigerator', quantity: 1, condition: 'Excellent', category: 'Kitchen' },
+          ],
+        };
+        await createRentalType.mutateAsync(payload);
+        success('Rental Package Created', `Configured new rental type: ${name}.`);
+      }
+      setModalOpen(false);
+    } catch {
+      error('Save Failed', 'Could not save this rental type. Please try again.');
     }
-    setModalOpen(false);
   };
 
   return (
@@ -148,7 +162,9 @@ export const AdminRentalTypesPage: React.FC = () => {
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-slate-400">Applicable across all 5 Kigali estates</span>
+              <span className="text-[11px] text-slate-400">
+                Applicable across {rt.applicablePropertyIds.length} propert{rt.applicablePropertyIds.length === 1 ? 'y' : 'ies'}
+              </span>
               <button
                 onClick={() => openEditModal(rt)}
                 className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-purple-50 hover:text-purple-600 text-xs font-bold transition-colors"
@@ -176,7 +192,7 @@ export const AdminRentalTypesPage: React.FC = () => {
                 type="text"
                 required
                 value={name}
-                onChange={(e) => setName(e.target.value as any)}
+                onChange={(e) => setName(e.target.value as FurnishingType)}
                 placeholder="e.g. Executive Luxury Suite"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
               />
@@ -217,7 +233,7 @@ export const AdminRentalTypesPage: React.FC = () => {
                 </label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
+                  onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
                 >
                   <option value="active">Active</option>
@@ -229,9 +245,10 @@ export const AdminRentalTypesPage: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-md transition-all"
+                disabled={saving}
+                className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-60"
               >
-                Save Rental Type Configuration
+                {saving ? 'Saving…' : 'Save Rental Type Configuration'}
               </button>
             </div>
           </form>

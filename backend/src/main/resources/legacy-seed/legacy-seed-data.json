@@ -1,0 +1,2890 @@
+{
+  "users": [
+    {
+      "legacyId": "user-ops",
+      "name": "Eric Manzi",
+      "email": "operations@panther.rw",
+      "phone": "+250 788 123 456",
+      "role": "OPERATIONS",
+      "title": "Senior Operations Director",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "clientLegacyId": null,
+      "employeeLegacyId": "emp-01",
+      "password": "password@123",
+      "mustChangePassword": false
+    },
+    {
+      "legacyId": "user-owner",
+      "name": "Hon. Alexis Gatete",
+      "email": "owner@panther.rw",
+      "phone": "+250 788 999 888",
+      "role": "OWNER",
+      "title": "Managing Principal & Investor",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "clientLegacyId": null,
+      "employeeLegacyId": null,
+      "password": "password@123",
+      "mustChangePassword": false
+    },
+    {
+      "legacyId": "user-client",
+      "name": "Jean-Paul Ndahiro",
+      "email": "jp.ndahiro@gmail.com",
+      "phone": "+250 785 432 109",
+      "role": "CLIENT",
+      "title": "Resident - Room A-204",
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "clientLegacyId": "client-01",
+      "employeeLegacyId": null,
+      "password": "password@123",
+      "mustChangePassword": false
+    },
+    {
+      "legacyId": "user-household",
+      "name": "Emmanuel Habimana",
+      "email": "emmanuel.h@panther.rw",
+      "phone": "+250 783 555 777",
+      "role": "HOUSEHOLD",
+      "title": "Lead Facility & Maintenance Officer",
+      "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+      "clientLegacyId": null,
+      "employeeLegacyId": "emp-03",
+      "password": "password@123",
+      "mustChangePassword": false
+    },
+    {
+      "legacyId": "user-admin",
+      "name": "Diane Umutoni",
+      "email": "admin@panther.rw",
+      "phone": "+250 788 777 666",
+      "role": "ADMIN",
+      "title": "Principal Systems Administrator",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "clientLegacyId": null,
+      "employeeLegacyId": "emp-02",
+      "password": "password@123",
+      "mustChangePassword": false
+    }
+  ],
+  "properties": [
+    {
+      "legacyId": "prop-01",
+      "name": "Gacuriro Vista Suites",
+      "code": "GVS",
+      "location": "Gacuriro, Gasabo",
+      "neighborhood": "Gacuriro Hillcrest Estate",
+      "city": "Kigali",
+      "address": "KG 14 Ave, Plot 88, Gacuriro, Kigali",
+      "description": "Ultra-luxury modern hillside serviced residences situated in the prestigious Gacuriro Hillcrest neighborhood. Boasting panoramic sunset balconies, 24/7 guarded security, high-speed fiber internet, and immediate proximity to MTN Center.",
+      "rating": 4.9,
+      "reviewCount": 56,
+      "featured": true,
+      "yearBuilt": 2024,
+      "monthlyRevenueEstimate": 29400,
+      "images": [
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&auto=format&fit=crop&q=80"
+      ],
+      "amenities": [
+        "High-Speed Fiber Wi-Fi",
+        "24/7 Gated Security & CCTV",
+        "Hillside Panoramic Balconies",
+        "Backup Power Generator",
+        "Covered Dedicated Parking",
+        "Water Reservoir System",
+        "Landscaped Tropical Gardens",
+        "Elevator Access"
+      ]
+    },
+    {
+      "legacyId": "prop-02",
+      "name": "Nyarutarama Golf View Lofts",
+      "code": "NGV",
+      "location": "Nyarutarama, Gasabo",
+      "neighborhood": "Nyarutarama Lake & Golf Area",
+      "city": "Kigali",
+      "address": "KG 9 Ave, Nyarutarama, Kigali",
+      "description": "Contemporary duplex lofts boasting floor-to-ceiling glass architecture with lush green views overlooking the Kigali Golf Club fairway. Features private gardens, modern European finishes, and solar energy systems.",
+      "rating": 4.95,
+      "reviewCount": 48,
+      "featured": true,
+      "yearBuilt": 2024,
+      "monthlyRevenueEstimate": 32800,
+      "images": [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&auto=format&fit=crop&q=80"
+      ],
+      "amenities": [
+        "Kigali Golf Fairway Views",
+        "High-Speed Fiber Wi-Fi",
+        "Solar Powered Water Heating",
+        "24/7 Private Security & CCTV",
+        "Landscaped Gardens & Sun Deck",
+        "Reserved Covered Parking",
+        "Smart Climate Control",
+        "Gourmet Fitted European Kitchens"
+      ]
+    }
+  ],
+  "buildings": [
+    {
+      "legacyId": "bld-01",
+      "propertyLegacyId": "prop-01",
+      "name": "Hillside Block 1",
+      "floorsCount": 4
+    },
+    {
+      "legacyId": "bld-02",
+      "propertyLegacyId": "prop-01",
+      "name": "Hillside Block 2",
+      "floorsCount": 4
+    },
+    {
+      "legacyId": "bld-03",
+      "propertyLegacyId": "prop-02",
+      "name": "Fairway Block A",
+      "floorsCount": 3
+    },
+    {
+      "legacyId": "bld-04",
+      "propertyLegacyId": "prop-02",
+      "name": "Fairway Block B",
+      "floorsCount": 3
+    }
+  ],
+  "rentalTypes": [
+    {
+      "legacyId": "rt-01",
+      "name": "FULLY_FURNISHED",
+      "description": "Turnkey ready with designer bedroom sets, living room lounge, smart 55\" 4K TV, fully equipped kitchen appliances, and washer/dryer.",
+      "priceMultiplier": 1.25,
+      "status": "ACTIVE",
+      "applicablePropertyLegacyIds": [
+        "prop-01",
+        "prop-02"
+      ],
+      "includedMaterials": [
+        {
+          "name": "King Bed & Orthopedic Mattress",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Bedroom"
+        },
+        {
+          "name": "Nightstands with Warm Lamps",
+          "quantity": 2,
+          "condition": "Good",
+          "category": "Bedroom"
+        },
+        {
+          "name": "3-Seater Velvet Sofa",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Living Room"
+        },
+        {
+          "name": "Coffee Table & Rug",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Living Room"
+        },
+        {
+          "name": "55\" 4K UHD Smart TV",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Electronics"
+        },
+        {
+          "name": "Double-Door Refrigerator",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Kitchen"
+        },
+        {
+          "name": "Microwave Oven & Kettle",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Kitchen"
+        },
+        {
+          "name": "Dining Table & 4 Chairs",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Dining"
+        },
+        {
+          "name": "Automatic Front-Load Washer",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Appliances"
+        }
+      ]
+    },
+    {
+      "legacyId": "rt-02",
+      "name": "SELF_FURNISHED",
+      "description": "Tenant brings their own personalized furniture. The apartment includes built-in wardrobe cabinets, fitted kitchen stove/sink, and pre-wired fiber connections.",
+      "priceMultiplier": 1,
+      "status": "ACTIVE",
+      "applicablePropertyLegacyIds": [
+        "prop-01",
+        "prop-02"
+      ],
+      "includedMaterials": [
+        {
+          "name": "Fitted Kitchen Gas/Induction Stove",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Kitchen"
+        },
+        {
+          "name": "Built-in Floor-to-Ceiling Wardrobes",
+          "quantity": 2,
+          "condition": "Excellent",
+          "category": "Bedroom"
+        },
+        {
+          "name": "Pre-installed Window Curtain Rods",
+          "quantity": 4,
+          "condition": "Good",
+          "category": "Fixtures"
+        },
+        {
+          "name": "High-Efficiency Water Heater",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Utilities"
+        }
+      ]
+    },
+    {
+      "legacyId": "rt-03",
+      "name": "SEMI_FURNISHED",
+      "description": "Includes key heavy appliances (Refrigerator, Washer, Cooker) and master bedroom bed frame, allowing tenants to bring custom soft decor and seating.",
+      "priceMultiplier": 1.12,
+      "status": "ACTIVE",
+      "applicablePropertyLegacyIds": [
+        "prop-01",
+        "prop-02"
+      ],
+      "includedMaterials": [
+        {
+          "name": "Master Bed Frame & Mattress",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Bedroom"
+        },
+        {
+          "name": "Double-Door Refrigerator",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Kitchen"
+        },
+        {
+          "name": "Gas/Electric Cooker Range",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Kitchen"
+        },
+        {
+          "name": "Washing Machine",
+          "quantity": 1,
+          "condition": "Good",
+          "category": "Appliances"
+        }
+      ]
+    },
+    {
+      "legacyId": "rt-04",
+      "name": "EXECUTIVE_LUXURY",
+      "description": "Ultra-premium bespoke European designer furniture, Sonos audio sound system, 65\" OLED TV, Nespresso bar, silk blackout drapes, and weekly housekeeping included.",
+      "priceMultiplier": 1.5,
+      "status": "ACTIVE",
+      "applicablePropertyLegacyIds": [
+        "prop-01",
+        "prop-02"
+      ],
+      "includedMaterials": [
+        {
+          "name": "Italian Leather Sectional Sofa",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Living Room"
+        },
+        {
+          "name": "65\" LG OLED 4K Smart TV",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Electronics"
+        },
+        {
+          "name": "Sonos Surround Sound Bar",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Electronics"
+        },
+        {
+          "name": "Nespresso Vertuo Coffee Bar",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Kitchen"
+        },
+        {
+          "name": "King Serta Luxury Plush Bed",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Bedroom"
+        },
+        {
+          "name": "Washer & Heat-Pump Dryer Combo",
+          "quantity": 1,
+          "condition": "Excellent",
+          "category": "Appliances"
+        }
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "legacyId": "room-01",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-01",
+      "roomNumber": "A-204",
+      "floor": 2,
+      "sizeSqM": 85,
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "furnishingType": "FULLY_FURNISHED",
+      "monthlyRent": 850,
+      "deposit": 850,
+      "status": "OCCUPIED",
+      "currentClientLegacyId": "client-01",
+      "virtualTourUrl": null,
+      "description": "Spacious 2-bedroom corner suite featuring an open-concept living area, balcony with city view, and master ensuite.",
+      "amenities": [
+        "High-Speed Wi-Fi",
+        "Smart Lock",
+        "City View Balcony",
+        "AC in Master",
+        "Ensuite Bathroom",
+        "Dishwasher"
+      ],
+      "utilitiesIncluded": [
+        "High-Speed Fiber Internet",
+        "Garbage Disposal",
+        "24/7 Security",
+        "Compound Maintenance"
+      ],
+      "rules": [
+        "No smoking inside apartment",
+        "Quiet hours from 10:00 PM to 7:00 AM",
+        "Small pets permitted with deposit"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-02",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-01",
+      "roomNumber": "A-301",
+      "floor": 3,
+      "sizeSqM": 110,
+      "bedrooms": 3,
+      "bathrooms": 2,
+      "furnishingType": "EXECUTIVE_LUXURY",
+      "monthlyRent": 1350,
+      "deposit": 1350,
+      "status": "AVAILABLE",
+      "currentClientLegacyId": null,
+      "virtualTourUrl": null,
+      "description": "Executive 3-bedroom apartment with designer kitchen island, panoramic terrace overlooking Kigali Convention Centre, and wine cooler.",
+      "amenities": [
+        "Panoramic Terrace",
+        "OLED TV",
+        "Sonos Sound",
+        "Smart Lock",
+        "Wine Cooler",
+        "Covered Parking (2 spots)"
+      ],
+      "utilitiesIncluded": [
+        "High-Speed Fiber Internet",
+        "Garbage Disposal",
+        "24/7 Security",
+        "Gym & Pool Access"
+      ],
+      "rules": [
+        "No smoking inside",
+        "Quiet hours after 10 PM",
+        "No subletting"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-03",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-02",
+      "roomNumber": "B-102",
+      "floor": 1,
+      "sizeSqM": 55,
+      "bedrooms": 1,
+      "bathrooms": 1,
+      "furnishingType": "FULLY_FURNISHED",
+      "monthlyRent": 600,
+      "deposit": 600,
+      "status": "AVAILABLE",
+      "currentClientLegacyId": null,
+      "virtualTourUrl": null,
+      "description": "Chic 1-bedroom urban loft with high ceilings, workstation desk, and garden courtyard terrace.",
+      "amenities": [
+        "High-Speed Wi-Fi",
+        "Smart Lock",
+        "Dedicated Work Desk",
+        "Courtyard Patio",
+        "Washer"
+      ],
+      "utilitiesIncluded": [
+        "Fiber Internet",
+        "Security",
+        "Water Booster"
+      ],
+      "rules": [
+        "No loud parties",
+        "Strict non-smoking unit"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1502005229762-ee1b2b800e84?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-04",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-02",
+      "roomNumber": "B-201",
+      "floor": 2,
+      "sizeSqM": 85,
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "furnishingType": "FULLY_FURNISHED",
+      "monthlyRent": 850,
+      "deposit": 850,
+      "status": "OCCUPIED",
+      "currentClientLegacyId": "client-06",
+      "virtualTourUrl": null,
+      "description": "Beautiful 2-bedroom with sunset view, walk-in closet, and upgraded smart lighting fixtures.",
+      "amenities": [
+        "Sunset Balcony",
+        "Walk-in Closet",
+        "Smart Lock",
+        "Fast Fiber Wi-Fi"
+      ],
+      "utilitiesIncluded": [
+        "Security",
+        "Internet",
+        "Gym Access"
+      ],
+      "rules": [
+        "Quiet hours after 10 PM"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-05",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-01",
+      "roomNumber": "A-404",
+      "floor": 4,
+      "sizeSqM": 85,
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "furnishingType": "SELF_FURNISHED",
+      "monthlyRent": 700,
+      "deposit": 700,
+      "status": "OCCUPIED",
+      "currentClientLegacyId": "client-04",
+      "virtualTourUrl": null,
+      "description": "Bright 2BR top-floor unit with modern kitchen cabinets, reserved for incoming diplomatic tenant.",
+      "amenities": [
+        "Top Floor Skylight",
+        "Balcony",
+        "Built-in Closets"
+      ],
+      "utilitiesIncluded": [
+        "Security",
+        "Trash Service"
+      ],
+      "rules": [
+        "Standard tenancy regulations"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-06",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-02",
+      "roomNumber": "B-105",
+      "floor": 1,
+      "sizeSqM": 70,
+      "bedrooms": 1,
+      "bathrooms": 1.5,
+      "furnishingType": "FULLY_FURNISHED",
+      "monthlyRent": 650,
+      "deposit": 650,
+      "status": "MAINTENANCE",
+      "currentClientLegacyId": null,
+      "virtualTourUrl": null,
+      "description": "Undergoing routine fixture upgrade and fresh repaint. Available for booking from next week.",
+      "amenities": [
+        "Patio Access",
+        "Smart TV",
+        "AC"
+      ],
+      "utilitiesIncluded": [
+        "Standard package"
+      ],
+      "rules": [
+        "Standard rules"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1502005229762-ee1b2b800e84?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-07",
+      "propertyLegacyId": "prop-02",
+      "buildingLegacyId": "bld-03",
+      "roomNumber": "G-201",
+      "floor": 2,
+      "sizeSqM": 130,
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "furnishingType": "EXECUTIVE_LUXURY",
+      "monthlyRent": 1650,
+      "deposit": 1650,
+      "status": "AVAILABLE",
+      "currentClientLegacyId": null,
+      "virtualTourUrl": null,
+      "description": "Prestigious duplex loft overlooking the green 5th hole fairway. Double-height ceilings and private plunge pool on terrace.",
+      "amenities": [
+        "Fairway View",
+        "Private Plunge Pool",
+        "Double Height Living Room",
+        "Solar Powered AC",
+        "Italian Kitchen"
+      ],
+      "utilitiesIncluded": [
+        "Solar Power Backup",
+        "Fiber Wi-Fi",
+        "Security & Guard",
+        "Garden Care"
+      ],
+      "rules": [
+        "No loud parties past 11 PM",
+        "Respect golf fairway quiet zones"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-08",
+      "propertyLegacyId": "prop-02",
+      "buildingLegacyId": "bld-04",
+      "roomNumber": "G-302",
+      "floor": 3,
+      "sizeSqM": 100,
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "furnishingType": "FULLY_FURNISHED",
+      "monthlyRent": 1200,
+      "deposit": 1200,
+      "status": "OCCUPIED",
+      "currentClientLegacyId": "client-02",
+      "virtualTourUrl": null,
+      "description": "Modern 2BR loft with rooftop golf panorama and marble master bathroom.",
+      "amenities": [
+        "Golf Course View",
+        "Marble Bath",
+        "Smart Climate Control"
+      ],
+      "utilitiesIncluded": [
+        "Fiber Wi-Fi",
+        "Solar Water Heating",
+        "Security"
+      ],
+      "rules": [
+        "Non-smoking inside"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-09",
+      "propertyLegacyId": "prop-01",
+      "buildingLegacyId": "bld-01",
+      "roomNumber": "V-101",
+      "floor": 1,
+      "sizeSqM": 95,
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "furnishingType": "FULLY_FURNISHED",
+      "monthlyRent": 920,
+      "deposit": 920,
+      "status": "OCCUPIED",
+      "currentClientLegacyId": "client-03",
+      "virtualTourUrl": null,
+      "description": "Serene 2-bedroom with expansive hillside garden patio, perfect for families.",
+      "amenities": [
+        "Garden Patio",
+        "Fast Fiber",
+        "Covered Parking"
+      ],
+      "utilitiesIncluded": [
+        "Security",
+        "Water Reservoir Backup",
+        "Waste Pickup"
+      ],
+      "rules": [
+        "Quiet hours after 10 PM"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1000&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "room-10",
+      "propertyLegacyId": "prop-02",
+      "buildingLegacyId": "bld-04",
+      "roomNumber": "G-401",
+      "floor": 4,
+      "sizeSqM": 160,
+      "bedrooms": 4,
+      "bathrooms": 3,
+      "furnishingType": "EXECUTIVE_LUXURY",
+      "monthlyRent": 2200,
+      "deposit": 2200,
+      "status": "OCCUPIED",
+      "currentClientLegacyId": "client-05",
+      "virtualTourUrl": null,
+      "description": "Penthouse-style 4-bedroom loft with private rooftop garden, golf fairway panorama, and full home automation.",
+      "amenities": [
+        "Rooftop Garden",
+        "Full Automation",
+        "Double Covered Parking",
+        "Italian Kitchen",
+        "Steam Shower"
+      ],
+      "utilitiesIncluded": [
+        "Solar Power",
+        "Fiber Wi-Fi",
+        "Security & Guard",
+        "Garden Concierge"
+      ],
+      "rules": [
+        "Non-smoking",
+        "No loud parties after 11 PM"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1000&auto=format&fit=crop&q=80",
+        "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=1000&auto=format&fit=crop&q=80"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "legacyId": "client-01",
+      "name": "Jean-Paul Ndahiro",
+      "email": "jp.ndahiro@gmail.com",
+      "phone": "+250 785 432 109",
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "identificationNumber": "1199080034291045",
+      "nationality": "Rwandan",
+      "occupation": null,
+      "employer": null,
+      "emergencyContact": {
+        "name": "Grace Ndahiro",
+        "phone": "+250 788 881 223",
+        "relationship": "Spouse"
+      },
+      "currentRoomLegacyId": "room-01",
+      "currentPropertyLegacyId": "prop-01",
+      "rentalType": "FULLY_FURNISHED",
+      "moveInDate": "2025-09-01",
+      "leaseExpiryDate": "2026-08-31",
+      "monthlyRent": 850,
+      "depositPaid": 850,
+      "paymentStatus": "PAID",
+      "status": "ACTIVE",
+      "deactivationReason": null,
+      "deactivatedDate": null,
+      "notes": null,
+      "materials": [
+        {
+          "name": "King Bed & Orthopedic Mattress",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2025-09-01",
+          "serialNumber": "BED-KHR-042",
+          "category": "Bedroom"
+        },
+        {
+          "name": "3-Seater Velvet Sofa",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2025-09-01",
+          "serialNumber": "SOF-KHR-019",
+          "category": "Living Room"
+        },
+        {
+          "name": "55\" 4K UHD Smart TV",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2025-09-01",
+          "serialNumber": "TV-LG-8892",
+          "category": "Electronics"
+        },
+        {
+          "name": "Double-Door Refrigerator",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2025-09-01",
+          "serialNumber": "FRG-SAM-4421",
+          "category": "Kitchen"
+        },
+        {
+          "name": "Dining Table & 4 Chairs",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2025-09-01",
+          "serialNumber": "DNT-KHR-08",
+          "category": "Dining"
+        },
+        {
+          "name": "Automatic Front-Load Washer",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2025-09-01",
+          "serialNumber": "WSH-BOS-102",
+          "category": "Appliances"
+        }
+      ]
+    },
+    {
+      "legacyId": "client-02",
+      "name": "Sarah Van der Beek",
+      "email": "sarah.vdb@eu-mission.org",
+      "phone": "+250 789 220 119",
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+      "identificationNumber": "P-BEL-9920194",
+      "nationality": "Belgian",
+      "occupation": null,
+      "employer": null,
+      "emergencyContact": {
+        "name": "Thomas Van der Beek",
+        "phone": "+32 470 12 34 56",
+        "relationship": "Brother"
+      },
+      "currentRoomLegacyId": "room-08",
+      "currentPropertyLegacyId": "prop-02",
+      "rentalType": "FULLY_FURNISHED",
+      "moveInDate": "2025-11-15",
+      "leaseExpiryDate": "2026-11-14",
+      "monthlyRent": 1200,
+      "depositPaid": 1200,
+      "paymentStatus": "PAID",
+      "status": "ACTIVE",
+      "deactivationReason": null,
+      "deactivatedDate": null,
+      "notes": null,
+      "materials": [
+        {
+          "name": "King Bed & Mattress",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2025-11-15",
+          "serialNumber": "BED-NGV-01",
+          "category": "Bedroom"
+        },
+        {
+          "name": "55\" 4K Smart TV",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2025-11-15",
+          "serialNumber": "TV-SAM-901",
+          "category": "Electronics"
+        },
+        {
+          "name": "Samsung Inverter Refrigerator",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2025-11-15",
+          "serialNumber": "FRG-NGV-04",
+          "category": "Kitchen"
+        }
+      ]
+    },
+    {
+      "legacyId": "client-03",
+      "name": "David Karekezi",
+      "email": "david.k@kigalitech.rw",
+      "phone": "+250 788 334 991",
+      "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+      "identificationNumber": "1198580045129088",
+      "nationality": "Rwandan",
+      "occupation": null,
+      "employer": null,
+      "emergencyContact": {
+        "name": "Yvonne Karekezi",
+        "phone": "+250 788 444 112",
+        "relationship": "Sister"
+      },
+      "currentRoomLegacyId": "room-09",
+      "currentPropertyLegacyId": "prop-01",
+      "rentalType": "FULLY_FURNISHED",
+      "moveInDate": "2026-01-01",
+      "leaseExpiryDate": "2026-12-31",
+      "monthlyRent": 920,
+      "depositPaid": 920,
+      "paymentStatus": "PENDING",
+      "status": "ACTIVE",
+      "deactivationReason": null,
+      "deactivatedDate": null,
+      "notes": null,
+      "materials": [
+        {
+          "name": "Queen Bed Set",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2026-01-01",
+          "serialNumber": "BED-GVS-12",
+          "category": "Bedroom"
+        }
+      ]
+    },
+    {
+      "legacyId": "client-04",
+      "name": "Claire Uwase",
+      "email": "claire.uwase@healthnet.rw",
+      "phone": "+250 782 100 234",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "identificationNumber": "1199270012456789",
+      "nationality": "Rwandan",
+      "occupation": null,
+      "employer": null,
+      "emergencyContact": {
+        "name": "Robert Uwase",
+        "phone": "+250 788 312 990",
+        "relationship": "Father"
+      },
+      "currentRoomLegacyId": "room-05",
+      "currentPropertyLegacyId": "prop-01",
+      "rentalType": "SELF_FURNISHED",
+      "moveInDate": "2026-03-01",
+      "leaseExpiryDate": "2027-02-28",
+      "monthlyRent": 700,
+      "depositPaid": 700,
+      "paymentStatus": "OVERDUE",
+      "status": "ACTIVE",
+      "deactivationReason": null,
+      "deactivatedDate": null,
+      "notes": null,
+      "materials": [
+        {
+          "name": "Fitted Kitchen Gas Stove",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2026-03-01",
+          "serialNumber": "STV-KHR-04",
+          "category": "Kitchen"
+        }
+      ]
+    },
+    {
+      "legacyId": "client-05",
+      "name": "Marcus Thorne",
+      "email": "m.thorne@globalinvest.co",
+      "phone": "+250 786 991 445",
+      "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      "identificationNumber": "P-GBR-8812903",
+      "nationality": "British",
+      "occupation": null,
+      "employer": null,
+      "emergencyContact": {
+        "name": "Emma Thorne",
+        "phone": "+44 7911 123456",
+        "relationship": "Spouse"
+      },
+      "currentRoomLegacyId": "room-10",
+      "currentPropertyLegacyId": "prop-02",
+      "rentalType": "EXECUTIVE_LUXURY",
+      "moveInDate": "2026-02-01",
+      "leaseExpiryDate": "2027-01-31",
+      "monthlyRent": 2200,
+      "depositPaid": 2200,
+      "paymentStatus": "PAID",
+      "status": "ACTIVE",
+      "deactivationReason": null,
+      "deactivatedDate": null,
+      "notes": null,
+      "materials": [
+        {
+          "name": "Italian Leather Sectional",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2026-02-01",
+          "serialNumber": "SOF-VC-02",
+          "category": "Living Room"
+        },
+        {
+          "name": "65\" OLED 4K Smart TV",
+          "quantity": 1,
+          "condition": "EXCELLENT",
+          "assignedDate": "2026-02-01",
+          "serialNumber": "TV-VC-01",
+          "category": "Electronics"
+        }
+      ]
+    },
+    {
+      "legacyId": "client-06",
+      "name": "Aline Mugabo",
+      "email": "aline.m@ecobank.rw",
+      "phone": "+250 788 678 123",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "identificationNumber": "1199480098765432",
+      "nationality": "Rwandan",
+      "occupation": null,
+      "employer": null,
+      "emergencyContact": {
+        "name": "Patrick Mugabo",
+        "phone": "+250 788 123 999",
+        "relationship": "Husband"
+      },
+      "currentRoomLegacyId": "room-04",
+      "currentPropertyLegacyId": "prop-01",
+      "rentalType": "FULLY_FURNISHED",
+      "moveInDate": "2025-10-01",
+      "leaseExpiryDate": "2026-09-30",
+      "monthlyRent": 850,
+      "depositPaid": 850,
+      "paymentStatus": "PAID",
+      "status": "ACTIVE",
+      "deactivationReason": null,
+      "deactivatedDate": null,
+      "notes": null,
+      "materials": [
+        {
+          "name": "King Bed & Mattress",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2025-10-01",
+          "serialNumber": "BED-KHR-09",
+          "category": "Bedroom"
+        },
+        {
+          "name": "55\" Smart TV",
+          "quantity": 1,
+          "condition": "GOOD",
+          "assignedDate": "2025-10-01",
+          "serialNumber": "TV-KHR-12",
+          "category": "Electronics"
+        }
+      ]
+    }
+  ],
+  "bookings": [
+    {
+      "legacyId": "bk-101",
+      "bookingNumber": "BK-2026-084",
+      "clientLegacyId": "client-01",
+      "clientName": "Jean-Paul Ndahiro",
+      "clientEmail": "jp.ndahiro@gmail.com",
+      "clientPhone": "+250 785 432 109",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "rentalTypeLegacyId": "rt-01",
+      "requestedDate": "2025-08-20T00:00:00Z",
+      "moveInDate": "2025-09-01",
+      "moveOutDate": null,
+      "monthlyRent": 850,
+      "deposit": 850,
+      "status": "CHECKED_IN",
+      "notes": "Diplomatic corporate guarantee provided. Requested high-floor unit.",
+      "source": "CLIENT_PORTAL",
+      "agentLegacyId": "agt-01",
+      "timeline": [
+        {
+          "status": "REQUESTED",
+          "occurredAt": "2025-08-20T10:15:00Z",
+          "note": "Online booking request submitted",
+          "updatedByName": "Jean-Paul Ndahiro"
+        },
+        {
+          "status": "UNDER_REVIEW",
+          "occurredAt": "2025-08-20T14:30:00Z",
+          "note": "ID & employment verification in progress",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "APPROVED",
+          "occurredAt": "2025-08-21T09:00:00Z",
+          "note": "Background check cleared successfully",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "ROOM_ASSIGNED",
+          "occurredAt": "2025-08-21T09:15:00Z",
+          "note": "Assigned Unit A-204",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "CONFIRMED",
+          "occurredAt": "2025-08-22T11:00:00Z",
+          "note": "Deposit & 1st month rent received",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "CHECKED_IN",
+          "occurredAt": "2025-09-01T09:30:00Z",
+          "note": "Key handover & inventory signed",
+          "updatedByName": "Emmanuel Habimana"
+        }
+      ]
+    },
+    {
+      "legacyId": "bk-102",
+      "bookingNumber": "BK-2026-092",
+      "clientLegacyId": null,
+      "clientName": "Dr. Arthur Rutayisire",
+      "clientEmail": "arthur.r@kingfaisal.rw",
+      "clientPhone": "+250 788 901 234",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-02",
+      "rentalTypeLegacyId": "rt-04",
+      "requestedDate": "2026-08-14T00:00:00Z",
+      "moveInDate": "2026-09-01",
+      "moveOutDate": null,
+      "monthlyRent": 1350,
+      "deposit": 1350,
+      "status": "REQUESTED",
+      "notes": "Visiting senior consultant surgeon at King Faisal Hospital. Requesting 1-year renewable contract.",
+      "source": "CLIENT_PORTAL",
+      "agentLegacyId": "agt-02",
+      "timeline": [
+        {
+          "status": "REQUESTED",
+          "occurredAt": "2026-08-14T16:45:00Z",
+          "note": "Requested 3BR Executive Luxury unit",
+          "updatedByName": "Dr. Arthur Rutayisire"
+        }
+      ]
+    },
+    {
+      "legacyId": "bk-103",
+      "bookingNumber": "BK-2026-093",
+      "clientLegacyId": null,
+      "clientName": "Elena Rostova",
+      "clientEmail": "elena.rostova@undp.org",
+      "clientPhone": "+250 789 654 321",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-07",
+      "rentalTypeLegacyId": "rt-04",
+      "requestedDate": "2026-08-12T00:00:00Z",
+      "moveInDate": "2026-08-25",
+      "moveOutDate": null,
+      "monthlyRent": 1650,
+      "deposit": 1650,
+      "status": "UNDER_REVIEW",
+      "notes": "UNDP regional project director relocating to Kigali. Verified UN credentials.",
+      "source": "OPERATIONS_MANAGER",
+      "agentLegacyId": "agt-01",
+      "timeline": [
+        {
+          "status": "REQUESTED",
+          "occurredAt": "2026-08-12T11:20:00Z",
+          "note": "Created reservation by Operations Manager",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "UNDER_REVIEW",
+          "occurredAt": "2026-08-13T09:30:00Z",
+          "note": "Reviewing UN diplomatic lease terms",
+          "updatedByName": "Eric Manzi"
+        }
+      ]
+    },
+    {
+      "legacyId": "bk-104",
+      "bookingNumber": "BK-2026-094",
+      "clientLegacyId": null,
+      "clientName": "Patrick Gasana",
+      "clientEmail": "pgasana@bkrwanda.com",
+      "clientPhone": "+250 788 221 445",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-03",
+      "rentalTypeLegacyId": "rt-01",
+      "requestedDate": "2026-08-10T00:00:00Z",
+      "moveInDate": "2026-08-20",
+      "moveOutDate": null,
+      "monthlyRent": 600,
+      "deposit": 600,
+      "status": "APPROVED",
+      "notes": "Bank of Kigali executive. Walk-in leasing request. Pre-approved for move-in pending deposit clearance.",
+      "source": "WALK_IN",
+      "agentLegacyId": "agt-03",
+      "timeline": [
+        {
+          "status": "REQUESTED",
+          "occurredAt": "2026-08-10T08:30:00Z",
+          "note": "Walk-in booking recorded by Manager",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "UNDER_REVIEW",
+          "occurredAt": "2026-08-10T14:00:00Z",
+          "note": "Verified salary slip",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "APPROVED",
+          "occurredAt": "2026-08-11T10:15:00Z",
+          "note": "Approved. Awaiting deposit.",
+          "updatedByName": "Eric Manzi"
+        }
+      ]
+    },
+    {
+      "legacyId": "bk-105",
+      "bookingNumber": "BK-2026-095",
+      "clientLegacyId": "client-05",
+      "clientName": "Marcus Thorne",
+      "clientEmail": "m.thorne@globalinvest.co",
+      "clientPhone": "+250 786 991 445",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-10",
+      "rentalTypeLegacyId": "rt-04",
+      "requestedDate": "2026-01-20T00:00:00Z",
+      "moveInDate": "2026-02-01",
+      "moveOutDate": null,
+      "monthlyRent": 2200,
+      "deposit": 2200,
+      "status": "CHECKED_IN",
+      "notes": "International hedge fund partner. 2-year lease.",
+      "source": "CLIENT_PORTAL",
+      "agentLegacyId": "agt-02",
+      "timeline": [
+        {
+          "status": "REQUESTED",
+          "occurredAt": "2026-01-20T14:00:00Z",
+          "note": "Online portal reservation submitted",
+          "updatedByName": "Marcus Thorne"
+        },
+        {
+          "status": "APPROVED",
+          "occurredAt": "2026-01-22T10:00:00Z",
+          "note": "Approved",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "ROOM_ASSIGNED",
+          "occurredAt": "2026-01-22T10:30:00Z",
+          "note": "Assigned Penthouse G-401",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "CONFIRMED",
+          "occurredAt": "2026-01-25T15:00:00Z",
+          "note": "Payment settled via Bank Swift",
+          "updatedByName": "Eric Manzi"
+        },
+        {
+          "status": "CHECKED_IN",
+          "occurredAt": "2026-02-01T10:00:00Z",
+          "note": "Handed over keys",
+          "updatedByName": "Emmanuel Habimana"
+        }
+      ]
+    }
+  ],
+  "agents": [
+    {
+      "legacyId": "agt-01",
+      "name": "Cedric Mugisha",
+      "agency": "Rwanda Prestige Living Realty",
+      "phone": "+250 788 554 433",
+      "email": "cedric@prestigeliving.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "status": "ACTIVE",
+      "commissionRatePercent": 10,
+      "paymentMethod": "BANK_TRANSFER",
+      "payoutAccount": "Bank of Kigali — Acc: 00045-8891230-14",
+      "notes": "Top performing broker for diplomatic expatriates. Fast turnaround and high client satisfaction.",
+      "deals": [
+        {
+          "clientName": "Jean-Paul Ndahiro",
+          "clientEmail": "jp.ndahiro@gmail.com",
+          "clientPhone": "+250 785 432 109",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": "room-01",
+          "rentalType": "Fully Furnished",
+          "monthlyRent": 850,
+          "commissionPercentage": 30,
+          "commissionAmount": 255,
+          "dealDate": "2025-08-25",
+          "status": "PAID",
+          "payoutDate": "2025-09-02",
+          "payoutReference": "BK-TRF-992014",
+          "notes": null
+        },
+        {
+          "clientName": "Elena Rostova",
+          "clientEmail": "elena.rostova@undp.org",
+          "clientPhone": "+250 789 654 321",
+          "propertyLegacyId": "prop-02",
+          "roomLegacyId": "room-07",
+          "rentalType": "Executive Luxury",
+          "monthlyRent": 1650,
+          "commissionPercentage": 30,
+          "commissionAmount": 495,
+          "dealDate": "2026-08-13",
+          "status": "PENDING",
+          "payoutDate": null,
+          "payoutReference": null,
+          "notes": "UNDP lease deal. Commission approved and ready for disbursement upon August reconciliation."
+        },
+        {
+          "clientName": "David Karekezi",
+          "clientEmail": "david.k@kigali-law.rw",
+          "clientPhone": "+250 788 440 912",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": "room-09",
+          "rentalType": "Fully Furnished",
+          "monthlyRent": 920,
+          "commissionPercentage": 30,
+          "commissionAmount": 276,
+          "dealDate": "2026-01-15",
+          "status": "PAID",
+          "payoutDate": "2026-01-20",
+          "payoutReference": "BK-TRF-881203",
+          "notes": null
+        },
+        {
+          "clientName": "Aline Mugabo",
+          "clientEmail": "aline.m@ecobank.rw",
+          "clientPhone": "+250 788 678 123",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": "room-04",
+          "rentalType": "Fully Furnished",
+          "monthlyRent": 850,
+          "commissionPercentage": 30,
+          "commissionAmount": 255,
+          "dealDate": "2025-10-05",
+          "status": "PAID",
+          "payoutDate": "2025-10-10",
+          "payoutReference": "BK-TRF-774411",
+          "notes": null
+        }
+      ]
+    },
+    {
+      "legacyId": "agt-02",
+      "name": "Sandrine Kayitesi",
+      "agency": "Kigali Prime Realty Ltd",
+      "phone": "+250 788 129 988",
+      "email": "sandrine@kigaliprime.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "status": "ACTIVE",
+      "commissionRatePercent": 10,
+      "paymentMethod": "MOBILE_MONEY",
+      "payoutAccount": "MTN Mobile Money: +250 788 129 988",
+      "notes": "Specializes in executive suites and luxury residential lofts.",
+      "deals": [
+        {
+          "clientName": "Marcus Thorne",
+          "clientEmail": "m.thorne@globalinvest.co",
+          "clientPhone": "+250 786 991 445",
+          "propertyLegacyId": "prop-02",
+          "roomLegacyId": "room-10",
+          "rentalType": "Executive Luxury",
+          "monthlyRent": 2200,
+          "commissionPercentage": 30,
+          "commissionAmount": 660,
+          "dealDate": "2026-01-25",
+          "status": "PAID",
+          "payoutDate": "2026-02-01",
+          "payoutReference": "MOMO-771920",
+          "notes": null
+        },
+        {
+          "clientName": "Dr. Arthur Rutayisire",
+          "clientEmail": "arthur.r@kingfaisal.rw",
+          "clientPhone": "+250 788 901 234",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": "room-02",
+          "rentalType": "Executive Luxury",
+          "monthlyRent": 1350,
+          "commissionPercentage": 30,
+          "commissionAmount": 405,
+          "dealDate": "2026-08-14",
+          "status": "PENDING",
+          "payoutDate": null,
+          "payoutReference": null,
+          "notes": "Senior consultant surgeon 1-year contract."
+        }
+      ]
+    },
+    {
+      "legacyId": "agt-03",
+      "name": "In-House Leasing Team",
+      "agency": "Panther Living Management",
+      "phone": "+250 788 123 456",
+      "email": "leasing@panther.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "status": "ACTIVE",
+      "commissionRatePercent": 5,
+      "paymentMethod": "BANK_TRANSFER",
+      "payoutAccount": "Internal Payroll Disbursal",
+      "notes": "Internal direct reservations and walk-in office operations.",
+      "deals": [
+        {
+          "clientName": "Sarah Van der Beek",
+          "clientEmail": "sarah.vdb@eu-mission.org",
+          "clientPhone": "+250 789 220 119",
+          "propertyLegacyId": "prop-02",
+          "roomLegacyId": "room-08",
+          "rentalType": "Fully Furnished",
+          "monthlyRent": 1200,
+          "commissionPercentage": 15,
+          "commissionAmount": 180,
+          "dealDate": "2025-11-10",
+          "status": "PAID",
+          "payoutDate": "2025-11-15",
+          "payoutReference": "INT-PAY-0941",
+          "notes": null
+        }
+      ]
+    }
+  ],
+  "payments": [
+    {
+      "legacyId": "pay-01",
+      "invoiceNumber": "INV-2026-0801",
+      "clientLegacyId": "client-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "amount": 850,
+      "date": "2026-08-01",
+      "dueDate": "2026-08-05",
+      "type": "RENT",
+      "method": "MOBILE_MONEY",
+      "reference": "MTN-MOMO-8829104",
+      "status": "PAID",
+      "receiptUrl": "#",
+      "notes": "Monthly rent for August 2026 (Room A-204)"
+    },
+    {
+      "legacyId": "pay-02",
+      "invoiceNumber": "INV-2026-0701",
+      "clientLegacyId": "client-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "amount": 850,
+      "date": "2026-07-01",
+      "dueDate": "2026-07-05",
+      "type": "RENT",
+      "method": "MOBILE_MONEY",
+      "reference": "MTN-MOMO-7718293",
+      "status": "PAID",
+      "receiptUrl": "#",
+      "notes": "Monthly rent for July 2026"
+    },
+    {
+      "legacyId": "pay-03",
+      "invoiceNumber": "INV-2026-0802",
+      "clientLegacyId": "client-02",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-08",
+      "amount": 1200,
+      "date": "2026-08-02",
+      "dueDate": "2026-08-05",
+      "type": "RENT",
+      "method": "BANK_TRANSFER",
+      "reference": "BK-SWIFT-991823",
+      "status": "PAID",
+      "receiptUrl": "#",
+      "notes": "Rent August 2026"
+    },
+    {
+      "legacyId": "pay-04",
+      "invoiceNumber": "INV-2026-0803",
+      "clientLegacyId": "client-03",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-09",
+      "amount": 920,
+      "date": "2026-08-10",
+      "dueDate": "2026-08-05",
+      "type": "RENT",
+      "method": "MOBILE_MONEY",
+      "reference": "MTN-MOMO-910283",
+      "status": "PENDING",
+      "receiptUrl": null,
+      "notes": "Pending customer SMS verification confirmation"
+    },
+    {
+      "legacyId": "pay-05",
+      "invoiceNumber": "INV-2026-0804",
+      "clientLegacyId": "client-04",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-05",
+      "amount": 700,
+      "date": "2026-08-01",
+      "dueDate": "2026-08-05",
+      "type": "RENT",
+      "method": "CREDIT_CARD",
+      "reference": "VISA-AUTH-0918",
+      "status": "OVERDUE",
+      "receiptUrl": null,
+      "notes": "Reminder notice dispatched via SMS & email"
+    },
+    {
+      "legacyId": "pay-06",
+      "invoiceNumber": "INV-2026-0805",
+      "clientLegacyId": "client-05",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-10",
+      "amount": 2200,
+      "date": "2026-08-01",
+      "dueDate": "2026-08-05",
+      "type": "RENT",
+      "method": "BANK_TRANSFER",
+      "reference": "I&M-TRANS-77881",
+      "status": "PAID",
+      "receiptUrl": "#",
+      "notes": "Rent August 2026 for Villa VC-12"
+    },
+    {
+      "legacyId": "pay-07",
+      "invoiceNumber": "INV-2026-0806",
+      "clientLegacyId": "client-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "amount": 24.5,
+      "date": "2026-08-08",
+      "dueDate": "2026-08-15",
+      "type": "UTILITY",
+      "method": "MOBILE_MONEY",
+      "reference": "MTN-WASAC-33019",
+      "status": "PAID",
+      "receiptUrl": "#",
+      "notes": "July Water Meter Reading (14 m³ @ $1.75/m³)"
+    },
+    {
+      "legacyId": "pay-08",
+      "invoiceNumber": "INV-2026-0807",
+      "clientLegacyId": "client-06",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-04",
+      "amount": 850,
+      "date": "2026-08-03",
+      "dueDate": "2026-08-05",
+      "type": "RENT",
+      "method": "MOBILE_MONEY",
+      "reference": "MTN-MOMO-440192",
+      "status": "PAID",
+      "receiptUrl": null,
+      "notes": "August 2026 Rent for Unit B-201"
+    },
+    {
+      "legacyId": "pay-09",
+      "invoiceNumber": "INV-2026-0808",
+      "clientLegacyId": "client-02",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-08",
+      "amount": 1200,
+      "date": "2026-08-15",
+      "dueDate": "2026-08-20",
+      "type": "DEPOSIT",
+      "method": "BANK_TRANSFER",
+      "reference": "BK-DEP-88910",
+      "status": "PAID",
+      "receiptUrl": null,
+      "notes": "Lease renewal security deposit increment"
+    },
+    {
+      "legacyId": "pay-10",
+      "invoiceNumber": "INV-2026-0809",
+      "clientLegacyId": "client-03",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-09",
+      "amount": 32.5,
+      "date": "2026-08-22",
+      "dueDate": "2026-08-25",
+      "type": "UTILITY",
+      "method": "MOBILE_MONEY",
+      "reference": "MTN-WASAC-77812",
+      "status": "PENDING",
+      "receiptUrl": null,
+      "notes": "August Submeter water consumption"
+    }
+  ],
+  "expenses": [
+    {
+      "legacyId": "exp-01",
+      "propertyLegacyId": "prop-01",
+      "category": "CLEANING",
+      "description": "Deep sanitary cleaning of common corridors, elevator cabins & lobbies",
+      "amount": 650,
+      "date": "2026-08-10",
+      "vendor": "Kigali Clean & Shine Ltd",
+      "paymentMethod": "BANK_TRANSFER",
+      "status": "PAID",
+      "receiptAttached": true,
+      "notes": "Bi-monthly contract payment"
+    },
+    {
+      "legacyId": "exp-02",
+      "propertyLegacyId": "prop-01",
+      "category": "SECURITY",
+      "description": "24/7 Security guards coverage (4 guards day/night shift) + alarm monitoring",
+      "amount": 1400,
+      "date": "2026-08-01",
+      "vendor": "ISCO Security Rwanda",
+      "paymentMethod": "BANK_TRANSFER",
+      "status": "PAID",
+      "receiptAttached": true,
+      "notes": null
+    },
+    {
+      "legacyId": "exp-03",
+      "propertyLegacyId": "prop-02",
+      "category": "LANDSCAPING",
+      "description": "Lawn manicuring, hedge trimming, tree pruning, organic fertilizer application",
+      "amount": 420,
+      "date": "2026-08-05",
+      "vendor": "Green Rwanda Gardens",
+      "paymentMethod": "MOBILE_MONEY",
+      "status": "PAID",
+      "receiptAttached": true,
+      "notes": null
+    },
+    {
+      "legacyId": "exp-04",
+      "propertyLegacyId": "prop-01",
+      "category": "REPAIRS",
+      "description": "Replacement of pressure pump motor bearings for rooftop tank system",
+      "amount": 380,
+      "date": "2026-08-12",
+      "vendor": "Akagera Technical Services",
+      "paymentMethod": "MOBILE_MONEY",
+      "status": "PAID",
+      "receiptAttached": true,
+      "notes": null
+    },
+    {
+      "legacyId": "exp-05",
+      "propertyLegacyId": "prop-01",
+      "category": "UTILITIES",
+      "description": "Backup Generator Diesel Refill (500 Liters @ 1,650 RWF/L)",
+      "amount": 680,
+      "date": "2026-08-08",
+      "vendor": "TotalEnergies Rwanda (Nyarutarama Station)",
+      "paymentMethod": "BANK_TRANSFER",
+      "status": "PAID",
+      "receiptAttached": true,
+      "notes": null
+    },
+    {
+      "legacyId": "exp-06",
+      "propertyLegacyId": "prop-02",
+      "category": "MAINTENANCE",
+      "description": "Quarterly swimming pool filtration filter replacements & chemical balancing",
+      "amount": 520,
+      "date": "2026-08-14",
+      "vendor": "Crystal Blue Pools Rwanda",
+      "paymentMethod": "BANK_TRANSFER",
+      "status": "PENDING",
+      "receiptAttached": false,
+      "notes": null
+    }
+  ],
+  "recurringBills": [
+    {
+      "legacyId": "rec-01",
+      "propertyLegacyId": "prop-01",
+      "name": "Compound & Common Area Electricity",
+      "category": "ELECTRICITY",
+      "vendor": "EUCL / REG Rwanda",
+      "amount": 1250,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-25",
+      "status": "UPCOMING",
+      "autoRenew": true,
+      "reminderDays": 5
+    },
+    {
+      "legacyId": "rec-02",
+      "propertyLegacyId": "prop-01",
+      "name": "High-Speed Commercial Dedicated Fiber (1 Gbps)",
+      "category": "INTERNET",
+      "vendor": "Liquid Intelligent Technologies",
+      "amount": 850,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-28",
+      "status": "UPCOMING",
+      "autoRenew": true,
+      "reminderDays": 3
+    },
+    {
+      "legacyId": "rec-03",
+      "propertyLegacyId": "prop-01",
+      "name": "24/7 Manned Guarding & Alarm Response",
+      "category": "SECURITY",
+      "vendor": "ISCO Security Rwanda",
+      "amount": 1400,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-10",
+      "status": "PAID",
+      "autoRenew": true,
+      "reminderDays": 7
+    },
+    {
+      "legacyId": "rec-04",
+      "propertyLegacyId": "prop-01",
+      "name": "Elevator Comprehensive Maintenance SLA",
+      "category": "MAINTENANCE_CONTRACT",
+      "vendor": "Otis Elevator East Africa",
+      "amount": 450,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-30",
+      "status": "UPCOMING",
+      "autoRenew": true,
+      "reminderDays": 5
+    },
+    {
+      "legacyId": "rec-05",
+      "propertyLegacyId": "prop-02",
+      "name": "Waste Management & Eco-Recycling Collection",
+      "category": "GARBAGE_COLLECTION",
+      "vendor": "Agruni Ltd Kigali",
+      "amount": 280,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-20",
+      "status": "UPCOMING",
+      "autoRenew": true,
+      "reminderDays": 2
+    },
+    {
+      "legacyId": "rec-06",
+      "propertyLegacyId": "prop-02",
+      "name": "Main Compound Water Feed Connection",
+      "category": "WATER",
+      "vendor": "WASAC Rwanda",
+      "amount": 620,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-14",
+      "status": "OVERDUE",
+      "autoRenew": true,
+      "reminderDays": 1
+    },
+    {
+      "legacyId": "rec-07",
+      "propertyLegacyId": "prop-02",
+      "name": "Swimming Pool & Sun Deck Chemical Maintenance",
+      "category": "MAINTENANCE_CONTRACT",
+      "vendor": "Crystal Blue Pools Rwanda",
+      "amount": 320,
+      "frequency": "MONTHLY",
+      "nextDueDate": "2026-08-22",
+      "status": "UPCOMING",
+      "autoRenew": true,
+      "reminderDays": 3
+    }
+  ],
+  "technicians": [
+    {
+      "legacyId": "tech-01",
+      "name": "Aimable Nkundimana",
+      "company": "Kigali HydroPlumb Solutions",
+      "contact": "+250 788 654 321",
+      "email": "aimable@hydroplumb.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+      "specialization": "PLUMBER",
+      "rating": 4.9,
+      "availability": "AVAILABLE",
+      "hourlyRate": 25,
+      "notes": "Certified master plumber. Excellent for pressurized systems, leak detection, and solar boilers.",
+      "address": "KN 14 Ave, Kiyovu, Kigali",
+      "nationalId": "1199880012345678",
+      "emergencyContact": {
+        "name": "Marie Nkundimana",
+        "phone": "+250 788 000 111",
+        "relationship": "Spouse"
+      },
+      "preferredPaymentMethod": "MOBILE_MONEY",
+      "payoutAccount": "+250 788 654 321 (MTN MoMo)",
+      "yearsExperience": 11,
+      "certifications": [
+        "Rwanda RURA Plumbing License",
+        "City & Guilds Plumbing L3"
+      ],
+      "workOrders": [
+        {
+          "jobNumber": "WO-24089",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": "room-01",
+          "title": "Bathroom Hot Water Pipe Leak Repair",
+          "description": "Pressure build-up caused a micro-fracture at the T-junction behind bathroom wall. Required wall panel removal and copper joint replacement with compression fittings.",
+          "category": "PLUMBING",
+          "priority": "HIGH",
+          "dispatchedDate": "2026-08-01",
+          "startDate": "2026-08-02",
+          "completedDate": "2026-08-02",
+          "estimatedHours": 3,
+          "actualHours": 2.5,
+          "laborCost": 63,
+          "materialCost": 42,
+          "paymentStatus": "PAID",
+          "paidAmount": 105,
+          "status": "COMPLETED",
+          "rating": 5,
+          "ratingComment": "Exceptionally fast and clean. No mess left behind.",
+          "notes": "Replaced 40cm copper pipe section and T-joint. Tested at 8 bar.",
+          "photos": []
+        },
+        {
+          "jobNumber": "WO-24091",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": "room-06",
+          "title": "Kitchen Sink Drainage Blockage",
+          "description": "Grease and food particle accumulation blocking the S-bend. Snaked drain 6m with industrial auger.",
+          "category": "PLUMBING",
+          "priority": "MEDIUM",
+          "dispatchedDate": "2026-08-10",
+          "startDate": "2026-08-11",
+          "completedDate": "2026-08-11",
+          "estimatedHours": 2,
+          "actualHours": 1.5,
+          "laborCost": 38,
+          "materialCost": 12,
+          "paymentStatus": "PAID",
+          "paidAmount": 50,
+          "status": "COMPLETED",
+          "rating": 5,
+          "ratingComment": "Quick and thorough.",
+          "notes": null,
+          "photos": []
+        }
+      ],
+      "documents": [
+        {
+          "name": "Rwanda RURA Plumbing License",
+          "type": "LICENSE",
+          "fileUrl": "/docs/tech-01-license.pdf",
+          "uploadDate": "2026-01-15",
+          "expiryDate": "2028-01-14",
+          "status": "VALID"
+        },
+        {
+          "name": "National ID — Aimable Nkundimana",
+          "type": "ID",
+          "fileUrl": "/docs/tech-01-id.pdf",
+          "uploadDate": "2026-01-15",
+          "expiryDate": null,
+          "status": "VALID"
+        }
+      ]
+    },
+    {
+      "legacyId": "tech-02",
+      "name": "Fabrice Mugabo",
+      "company": "VoltMaster Electrical Engineering",
+      "contact": "+250 788 112 334",
+      "email": "fabrice@voltmaster.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "specialization": "ELECTRICIAN",
+      "rating": 4.8,
+      "availability": "ON_JOB",
+      "hourlyRate": 30,
+      "notes": "Expert in 3-phase commercial panels, backup generator synchronizers, and smart lighting.",
+      "address": "KG 9 Ave, Kacyiru, Kigali",
+      "nationalId": "1198870098765432",
+      "emergencyContact": {
+        "name": "Claudette Mugabo",
+        "phone": "+250 788 900 200",
+        "relationship": "Spouse"
+      },
+      "preferredPaymentMethod": "BANK_TRANSFER",
+      "payoutAccount": "BK Rwanda — Acc: 00045-23812-1",
+      "yearsExperience": 14,
+      "certifications": [
+        "Rwanda REG Electrical Contractor License",
+        "Schneider Electric Certified Partner"
+      ],
+      "workOrders": [
+        {
+          "jobNumber": "WO-24085",
+          "propertyLegacyId": "prop-01",
+          "roomLegacyId": null,
+          "title": "Main Distribution Board Phase Fault Diagnosis",
+          "description": "Phase 3 on 3-phase commercial panel intermittently tripping 40A breaker. Traced to loose busbar connection and corroded terminal block. Cleaned and torqued to spec.",
+          "category": "ELECTRICAL",
+          "priority": "EMERGENCY",
+          "dispatchedDate": "2026-07-28",
+          "startDate": "2026-07-28",
+          "completedDate": "2026-07-28",
+          "estimatedHours": 4,
+          "actualHours": 3,
+          "laborCost": 90,
+          "materialCost": 55,
+          "paymentStatus": "PAID",
+          "paidAmount": 145,
+          "status": "COMPLETED",
+          "rating": 5,
+          "ratingComment": "Responded within 30 minutes on a Sunday. Outstanding.",
+          "notes": null,
+          "photos": []
+        },
+        {
+          "jobNumber": "WO-24097",
+          "propertyLegacyId": "prop-02",
+          "roomLegacyId": null,
+          "title": "Rooftop Solar Panel Output Inspection",
+          "description": "Inspect all 18 panels, inverter health check, clean contacts, verify battery bank float voltage.",
+          "category": "ELECTRICAL",
+          "priority": "MEDIUM",
+          "dispatchedDate": "2026-08-15",
+          "startDate": null,
+          "completedDate": null,
+          "estimatedHours": 5,
+          "actualHours": null,
+          "laborCost": 150,
+          "materialCost": 0,
+          "paymentStatus": "UNPAID",
+          "paidAmount": 0,
+          "status": "IN_PROGRESS",
+          "rating": null,
+          "ratingComment": null,
+          "notes": "Technician currently on-site.",
+          "photos": []
+        }
+      ],
+      "documents": [
+        {
+          "name": "Rwanda REG Electrical License",
+          "type": "LICENSE",
+          "fileUrl": "/docs/tech-02-license.pdf",
+          "uploadDate": "2026-02-01",
+          "expiryDate": "2027-01-31",
+          "status": "VALID"
+        }
+      ]
+    },
+    {
+      "legacyId": "tech-03",
+      "name": "Jean-Claude Bizimana",
+      "company": "Kigali Precision Carpentry",
+      "contact": "+250 783 998 123",
+      "email": "bizimana.jc@carpentry.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "specialization": "CARPENTER",
+      "rating": 4.7,
+      "availability": "AVAILABLE",
+      "hourlyRate": 20,
+      "notes": "Specializes in hardwood door alignment, kitchen cabinetry, and custom wardrobe repairs.",
+      "address": null,
+      "nationalId": null,
+      "emergencyContact": null,
+      "preferredPaymentMethod": "MOBILE_MONEY",
+      "payoutAccount": "+250 783 998 123 (MTN MoMo)",
+      "yearsExperience": 9,
+      "certifications": [],
+      "workOrders": [],
+      "documents": []
+    },
+    {
+      "legacyId": "tech-04",
+      "name": "Dieudonne Habarugira",
+      "company": "CoolBreeze HVAC & Refrigeration",
+      "contact": "+250 788 440 912",
+      "email": "dieudonne@coolbreeze.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+      "specialization": "HVAC",
+      "rating": 4.95,
+      "availability": "AVAILABLE",
+      "hourlyRate": 35,
+      "notes": "Daikin and Samsung certified inverter AC technician. Fast diagnostic response time.",
+      "address": null,
+      "nationalId": null,
+      "emergencyContact": null,
+      "preferredPaymentMethod": "BANK_TRANSFER",
+      "payoutAccount": "Equity Bank Rwanda — Acc: 0012-87654-0",
+      "yearsExperience": 12,
+      "certifications": [
+        "Daikin Certified Technician",
+        "Samsung HVAC Partner"
+      ],
+      "workOrders": [],
+      "documents": []
+    },
+    {
+      "legacyId": "tech-05",
+      "name": "Olive Nyirasafari",
+      "company": "Rwanda Fine Finishes & Painting",
+      "contact": "+250 788 776 554",
+      "email": "olive@finefinishes.rw",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "specialization": "PAINTER",
+      "rating": 4.85,
+      "availability": "ON_JOB",
+      "hourlyRate": 22,
+      "notes": "Premium washable paint application, plaster patching, and moisture barrier sealing.",
+      "address": null,
+      "nationalId": null,
+      "emergencyContact": null,
+      "preferredPaymentMethod": "MOBILE_MONEY",
+      "payoutAccount": "+250 788 776 554 (MTN MoMo)",
+      "yearsExperience": 7,
+      "certifications": [],
+      "workOrders": [],
+      "documents": []
+    }
+  ],
+  "preventiveTasks": [
+    {
+      "legacyId": "prev-01",
+      "propertyLegacyId": "prop-01",
+      "category": "CORRIDORS",
+      "taskName": "Inspect corridor floor tiles, skirting boards, and emergency exit pathway lighting",
+      "frequency": "WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "PASS",
+      "remarks": "Floors polished and free of obstructions. All 24 corridor LED downlights operating normally.",
+      "dueDate": "2026-08-19",
+      "lastCompletedDate": "2026-08-12",
+      "resolvedDate": null,
+      "evidencePhotos": [
+        "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "prev-02",
+      "propertyLegacyId": "prop-01",
+      "category": "WASTE_MANAGEMENT",
+      "taskName": "Sanitize waste chutes, inspect trash sorting bins, verify pest-proof seal",
+      "frequency": "WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "PASS",
+      "remarks": "Disinfectant washed thoroughly. Bio-hazard and recycling bins tagged correctly.",
+      "dueDate": "2026-08-18",
+      "lastCompletedDate": "2026-08-11",
+      "resolvedDate": null,
+      "evidencePhotos": []
+    },
+    {
+      "legacyId": "prev-03",
+      "propertyLegacyId": "prop-01",
+      "category": "ELECTRICAL_SYSTEM",
+      "taskName": "Check main distribution panel circuit breakers, test emergency ATS generator switchover",
+      "frequency": "WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "NEEDS_ATTENTION",
+      "remarks": "ATS auto-started in 6 seconds (Pass). Breaker #14 on Floor 3 shows minor thermal heating (Needs VoltMaster check).",
+      "dueDate": "2026-08-21",
+      "lastCompletedDate": "2026-08-14",
+      "resolvedDate": null,
+      "evidencePhotos": [
+        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "prev-04",
+      "propertyLegacyId": "prop-01",
+      "category": "ROOF_AND_DRAINAGE",
+      "taskName": "Clear rainwater roof gutters, inspect drain covers and parapet waterproof membrane",
+      "frequency": "BI_WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "PASS",
+      "remarks": "Gutters cleared of leaves before the rainy period. Downspouts flowing without blockage.",
+      "dueDate": "2026-08-23",
+      "lastCompletedDate": "2026-08-09",
+      "resolvedDate": null,
+      "evidencePhotos": []
+    },
+    {
+      "legacyId": "prev-05",
+      "propertyLegacyId": "prop-01",
+      "category": "STAIRCASES",
+      "taskName": "Check fire safety doors automatic self-closers, non-slip treads, and stair handrails stability",
+      "frequency": "WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "PASS",
+      "remarks": "All stainless steel handrails anchored firmly. Fire doors latch tightly without jamming.",
+      "dueDate": "2026-08-20",
+      "lastCompletedDate": "2026-08-13",
+      "resolvedDate": null,
+      "evidencePhotos": []
+    },
+    {
+      "legacyId": "prev-06",
+      "propertyLegacyId": "prop-01",
+      "category": "PEST_CONTROL",
+      "taskName": "Inspect bait stations in basement parking and perimeter fence, replenish rodent deterrents",
+      "frequency": "MONTHLY",
+      "scheduleWeek": 1,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "PASS",
+      "remarks": "All 12 exterior stations checked. No rodent activity detected.",
+      "dueDate": "2026-09-04",
+      "lastCompletedDate": "2026-08-04",
+      "resolvedDate": null,
+      "evidencePhotos": []
+    },
+    {
+      "legacyId": "prev-07",
+      "propertyLegacyId": "prop-01",
+      "category": "GARDEN_AND_LANDSCAPING",
+      "taskName": "Inspect drip irrigation system, trim decorative palm trees, inspect perimeter security lighting",
+      "frequency": "WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-03",
+      "status": "PENDING",
+      "remarks": "Scheduled for Friday afternoon inspection routine.",
+      "dueDate": "2026-08-18",
+      "lastCompletedDate": null,
+      "resolvedDate": null,
+      "evidencePhotos": []
+    },
+    {
+      "legacyId": "prev-08",
+      "propertyLegacyId": "prop-02",
+      "category": "COMMON_AREAS",
+      "taskName": "Inspect infinity pool chlorination & pH balance, check perimeter glass balustrades",
+      "frequency": "WEEKLY",
+      "scheduleWeek": 2,
+      "assignedStaffLegacyId": "emp-04",
+      "status": "PASS",
+      "remarks": "Pool pH is optimal at 7.3, chlorine at 1.8 ppm. Glass balustrades wiped clean.",
+      "dueDate": "2026-08-21",
+      "lastCompletedDate": "2026-08-14",
+      "resolvedDate": null,
+      "evidencePhotos": [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&auto=format&fit=crop&q=80"
+      ]
+    }
+  ],
+  "damageReports": [
+    {
+      "legacyId": "dmg-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "clientLegacyId": "client-01",
+      "item": "Dining Room Velvet Chair Armrest",
+      "damageType": "Upholstery Tear & Joint Loosening",
+      "description": "During a dinner gathering, chair joint cracked and fabric ripped at lower seam.",
+      "reportedDate": "2026-08-05",
+      "estimatedCost": 120,
+      "amountCharged": 120,
+      "responsibleParty": "TENANT",
+      "status": "RESOLVED",
+      "resolutionNotes": "Repaired by Kigali Precision Carpentry. Fee included in August utility statement.",
+      "photos": [
+        "https://images.unsplash.com/photo-1580481077197-2a54fb263625?w=600&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "dmg-02",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-06",
+      "clientLegacyId": null,
+      "item": "Bathroom Glass Shower Door Seal & Handle",
+      "damageType": "Silicone Seal Degradation & Water Leakage",
+      "description": "Wear and tear caused lower silicone seal to peel away, leading to shower water overflow.",
+      "reportedDate": "2026-08-11",
+      "estimatedCost": 85,
+      "amountCharged": 0,
+      "responsibleParty": "WEAR_AND_TEAR",
+      "status": "IN_REPAIR",
+      "resolutionNotes": "Aimable Nkundimana assigned to replace silicone seal and adjust roller bearings.",
+      "photos": []
+    },
+    {
+      "legacyId": "dmg-03",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-09",
+      "clientLegacyId": "client-03",
+      "item": "Kitchen Granite Countertop Edge",
+      "damageType": "Impact Chip (3cm)",
+      "description": "Heavy cast-iron pot dropped on edge of counter causing visible stone chip.",
+      "reportedDate": "2026-08-08",
+      "estimatedCost": 150,
+      "amountCharged": 150,
+      "responsibleParty": "TENANT",
+      "status": "PENDING_REVIEW",
+      "resolutionNotes": "Under review by operations director.",
+      "photos": []
+    }
+  ],
+  "waterMeters": [
+    {
+      "legacyId": "wm-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "clientLegacyId": "client-01",
+      "meterNumber": "WM-KHR-A204",
+      "previousReading": 142,
+      "currentReading": 156,
+      "consumptionM3": 14,
+      "readingDate": "2026-08-01",
+      "ratePerM3": 1.75,
+      "totalAmount": 24.5,
+      "paymentStatus": "PAID",
+      "history": [
+        {
+          "periodMonth": "March 2026",
+          "reading": 102,
+          "consumption": 12,
+          "amount": 21
+        },
+        {
+          "periodMonth": "April 2026",
+          "reading": 115,
+          "consumption": 13,
+          "amount": 22.75
+        },
+        {
+          "periodMonth": "May 2026",
+          "reading": 128,
+          "consumption": 13,
+          "amount": 22.75
+        },
+        {
+          "periodMonth": "June 2026",
+          "reading": 142,
+          "consumption": 14,
+          "amount": 24.5
+        },
+        {
+          "periodMonth": "July 2026",
+          "reading": 156,
+          "consumption": 14,
+          "amount": 24.5
+        }
+      ]
+    },
+    {
+      "legacyId": "wm-02",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-04",
+      "clientLegacyId": "client-06",
+      "meterNumber": "WM-KHR-B201",
+      "previousReading": 88,
+      "currentReading": 101.5,
+      "consumptionM3": 13.5,
+      "readingDate": "2026-08-01",
+      "ratePerM3": 1.75,
+      "totalAmount": 23.63,
+      "paymentStatus": "PAID",
+      "history": [
+        {
+          "periodMonth": "May 2026",
+          "reading": 62,
+          "consumption": 12,
+          "amount": 21
+        },
+        {
+          "periodMonth": "June 2026",
+          "reading": 75,
+          "consumption": 13,
+          "amount": 22.75
+        },
+        {
+          "periodMonth": "July 2026",
+          "reading": 88,
+          "consumption": 13,
+          "amount": 22.75
+        },
+        {
+          "periodMonth": "August 2026",
+          "reading": 101.5,
+          "consumption": 13.5,
+          "amount": 23.63
+        }
+      ]
+    },
+    {
+      "legacyId": "wm-03",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-08",
+      "clientLegacyId": "client-02",
+      "meterNumber": "WM-NGV-G302",
+      "previousReading": 210,
+      "currentReading": 228,
+      "consumptionM3": 18,
+      "readingDate": "2026-08-01",
+      "ratePerM3": 1.75,
+      "totalAmount": 31.5,
+      "paymentStatus": "PAID",
+      "history": [
+        {
+          "periodMonth": "May 2026",
+          "reading": 174,
+          "consumption": 17,
+          "amount": 29.75
+        },
+        {
+          "periodMonth": "June 2026",
+          "reading": 192,
+          "consumption": 18,
+          "amount": 31.5
+        },
+        {
+          "periodMonth": "July 2026",
+          "reading": 210,
+          "consumption": 18,
+          "amount": 31.5
+        },
+        {
+          "periodMonth": "August 2026",
+          "reading": 228,
+          "consumption": 18,
+          "amount": 31.5
+        }
+      ]
+    },
+    {
+      "legacyId": "wm-04",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-09",
+      "clientLegacyId": "client-03",
+      "meterNumber": "WM-GVS-V101",
+      "previousReading": 70,
+      "currentReading": 86,
+      "consumptionM3": 16,
+      "readingDate": "2026-08-01",
+      "ratePerM3": 1.75,
+      "totalAmount": 28,
+      "paymentStatus": "PENDING",
+      "history": [
+        {
+          "periodMonth": "June 2026",
+          "reading": 54,
+          "consumption": 16,
+          "amount": 28
+        },
+        {
+          "periodMonth": "July 2026",
+          "reading": 70,
+          "consumption": 16,
+          "amount": 28
+        },
+        {
+          "periodMonth": "August 2026",
+          "reading": 86,
+          "consumption": 16,
+          "amount": 28
+        }
+      ]
+    }
+  ],
+  "employees": [
+    {
+      "legacyId": "emp-01",
+      "name": "Eric Manzi",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "position": "Senior Operations Director",
+      "department": "OPERATIONS",
+      "contact": "+250 788 123 456",
+      "email": "operations@panther.rw",
+      "employmentStatus": "FULL_TIME",
+      "status": "ACTIVE",
+      "statusReason": null,
+      "startDate": "2022-01-15",
+      "basicSalary": 2800,
+      "nationalId": "1198880012903847",
+      "emergencyContact": {
+        "name": "Jeanne Manzi",
+        "phone": "+250 788 998 771",
+        "relationship": "Spouse"
+      },
+      "address": "KG 14 Ave, Nyarutarama, Kigali",
+      "documents": [
+        {
+          "name": "Executive Employment Contract.pdf",
+          "type": "EMPLOYMENT_CONTRACT",
+          "fileUrl": "https://example.com/contract.pdf",
+          "uploadDate": "2022-01-15",
+          "sizeLabel": "1.8 MB",
+          "status": "VERIFIED"
+        },
+        {
+          "name": "National ID Card Scan.pdf",
+          "type": "NATIONAL_ID_PASSPORT",
+          "fileUrl": "https://example.com/id.pdf",
+          "uploadDate": "2022-01-15",
+          "sizeLabel": "850 KB",
+          "status": "VERIFIED"
+        }
+      ],
+      "dailyTasks": [
+        {
+          "title": "Review Q3 Building Maintenance Budget",
+          "description": "Consolidate contractor bids and preventive maintenance estimates",
+          "assignedDate": "2026-08-17",
+          "dueDate": "2026-08-18",
+          "priority": "HIGH",
+          "propertyLegacyId": null,
+          "roomNumber": null,
+          "status": "IN_PROGRESS",
+          "completedDate": null,
+          "managerComment": null,
+          "rating": null,
+          "ratedByName": null
+        },
+        {
+          "title": "Audit Tenant Water Submeter Discrepancies",
+          "description": "Cross-check WASAC master bill with submeter telemetry records",
+          "assignedDate": "2026-08-16",
+          "dueDate": "2026-08-17",
+          "priority": "MEDIUM",
+          "propertyLegacyId": null,
+          "roomNumber": null,
+          "status": "COMPLETED",
+          "completedDate": "2026-08-17",
+          "managerComment": "All variances accounted for.",
+          "rating": 5,
+          "ratedByName": "Board of Directors"
+        }
+      ],
+      "damages": []
+    },
+    {
+      "legacyId": "emp-02",
+      "name": "Diane Umutoni",
+      "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      "position": "Chief Financial & Admin Officer",
+      "department": "FINANCE",
+      "contact": "+250 788 777 666",
+      "email": "admin@panther.rw",
+      "employmentStatus": "FULL_TIME",
+      "status": "ACTIVE",
+      "statusReason": null,
+      "startDate": "2022-03-01",
+      "basicSalary": 2500,
+      "nationalId": "1199080034567891",
+      "emergencyContact": {
+        "name": "Paul Umutoni",
+        "phone": "+250 788 443 219",
+        "relationship": "Brother"
+      },
+      "address": "KK 28 St, Kicukiro, Kigali",
+      "documents": [
+        {
+          "name": "CPA Professional Certificate.pdf",
+          "type": "CERTIFICATE_DEGREE",
+          "fileUrl": "https://example.com/cpa.pdf",
+          "uploadDate": "2022-03-01",
+          "sizeLabel": "2.1 MB",
+          "status": "VERIFIED"
+        }
+      ],
+      "dailyTasks": [
+        {
+          "title": "Process Monthly Staff Payroll Disbursements",
+          "description": "Run RAMA, RSSB and PAYE statutory deductions and bank transfers",
+          "assignedDate": "2026-08-17",
+          "dueDate": "2026-08-19",
+          "priority": "HIGH",
+          "propertyLegacyId": null,
+          "roomNumber": null,
+          "status": "IN_PROGRESS",
+          "completedDate": null,
+          "managerComment": null,
+          "rating": null,
+          "ratedByName": null
+        }
+      ],
+      "damages": []
+    },
+    {
+      "legacyId": "emp-03",
+      "name": "Emmanuel Habimana",
+      "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+      "position": "Lead Facility & Maintenance Officer",
+      "department": "HOUSEKEEPING",
+      "contact": "+250 783 555 777",
+      "email": "emmanuel.h@panther.rw",
+      "employmentStatus": "FULL_TIME",
+      "status": "ACTIVE",
+      "statusReason": null,
+      "startDate": "2023-05-10",
+      "basicSalary": 950,
+      "nationalId": "1199280045612378",
+      "emergencyContact": {
+        "name": "Beatha Habimana",
+        "phone": "+250 788 129 004",
+        "relationship": "Spouse"
+      },
+      "address": "Kimironko, Gasabo, Kigali",
+      "documents": [
+        {
+          "name": "Employment Contract - Facilities.pdf",
+          "type": "EMPLOYMENT_CONTRACT",
+          "fileUrl": "https://example.com/contract3.pdf",
+          "uploadDate": "2023-05-10",
+          "sizeLabel": "1.4 MB",
+          "status": "VERIFIED"
+        },
+        {
+          "name": "Criminal Record Clearance.pdf",
+          "type": "CRIMINAL_RECORD_CLEARANCE",
+          "fileUrl": "https://example.com/clearance.pdf",
+          "uploadDate": "2023-05-10",
+          "sizeLabel": "640 KB",
+          "status": "VERIFIED"
+        }
+      ],
+      "dailyTasks": [
+        {
+          "title": "Week 33 Common Area Corridors & Roof Inspection",
+          "description": "Complete 19 preventive maintenance checkpoints in Kigali Heights",
+          "assignedDate": "2026-08-17",
+          "dueDate": "2026-08-17",
+          "priority": "HIGH",
+          "propertyLegacyId": "prop-01",
+          "roomNumber": null,
+          "status": "COMPLETED",
+          "completedDate": "2026-08-17",
+          "managerComment": "Great speed and photo documentation.",
+          "rating": 5,
+          "ratedByName": "Eric Manzi"
+        },
+        {
+          "title": "Deep Clean Waste Disposal Area & Disinfect Bins",
+          "description": "Apply odor neutralizer and pressure wash concrete pads",
+          "assignedDate": "2026-08-17",
+          "dueDate": "2026-08-17",
+          "priority": "MEDIUM",
+          "propertyLegacyId": "prop-01",
+          "roomNumber": null,
+          "status": "IN_PROGRESS",
+          "completedDate": null,
+          "managerComment": null,
+          "rating": null,
+          "ratedByName": null
+        }
+      ],
+      "damages": [
+        {
+          "incidentDate": "2026-06-12",
+          "item": "Industrial Floor Polisher Motor Bearing",
+          "propertyName": "Kigali Heights Residences",
+          "roomNumber": null,
+          "description": "Over-tightened drive belt causing bearing overheat. Replaced parts.",
+          "estimatedCost": 65,
+          "deductedFromSalary": true,
+          "deductedAmount": 30,
+          "status": "DEDUCTED",
+          "photos": []
+        }
+      ]
+    },
+    {
+      "legacyId": "emp-04",
+      "name": "Patrick Nshimiyimana",
+      "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+      "position": "Property Facilities Supervisor",
+      "department": "MAINTENANCE",
+      "contact": "+250 788 444 888",
+      "email": "patrick.n@panther.rw",
+      "employmentStatus": "FULL_TIME",
+      "status": "ACTIVE",
+      "statusReason": null,
+      "startDate": "2023-08-01",
+      "basicSalary": 1100,
+      "nationalId": "1199180023456712",
+      "emergencyContact": null,
+      "address": null,
+      "documents": [
+        {
+          "name": "Electrical Engineering Diploma.pdf",
+          "type": "CERTIFICATE_DEGREE",
+          "fileUrl": "https://example.com/diploma.pdf",
+          "uploadDate": "2023-08-01",
+          "sizeLabel": "2.5 MB",
+          "status": "VERIFIED"
+        }
+      ],
+      "dailyTasks": [
+        {
+          "title": "Nyarutarama Swimming Pool Filtration Backwash",
+          "description": "Backwash sand filters and test chlorine balance",
+          "assignedDate": "2026-08-17",
+          "dueDate": "2026-08-17",
+          "priority": "HIGH",
+          "propertyLegacyId": "prop-02",
+          "roomNumber": null,
+          "status": "COMPLETED",
+          "completedDate": "2026-08-17",
+          "managerComment": "Optimal water clarity verified.",
+          "rating": 4,
+          "ratedByName": "Eric Manzi"
+        }
+      ],
+      "damages": []
+    },
+    {
+      "legacyId": "emp-05",
+      "name": "Claudine Mukamana",
+      "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+      "position": "Resident Hospitality & Front Desk Manager",
+      "department": "OPERATIONS",
+      "contact": "+250 788 333 222",
+      "email": "claudine.m@panther.rw",
+      "employmentStatus": "FULL_TIME",
+      "status": "ACTIVE",
+      "statusReason": null,
+      "startDate": "2024-02-01",
+      "basicSalary": 1300,
+      "nationalId": "1199580011223344",
+      "emergencyContact": null,
+      "address": null,
+      "documents": [
+        {
+          "name": "Hospitality Management Degree.pdf",
+          "type": "CERTIFICATE_DEGREE",
+          "fileUrl": "https://example.com/degree.pdf",
+          "uploadDate": "2024-02-01",
+          "sizeLabel": "1.9 MB",
+          "status": "VERIFIED"
+        }
+      ],
+      "dailyTasks": [
+        {
+          "title": "Conduct Check-in Handover for Suite A-404",
+          "description": "Verify physical inventory and key handover protocol with tenant",
+          "assignedDate": "2026-08-17",
+          "dueDate": "2026-08-17",
+          "priority": "HIGH",
+          "propertyLegacyId": "prop-01",
+          "roomNumber": null,
+          "status": "PENDING",
+          "completedDate": null,
+          "managerComment": null,
+          "rating": null,
+          "ratedByName": null
+        }
+      ],
+      "damages": []
+    }
+  ],
+  "payrollRecords": [
+    {
+      "legacyId": "payr-01",
+      "payrollNumber": "PAY-2026-07-001",
+      "employeeLegacyId": "emp-01",
+      "employeeName": "Eric Manzi",
+      "position": "Senior Operations Director",
+      "department": "Operations",
+      "period": "July 2026",
+      "basicSalary": 2800,
+      "allowances": 350,
+      "bonuses": 200,
+      "deductions": 50,
+      "taxAmount": 420,
+      "netSalary": 2880,
+      "paymentDate": "2026-07-30",
+      "paymentStatus": "PAID",
+      "paymentMethod": "BANK_TRANSFER"
+    },
+    {
+      "legacyId": "payr-02",
+      "payrollNumber": "PAY-2026-07-002",
+      "employeeLegacyId": "emp-02",
+      "employeeName": "Diane Umutoni",
+      "position": "Chief Financial & Admin Officer",
+      "department": "Finance",
+      "period": "July 2026",
+      "basicSalary": 2500,
+      "allowances": 300,
+      "bonuses": 150,
+      "deductions": 40,
+      "taxAmount": 375,
+      "netSalary": 2535,
+      "paymentDate": "2026-07-30",
+      "paymentStatus": "PAID",
+      "paymentMethod": "BANK_TRANSFER"
+    },
+    {
+      "legacyId": "payr-03",
+      "payrollNumber": "PAY-2026-07-003",
+      "employeeLegacyId": "emp-03",
+      "employeeName": "Emmanuel Habimana",
+      "position": "Lead Facility & Maintenance Officer",
+      "department": "Housekeeping",
+      "period": "July 2026",
+      "basicSalary": 950,
+      "allowances": 120,
+      "bonuses": 80,
+      "deductions": 20,
+      "taxAmount": 110,
+      "netSalary": 1020,
+      "paymentDate": "2026-07-30",
+      "paymentStatus": "PAID",
+      "paymentMethod": "MOBILE_MONEY"
+    },
+    {
+      "legacyId": "payr-04",
+      "payrollNumber": "PAY-2026-08-001",
+      "employeeLegacyId": "emp-03",
+      "employeeName": "Emmanuel Habimana",
+      "position": "Lead Facility & Maintenance Officer",
+      "department": "Housekeeping",
+      "period": "August 2026",
+      "basicSalary": 950,
+      "allowances": 120,
+      "bonuses": 100,
+      "deductions": 20,
+      "taxAmount": 112,
+      "netSalary": 1038,
+      "paymentDate": "2026-08-30",
+      "paymentStatus": "PROCESSING",
+      "paymentMethod": "MOBILE_MONEY"
+    }
+  ],
+  "maintenanceIssues": [
+    {
+      "legacyId": "issue-01",
+      "ticketNumber": "TKT-2026-042",
+      "clientLegacyId": "client-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "category": "HVAC",
+      "title": "Master Bedroom Air Conditioner Cooling Weak",
+      "description": "The Samsung inverter AC unit blows air but is not reaching set temperatures below 24°C. Needs refrigerant level check.",
+      "priority": "MEDIUM",
+      "status": "IN_PROGRESS",
+      "reportedDate": "2026-08-13T11:20:00Z",
+      "assignedTechnicianLegacyId": "tech-04",
+      "resolutionDate": null,
+      "resolutionNotes": null,
+      "photos": [
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80"
+      ]
+    },
+    {
+      "legacyId": "issue-02",
+      "ticketNumber": "TKT-2026-040",
+      "clientLegacyId": "client-01",
+      "propertyLegacyId": "prop-01",
+      "roomLegacyId": "room-01",
+      "category": "PLUMBING",
+      "title": "Kitchen Sink Mixer Tap Low Water Pressure",
+      "description": "Hot water faucet stream has low pressure compared to bathroom faucets.",
+      "priority": "LOW",
+      "status": "RESOLVED",
+      "reportedDate": "2026-08-06T09:15:00Z",
+      "assignedTechnicianLegacyId": "tech-01",
+      "resolutionDate": "2026-08-07",
+      "resolutionNotes": "Removed mineral sediment from aerator mesh filter and cleaned inline valve. Flow fully restored.",
+      "photos": []
+    },
+    {
+      "legacyId": "issue-03",
+      "ticketNumber": "TKT-2026-043",
+      "clientLegacyId": "client-02",
+      "propertyLegacyId": "prop-02",
+      "roomLegacyId": "room-08",
+      "category": "ELECTRICAL",
+      "title": "Balcony Ambient LED Strip Light Flickering",
+      "description": "The outdoor waterproof LED strip light under the balcony roof railing flickers after rain.",
+      "priority": "LOW",
+      "status": "ASSIGNED",
+      "reportedDate": "2026-08-14T15:40:00Z",
+      "assignedTechnicianLegacyId": "tech-02",
+      "resolutionDate": null,
+      "resolutionNotes": null,
+      "photos": []
+    }
+  ],
+  "activityLogs": [
+    {
+      "legacyId": "act-01",
+      "occurredAt": "2026-08-16T10:42:00Z",
+      "userLegacyId": "user-ops",
+      "userName": "Eric Manzi",
+      "role": "Operations Director",
+      "action": "Booking Approved",
+      "module": "Bookings",
+      "details": "Approved corporate lease application for Patrick Gasana (BK-2026-094)",
+      "type": "SUCCESS"
+    },
+    {
+      "legacyId": "act-02",
+      "occurredAt": "2026-08-16T09:35:00Z",
+      "userLegacyId": "user-ops",
+      "userName": "Eric Manzi",
+      "role": "Operations Director",
+      "action": "Payment Recorded",
+      "module": "Finance",
+      "details": "Recorded MTN Mobile Money payment $850 for Jean-Paul Ndahiro (INV-2026-0801)",
+      "type": "SUCCESS"
+    },
+    {
+      "legacyId": "act-03",
+      "occurredAt": "2026-08-15T16:20:00Z",
+      "userLegacyId": "user-ops",
+      "userName": "Eric Manzi",
+      "role": "Operations Director",
+      "action": "Room Assigned",
+      "module": "Rooms",
+      "details": "Assigned Kigali Heights Unit A-204 to client Jean-Paul Ndahiro",
+      "type": "INFO"
+    },
+    {
+      "legacyId": "act-04",
+      "occurredAt": "2026-08-15T14:15:00Z",
+      "userLegacyId": "user-household",
+      "userName": "Emmanuel Habimana",
+      "role": "Facility Officer",
+      "action": "Checklist Completed",
+      "module": "Preventive Maintenance",
+      "details": "Completed Week 2 corridors, staircases and waste chutes inspection (Pass 4/4)",
+      "type": "SUCCESS"
+    },
+    {
+      "legacyId": "act-05",
+      "occurredAt": "2026-08-14T11:30:00Z",
+      "userLegacyId": "user-ops",
+      "userName": "Eric Manzi",
+      "role": "Operations Director",
+      "action": "Technician Dispatched",
+      "module": "Maintenance",
+      "details": "Dispatched Dieudonne Habarugira (HVAC) to resolve AC cooling issue in Room A-204",
+      "type": "INFO"
+    },
+    {
+      "legacyId": "act-06",
+      "occurredAt": "2026-08-14T09:10:00Z",
+      "userLegacyId": "user-owner",
+      "userName": "Alexis Gatete",
+      "role": "Owner",
+      "action": "Executive Report Exported",
+      "module": "Reports",
+      "details": "Generated Q2 2026 Portfolio Net Yield & Occupancy Performance Audit",
+      "type": "INFO"
+    }
+  ],
+  "notifications": [
+    {
+      "legacyId": "notif-01",
+      "title": "Booking Approved",
+      "message": "Your tenancy agreement for Kigali Heights A-204 has been confirmed by operations.",
+      "occurredAt": "2026-08-18T10:00:00.000Z",
+      "read": false,
+      "type": "BOOKING",
+      "targetRoles": [
+        "CLIENT"
+      ],
+      "link": "/client/my-booking"
+    },
+    {
+      "legacyId": "notif-02",
+      "title": "Payment Recorded",
+      "message": "Rent payment of $850 for August 2026 successfully received. Receipt generated.",
+      "occurredAt": "2026-08-17T12:00:00.000Z",
+      "read": true,
+      "type": "PAYMENT",
+      "targetRoles": [
+        "CLIENT"
+      ],
+      "link": "/client/payments"
+    },
+    {
+      "legacyId": "notif-03",
+      "title": "Maintenance Update",
+      "message": "Technician Dieudonne Habarugira has been assigned to your AC cooling ticket.",
+      "occurredAt": "2026-08-18T09:00:00.000Z",
+      "read": false,
+      "type": "MAINTENANCE",
+      "targetRoles": [
+        "CLIENT"
+      ],
+      "link": "/client/report-issue"
+    },
+    {
+      "legacyId": "notif-04",
+      "title": "New High-Value Booking Request",
+      "message": "Dr. Arthur Rutayisire submitted a booking request for 3BR Executive Suite ($1,350/mo).",
+      "occurredAt": "2026-08-18T10:00:00.000Z",
+      "read": false,
+      "type": "BOOKING",
+      "targetRoles": [
+        "OPERATIONS",
+        "ADMIN",
+        "OWNER"
+      ],
+      "link": "/operations/bookings"
+    },
+    {
+      "legacyId": "notif-05",
+      "title": "Preventive Task Flagged Attention",
+      "message": "Emmanuel Habimana reported minor heating on Breaker #14 at Kigali Heights.",
+      "occurredAt": "2026-08-17T12:00:00.000Z",
+      "read": false,
+      "type": "ALERT",
+      "targetRoles": [
+        "OPERATIONS",
+        "HOUSEHOLD",
+        "ADMIN"
+      ],
+      "link": "/operations/preventive-maintenance"
+    },
+    {
+      "legacyId": "notif-06",
+      "title": "Upcoming EUCL Utility Bill",
+      "message": "Commercial electricity bill of $1,250 due in 9 days.",
+      "occurredAt": "2026-08-16T12:00:00.000Z",
+      "read": true,
+      "type": "PAYMENT",
+      "targetRoles": [
+        "OPERATIONS",
+        "OWNER"
+      ],
+      "link": "/operations/recurring-bills"
+    },
+    {
+      "legacyId": "notif-07",
+      "title": "Executive Portfolio Update",
+      "message": "Monthly occupancy reached 85.5% across 130 portfolio units with $143,200 collected.",
+      "occurredAt": "2026-08-15T12:00:00.000Z",
+      "read": false,
+      "type": "ALERT",
+      "targetRoles": [
+        "OWNER"
+      ],
+      "link": "/owner/dashboard"
+    }
+  ]
+}

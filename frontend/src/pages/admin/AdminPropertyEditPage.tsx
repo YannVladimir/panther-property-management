@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { usePropertyQuery, useCreatePropertyMutation, useUpdatePropertyMutation, PropertyInput } from '../../api/properties';
 import { useToast } from '../../context/ToastContext';
+import { FileUploadButton } from '../../components/common/FileUploadButton';
 import {
   Building,
   Save,
@@ -10,38 +11,33 @@ import {
   Plus,
   Trash2,
   Image as ImageIcon,
-  MapPin,
   Sparkles,
   Shield,
-  Star,
   Check,
-  CheckCircle2,
-  DollarSign,
-  Layers,
 } from 'lucide-react';
-import { Badge } from '../../components/common/Badge';
-import { Property } from '../../types';
+import { PropertyStatus } from '../../types';
 
 export const AdminPropertyEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { properties, addProperty, updateProperty } = useData();
   const { success, error } = useToast();
 
   const isNew = !id || id === 'new';
-  const existingProperty = properties.find((p) => p.id === id);
+  const { data: existingProperty, isLoading } = usePropertyQuery(isNew ? undefined : id);
+  const createProperty = useCreatePropertyMutation();
+  const updateProperty = useUpdatePropertyMutation();
+  const saving = createProperty.isPending || updateProperty.isPending;
 
   // Form State
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
   const [location, setLocation] = useState('Gacuriro, Gasabo');
   const [neighborhood, setNeighborhood] = useState('Gacuriro Hillcrest');
   const [city, setCity] = useState('Kigali');
   const [address, setAddress] = useState('KG 14 Ave, Kigali');
-  const [totalRooms, setTotalRooms] = useState(24);
   const [yearBuilt, setYearBuilt] = useState(2024);
   const [rating, setRating] = useState(4.9);
   const [featured, setFeatured] = useState(true);
+  const [status, setStatus] = useState<PropertyStatus>('active');
   const [monthlyRevenueEstimate, setMonthlyRevenueEstimate] = useState(28000);
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([
@@ -82,22 +78,20 @@ export const AdminPropertyEditPage: React.FC = () => {
   useEffect(() => {
     if (!isNew && existingProperty) {
       setName(existingProperty.name);
-      setCode(existingProperty.code);
       setLocation(existingProperty.location);
       setNeighborhood(existingProperty.neighborhood);
       setCity(existingProperty.city);
       setAddress(existingProperty.address);
-      setTotalRooms(existingProperty.totalRooms);
       setYearBuilt(existingProperty.yearBuilt || 2024);
       setRating(existingProperty.rating);
       setFeatured(existingProperty.featured);
+      setStatus(existingProperty.status);
       setMonthlyRevenueEstimate(existingProperty.monthlyRevenueEstimate);
       setDescription(existingProperty.description);
       setImages(existingProperty.images.length > 0 ? existingProperty.images : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80']);
       setAmenities(existingProperty.amenities || []);
     } else if (isNew) {
       setName('Gacuriro Executive Vista Residences');
-      setCode('GVR');
       setDescription('Turnkey modern executive luxury apartments nestled in Gacuriro with breathtaking hillcrest views, 24/7 guarded security, infinity swimming pool, and high-speed fiber internet.');
     }
   }, [id, existingProperty, isNew]);
@@ -128,29 +122,23 @@ export const AdminPropertyEditPage: React.FC = () => {
     setNewAmenity('');
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       error('Validation Error', 'Property name is required.');
       return;
     }
 
-    const payload: Property = {
-      id: isNew ? `prop-${Date.now()}` : existingProperty!.id,
+    const payload: PropertyInput = {
       name,
-      code: code || name.slice(0, 3).toUpperCase(),
       location,
       neighborhood,
       city,
       address,
-      totalRooms: Number(totalRooms),
-      occupiedRooms: existingProperty ? existingProperty.occupiedRooms : Math.round(Number(totalRooms) * 0.8),
-      availableRooms: existingProperty ? existingProperty.availableRooms : Math.round(Number(totalRooms) * 0.2),
-      reservedRooms: existingProperty ? existingProperty.reservedRooms : 0,
-      maintenanceRooms: existingProperty ? existingProperty.maintenanceRooms : 0,
       rating: Number(rating),
-      reviewCount: existingProperty ? existingProperty.reviewCount : 12,
+      reviewCount: existingProperty?.reviewCount,
       featured: Boolean(featured),
+      status,
       yearBuilt: Number(yearBuilt),
       monthlyRevenueEstimate: Number(monthlyRevenueEstimate),
       description,
@@ -158,16 +146,23 @@ export const AdminPropertyEditPage: React.FC = () => {
       amenities,
     };
 
-    if (isNew) {
-      addProperty(payload);
-      success('Property Published', `Created "${name}" — now live on public catalog!`);
-    } else {
-      updateProperty(payload);
-      success('Property Updated', `Saved configurations for "${name}" — public site updated.`);
+    try {
+      if (isNew) {
+        await createProperty.mutateAsync(payload);
+        success('Property Published', `Created "${name}" — now live on public catalog!`);
+      } else {
+        await updateProperty.mutateAsync({ id: existingProperty!.id, input: payload });
+        success('Property Updated', `Saved configurations for "${name}" — public site updated.`);
+      }
+      navigate('/admin/properties');
+    } catch {
+      error('Save Failed', 'Could not save this property. Please try again.');
     }
-
-    navigate('/admin/properties');
   };
+
+  if (!isNew && isLoading) {
+    return <div className="max-w-5xl mx-auto py-24 text-center text-sm text-slate-400">Loading property…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -203,10 +198,11 @@ export const AdminPropertyEditPage: React.FC = () => {
 
           <button
             onClick={handleSave}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-glow transition-all"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-glow transition-all disabled:opacity-60"
           >
             <Save className="w-4 h-4" />
-            <span>Save & Publish</span>
+            <span>{saving ? 'Saving…' : 'Save & Publish'}</span>
           </button>
         </div>
       </div>
@@ -251,15 +247,15 @@ export const AdminPropertyEditPage: React.FC = () => {
 
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                Estate Code / Slug *
+                Estate Code
               </label>
               <input
                 type="text"
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="e.g. GVS"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold uppercase text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+                disabled
+                value={isNew ? 'auto-generated' : existingProperty?.code ?? ''}
+                placeholder="auto-generated"
+                title="Generated automatically from the property name — not editable"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold uppercase text-slate-400 text-xs cursor-not-allowed"
               />
             </div>
           </div>
@@ -327,15 +323,17 @@ export const AdminPropertyEditPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                Total Units Capacity *
+                Operating Status *
               </label>
-              <input
-                type="number"
-                required
-                value={totalRooms}
-                onChange={(e) => setTotalRooms(Number(e.target.value))}
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as PropertyStatus)}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              >
+                <option value="active">Active — visible to the public</option>
+                <option value="maintenance">Maintenance — hidden from the public</option>
+                <option value="full">Full — visible, fully booked</option>
+              </select>
             </div>
 
             <div>
@@ -362,6 +360,18 @@ export const AdminPropertyEditPage: React.FC = () => {
               />
             </div>
           </div>
+
+          {!isNew && existingProperty && (
+            <p className="text-[11px] text-slate-400 pt-1">
+              {existingProperty.totalRooms} total rooms · {existingProperty.occupiedRooms} occupied ·{' '}
+              {existingProperty.availableRooms} available · {existingProperty.reservedRooms} reserved ·{' '}
+              {existingProperty.maintenanceRooms} under maintenance — managed on the{' '}
+              <Link to="/admin/buildings-rooms" className="text-brand-600 dark:text-brand-400 font-bold hover:underline">
+                Buildings &amp; Rooms
+              </Link>{' '}
+              page, computed automatically from real room records.
+            </p>
+          )}
         </div>
 
         {/* Section 2: Public Marketing Content & Description */}
@@ -417,6 +427,13 @@ export const AdminPropertyEditPage: React.FC = () => {
               <Plus className="w-4 h-4" />
               <span>Add Photo</span>
             </button>
+            <FileUploadButton
+              folder="property-photos"
+              accept="image/*"
+              multiple
+              label="Upload Photo"
+              onUploaded={(result) => setImages((prev) => [...prev, result.url])}
+            />
           </div>
 
           {/* Gallery Tiles Grid */}
@@ -424,7 +441,7 @@ export const AdminPropertyEditPage: React.FC = () => {
             {images.map((img, i) => (
               <div key={i} className="relative rounded-2xl overflow-hidden group border border-slate-200 dark:border-slate-700 h-44 shadow-sm bg-slate-100 dark:bg-slate-800">
                 <img src={img} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
-                
+
                 {i === 0 && (
                   <span className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-brand-600 text-white font-black text-[10px] shadow-md">
                     COVER PHOTO
@@ -508,10 +525,11 @@ export const AdminPropertyEditPage: React.FC = () => {
 
           <button
             type="submit"
-            className="px-8 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md hover:shadow-glow transition-all flex items-center gap-2"
+            disabled={saving}
+            className="px-8 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md hover:shadow-glow transition-all flex items-center gap-2 disabled:opacity-60"
           >
             <Save className="w-4 h-4" />
-            <span>Save & Publish Estate</span>
+            <span>{saving ? 'Saving…' : 'Save & Publish Estate'}</span>
           </button>
         </div>
       </form>

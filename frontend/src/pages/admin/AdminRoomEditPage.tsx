@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { usePropertiesQuery } from '../../api/properties';
+import { useBuildingsQuery } from '../../api/buildings';
+import { useRoomQuery, useCreateRoomMutation, useUpdateRoomMutation, RoomInput } from '../../api/rooms';
 import { useToast } from '../../context/ToastContext';
 import {
   DoorOpen,
-  Building,
   Save,
   ArrowLeft,
   Eye,
@@ -12,30 +13,29 @@ import {
   Trash2,
   Image as ImageIcon,
   DollarSign,
-  Layers,
   Sparkles,
-  Bed,
-  Bath,
-  Maximize2,
   Check,
-  Shield,
-  FileText,
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
-import { Room, RoomStatus, FurnishingType } from '../../types';
+import { FileUploadButton } from '../../components/common/FileUploadButton';
+import { RoomStatus, FurnishingType } from '../../types';
 
 export const AdminRoomEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { rooms, properties, addRoom, updateRoom } = useData();
   const { success, error } = useToast();
 
   const isNew = !id || id === 'new';
-  const existingRoom = rooms.find((r) => r.id === id);
+  const { data: existingRoom, isLoading: isLoadingRoom } = useRoomQuery(isNew ? undefined : id);
+  const { data: properties = [] } = usePropertiesQuery();
+  const createRoom = useCreateRoomMutation();
+  const updateRoom = useUpdateRoomMutation();
+  const saving = createRoom.isPending || updateRoom.isPending;
 
   // Form State
-  const [propertyId, setPropertyId] = useState(properties[0]?.id || 'prop-03');
-  const [buildingName, setBuildingName] = useState('Hillcrest Tower A');
+  const [propertyId, setPropertyId] = useState('');
+  const { data: buildings = [] } = useBuildingsQuery(propertyId || undefined);
+  const [buildingId, setBuildingId] = useState('');
   const [roomNumber, setRoomNumber] = useState('V-101');
   const [floor, setFloor] = useState(1);
   const [sizeSqM, setSizeSqM] = useState(75);
@@ -98,10 +98,17 @@ export const AdminRoomEditPage: React.FC = () => {
     'Gym & Pool Access',
   ];
 
+  // Default the property picker to the first real property once loaded, for a brand new room.
+  useEffect(() => {
+    if (isNew && !propertyId && properties.length > 0) {
+      setPropertyId(properties[0].id);
+    }
+  }, [isNew, propertyId, properties]);
+
   useEffect(() => {
     if (!isNew && existingRoom) {
       setPropertyId(existingRoom.propertyId);
-      setBuildingName(existingRoom.buildingName || 'Main Tower');
+      setBuildingId(existingRoom.buildingId || '');
       setRoomNumber(existingRoom.roomNumber);
       setFloor(existingRoom.floor);
       setSizeSqM(existingRoom.sizeSqM);
@@ -121,6 +128,14 @@ export const AdminRoomEditPage: React.FC = () => {
       setDescription('Sophisticated luxury apartment suite with expansive floor-to-ceiling windows, private sunset balcony, custom Italian kitchen cabinetry, and ultra-fast optical fiber connectivity.');
     }
   }, [id, existingRoom, isNew]);
+
+  // A building only belongs to one property — clear the selection if it no longer matches
+  // the buildings actually available for the currently-selected property.
+  useEffect(() => {
+    if (buildingId && !buildings.some((b) => b.id === buildingId)) {
+      setBuildingId('');
+    }
+  }, [buildings, buildingId]);
 
   const handleAddImage = () => {
     if (!newImageUrl.trim()) return;
@@ -148,21 +163,22 @@ export const AdminRoomEditPage: React.FC = () => {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!roomNumber.trim()) {
       error('Validation Error', 'Room / Unit number is required.');
       return;
     }
+    if (!propertyId) {
+      error('Validation Error', 'Select a parent property first.');
+      return;
+    }
 
     const selectedProp = properties.find((p) => p.id === propertyId) || properties[0];
 
-    const payload: Room = {
-      id: isNew ? `room-${Date.now()}` : existingRoom!.id,
+    const payload: RoomInput = {
       propertyId: selectedProp.id,
-      propertyName: selectedProp.name,
-      buildingId: 'bld-01',
-      buildingName,
+      buildingId: buildingId || '',
       roomNumber,
       floor: Number(floor),
       sizeSqM: Number(sizeSqM),
@@ -178,20 +194,25 @@ export const AdminRoomEditPage: React.FC = () => {
       amenities,
       utilitiesIncluded,
       rules,
-      currentClientId: existingRoom?.currentClientId,
-      currentClientName: existingRoom?.currentClientName,
     };
 
-    if (isNew) {
-      addRoom(payload);
-      success('Suite Created', `Unit ${roomNumber} added to ${selectedProp.name} inventory.`);
-    } else {
-      updateRoom(payload);
-      success('Suite Updated', `Saved configurations for Unit ${roomNumber} — live on public matrix.`);
+    try {
+      if (isNew) {
+        await createRoom.mutateAsync(payload);
+        success('Suite Created', `Unit ${roomNumber} added to ${selectedProp.name} inventory.`);
+      } else {
+        await updateRoom.mutateAsync({ id: existingRoom!.id, input: payload });
+        success('Suite Updated', `Saved configurations for Unit ${roomNumber} — live on public matrix.`);
+      }
+      navigate('/admin/buildings-rooms');
+    } catch {
+      error('Save Failed', 'Could not save this room. Please try again.');
     }
-
-    navigate('/admin/buildings-rooms');
   };
+
+  if (!isNew && isLoadingRoom) {
+    return <div className="max-w-5xl mx-auto py-24 text-center text-sm text-slate-400">Loading room…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -227,10 +248,11 @@ export const AdminRoomEditPage: React.FC = () => {
 
           <button
             onClick={handleSave}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-glow transition-all"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-md hover:shadow-glow transition-all disabled:opacity-60"
           >
             <Save className="w-4 h-4" />
-            <span>Save & Publish Unit</span>
+            <span>{saving ? 'Saving…' : 'Save & Publish Unit'}</span>
           </button>
         </div>
       </div>
@@ -290,13 +312,18 @@ export const AdminRoomEditPage: React.FC = () => {
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
                 Building Wing / Block
               </label>
-              <input
-                type="text"
-                value={buildingName}
-                onChange={(e) => setBuildingName(e.target.value)}
-                placeholder="e.g. Tower Alpha or Hillcrest Wing"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-              />
+              <select
+                value={buildingId}
+                onChange={(e) => setBuildingId(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+              >
+                <option value="">No specific building</option>
+                {buildings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -490,6 +517,13 @@ export const AdminRoomEditPage: React.FC = () => {
               <Plus className="w-4 h-4" />
               <span>Add Photo</span>
             </button>
+            <FileUploadButton
+              folder="room-photos"
+              accept="image/*"
+              multiple
+              label="Upload Photo"
+              onUploaded={(result) => setImages((prev) => [...prev, result.url])}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -584,10 +618,11 @@ export const AdminRoomEditPage: React.FC = () => {
 
           <button
             type="submit"
-            className="px-8 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md hover:shadow-glow transition-all flex items-center gap-2"
+            disabled={saving}
+            className="px-8 py-3 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md hover:shadow-glow transition-all flex items-center gap-2 disabled:opacity-60"
           >
             <Save className="w-4 h-4" />
-            <span>Save & Publish Unit</span>
+            <span>{saving ? 'Saving…' : 'Save & Publish Unit'}</span>
           </button>
         </div>
       </form>

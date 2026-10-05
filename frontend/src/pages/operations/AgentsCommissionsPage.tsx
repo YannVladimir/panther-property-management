@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { useAgentsQuery, useCreateAgentMutation, useAddAgentDealMutation, usePayAgentCommissionMutation } from '../../api/agents';
+import { usePropertiesQuery } from '../../api/properties';
 import {
   UserCheck,
   Search,
@@ -34,15 +35,15 @@ import { Modal } from '../../components/common/Modal';
 import { Agent, AgentDeal } from '../../types';
 
 export const AgentsCommissionsPage: React.FC = () => {
-  const {
-    agents,
-    properties,
-    rooms,
-    addAgent,
-    updateAgent,
-    addAgentDeal,
-    payAgentCommission,
-  } = useData();
+  const agentsQuery = useAgentsQuery();
+  const propertiesQuery = usePropertiesQuery();
+  const agents = agentsQuery.data ?? [];
+  const properties = propertiesQuery.data ?? [];
+  const isLoading = agentsQuery.isLoading || propertiesQuery.isLoading;
+
+  const createAgentMutation = useCreateAgentMutation();
+  const addAgentDealMutation = useAddAgentDealMutation();
+  const payAgentCommissionMutation = usePayAgentCommissionMutation();
 
   const { success, error, info } = useToast();
 
@@ -51,8 +52,11 @@ export const AgentsCommissionsPage: React.FC = () => {
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Slide-in Drawer States
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  // Slide-in Drawer States — only the id is stored; the displayed agent is derived live from
+  // `agents` below so it automatically reflects fresh data after any mutation invalidates the
+  // agents query, instead of going stale until manually "refreshed".
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId) ?? null;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [addAgentDrawerOpen, setAddAgentDrawerOpen] = useState(false);
 
@@ -77,12 +81,16 @@ export const AgentsCommissionsPage: React.FC = () => {
   const [dealAgentId, setDealAgentId] = useState('');
   const [dealClientName, setDealClientName] = useState('');
   const [dealClientEmail, setDealClientEmail] = useState('');
-  const [dealPropertyId, setDealPropertyId] = useState(properties[0]?.id || 'prop-01');
+  const [dealPropertyId, setDealPropertyId] = useState('');
   const [dealRoomNumber, setDealRoomNumber] = useState('A-204');
   const [dealMonthlyRent, setDealMonthlyRent] = useState(850);
   const [dealCommissionPct, setDealCommissionPct] = useState(30);
   const [dealStatus, setDealStatus] = useState<'Pending' | 'Paid'>('Pending');
   const [dealNotes, setDealNotes] = useState('');
+
+  useEffect(() => {
+    if (!dealPropertyId && properties.length > 0) setDealPropertyId(properties[0].id);
+  }, [properties, dealPropertyId]);
 
   const totalCommissionEarned = agents.reduce((acc, a) => acc + (a.totalCommissionEarned || 0), 0);
   const totalCommissionPaid = agents.reduce((acc, a) => acc + (a.commissionPaid || 0), 0);
@@ -111,13 +119,13 @@ export const AgentsCommissionsPage: React.FC = () => {
   }, [filteredAgents, pageIndex, pageSize]);
 
   const openAgentDrawer = (agent: Agent) => {
-    setSelectedAgent(agent);
+    setSelectedAgentId(agent.id);
     setDrawerOpen(true);
   };
 
   const closeAgentDrawer = () => {
     setDrawerOpen(false);
-    setSelectedAgent(null);
+    setSelectedAgentId(null);
   };
 
   const openDealModalForAgent = (agent?: Agent) => {
@@ -130,45 +138,49 @@ export const AgentsCommissionsPage: React.FC = () => {
   };
 
   const openPayoutModalForAgent = (agent: Agent) => {
-    setSelectedAgent(agent);
+    setSelectedAgentId(agent.id);
     setPayoutAmount(agent.outstandingCommission);
     setPayoutMethod(agent.paymentMethod || 'Bank Transfer');
     setPayoutRef(`PAY-${Math.floor(100000 + Math.random() * 900000)}`);
     setPayoutModalOpen(true);
   };
 
-  const handleAddAgentSubmit = (e: React.FormEvent) => {
+  const handleAddAgentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newEmail.trim()) {
       error('Validation Error', 'Agent name and email are required.');
       return;
     }
 
-    const created = addAgent({
-      name: newName.trim(),
-      agency: newAgency.trim() || 'Independent Broker',
-      phone: newPhone.trim() || '+250 788 000 000',
-      email: newEmail.trim(),
-      avatar: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000000)}?w=150&auto=format&fit=crop&q=80`,
-      status: 'Active',
-      commissionRatePercent: Number(newRate),
-      paymentMethod: newPaymentMethod,
-      payoutAccount: newPayoutAccount.trim() || 'Pending payout setup',
-      notes: newNotes,
-    });
+    try {
+      // No avatar field on the real create endpoint (the mock generated a random stock photo —
+      // the backend has no avatar-upload story for agents yet); status defaults to Active server-side.
+      const created = await createAgentMutation.mutateAsync({
+        name: newName.trim(),
+        agency: newAgency.trim() || 'Independent Broker',
+        phone: newPhone.trim() || '+250 788 000 000',
+        email: newEmail.trim(),
+        commissionRatePercent: Number(newRate),
+        paymentMethod: newPaymentMethod,
+        payoutAccount: newPayoutAccount.trim() || 'Pending payout setup',
+        notes: newNotes,
+      });
 
-    success('Broker Registered', `Partner ${created.name} registered successfully.`);
-    setAddAgentDrawerOpen(false);
-    // Reset form
-    setNewName('');
-    setNewAgency('');
-    setNewPhone('');
-    setNewEmail('');
-    setNewPayoutAccount('');
-    setNewNotes('');
+      success('Broker Registered', `Partner ${created.name} registered successfully.`);
+      setAddAgentDrawerOpen(false);
+      // Reset form
+      setNewName('');
+      setNewAgency('');
+      setNewPhone('');
+      setNewEmail('');
+      setNewPayoutAccount('');
+      setNewNotes('');
+    } catch {
+      error('Registration Failed', 'Could not register this agent. Please try again.');
+    }
   };
 
-  const handleRecordDealSubmit = (e: React.FormEvent) => {
+  const handleRecordDealSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dealAgentId) {
       error('Validation Error', 'Please select a referral agent.');
@@ -180,61 +192,80 @@ export const AgentsCommissionsPage: React.FC = () => {
     }
 
     const targetProp = properties.find((p) => p.id === dealPropertyId) || properties[0];
-    const commissionAmt = Math.round((Number(dealMonthlyRent) * Number(dealCommissionPct)) / 100);
-
-    const createdDeal = addAgentDeal(dealAgentId, {
-      clientName: dealClientName.trim(),
-      clientEmail: dealClientEmail.trim(),
-      propertyId: targetProp.id,
-      propertyName: targetProp.name,
-      roomNumber: dealRoomNumber.trim() || 'Main Suite',
-      monthlyRent: Number(dealMonthlyRent),
-      commissionPercentage: Number(dealCommissionPct),
-      commissionAmount: commissionAmt,
-      status: dealStatus,
-      payoutDate: dealStatus === 'Paid' ? new Date().toISOString().split('T')[0] : undefined,
-      payoutReference: dealStatus === 'Paid' ? `AUTO-SETTLE-${Date.now().toString().slice(-4)}` : undefined,
-      notes: dealNotes,
-    });
-
-    const agentObj = agents.find((a) => a.id === dealAgentId);
-    success(
-      'Deal & Commission Logged',
-      `Logged $${commissionAmt} commission deal for ${dealClientName} with ${agentObj?.name}.`
-    );
-
-    setDealModalOpen(false);
-    // Refresh selected agent if open
-    if (selectedAgent && selectedAgent.id === dealAgentId) {
-      const refreshed = agents.find((a) => a.id === dealAgentId);
-      if (refreshed) setSelectedAgent(refreshed);
+    if (!targetProp) {
+      error('No Property Available', 'Cannot log a deal with no properties in the system.');
+      return;
     }
 
-    // Reset deal form
-    setDealClientName('');
-    setDealClientEmail('');
-    setDealNotes('');
+    try {
+      // commissionAmount is computed server-side from monthlyRent × commissionPercentage — not
+      // sent here. The "Leased Unit / Suite #" field has no real room picker yet (unlike
+      // AdminRoomEditPage's building selector), so it isn't sent as a roomId; kept in the form
+      // for now as a display-only note rather than removed outright.
+      const createdDeal = await addAgentDealMutation.mutateAsync({
+        agentId: dealAgentId,
+        input: {
+          clientName: dealClientName.trim(),
+          clientEmail: dealClientEmail.trim() || undefined,
+          propertyId: targetProp.id,
+          monthlyRent: Number(dealMonthlyRent),
+          commissionPercentage: Number(dealCommissionPct),
+          notes: dealNotes,
+        },
+      });
+
+      // New deals always start Pending server-side — "Already Paid" is achieved as a second,
+      // real settlement call rather than something the create endpoint accepts directly.
+      if (dealStatus === 'Paid') {
+        await payAgentCommissionMutation.mutateAsync({
+          agentId: dealAgentId,
+          amount: createdDeal.commissionAmount,
+          paymentMethod: 'Mobile Money',
+          reference: `AUTO-SETTLE-${Date.now().toString().slice(-4)}`,
+          dealIds: [createdDeal.id],
+        });
+      }
+
+      const agentObj = agents.find((a) => a.id === dealAgentId);
+      success(
+        'Deal & Commission Logged',
+        `Logged $${createdDeal.commissionAmount} commission deal for ${dealClientName} with ${agentObj?.name}.`
+      );
+
+      setDealModalOpen(false);
+      // Reset deal form
+      setDealClientName('');
+      setDealClientEmail('');
+      setDealNotes('');
+    } catch {
+      error('Deal Logging Failed', 'Could not log this deal. Please try again.');
+    }
   };
 
-  const handlePayoutSubmit = (e: React.FormEvent) => {
+  const handlePayoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAgent || payoutAmount <= 0) return;
 
-    payAgentCommission(selectedAgent.id, Number(payoutAmount), payoutMethod, payoutRef);
-
-    success(
-      'Commission Disbursed',
-      `Disbursed payout of $${payoutAmount} to ${selectedAgent.name} (Ref: ${payoutRef}).`
-    );
-
-    setPayoutModalOpen(false);
-
-    // Refresh selected agent in drawer
-    const refreshed = agents.find((a) => a.id === selectedAgent.id);
-    if (refreshed) {
-      setSelectedAgent(refreshed);
+    try {
+      await payAgentCommissionMutation.mutateAsync({
+        agentId: selectedAgent.id,
+        amount: Number(payoutAmount),
+        paymentMethod: payoutMethod,
+        reference: payoutRef,
+      });
+      success(
+        'Commission Disbursed',
+        `Disbursed payout of $${payoutAmount} to ${selectedAgent.name} (Ref: ${payoutRef}).`
+      );
+      setPayoutModalOpen(false);
+    } catch {
+      error('Payout Failed', 'Could not process this payout. Please try again.');
     }
   };
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading agents…</div>;
+  }
 
   return (
     <div className="space-y-8 pb-16">
@@ -652,11 +683,19 @@ export const AgentsCommissionsPage: React.FC = () => {
                           <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[10px]">
                             <span className="text-amber-600 font-semibold">Pending disbursement approval</span>
                             <button
-                              onClick={() => {
-                                payAgentCommission(selectedAgent.id, deal.commissionAmount, 'Mobile Money', `MOMO-${Date.now().toString().slice(-4)}`, [deal.id]);
-                                success('Deal Commission Settled', `Marked $${deal.commissionAmount} commission for ${deal.clientName} as Paid.`);
-                                const refreshed = agents.find((a) => a.id === selectedAgent.id);
-                                if (refreshed) setSelectedAgent(refreshed);
+                              onClick={async () => {
+                                try {
+                                  await payAgentCommissionMutation.mutateAsync({
+                                    agentId: selectedAgent.id,
+                                    amount: deal.commissionAmount,
+                                    paymentMethod: 'Mobile Money',
+                                    reference: `MOMO-${Date.now().toString().slice(-4)}`,
+                                    dealIds: [deal.id],
+                                  });
+                                  success('Deal Commission Settled', `Marked $${deal.commissionAmount} commission for ${deal.clientName} as Paid.`);
+                                } catch {
+                                  error('Settlement Failed', 'Could not settle this commission. Please try again.');
+                                }
                               }}
                               className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors"
                             >

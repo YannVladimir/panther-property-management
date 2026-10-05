@@ -1,6 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { useToast } from '../../context/ToastContext';
-import { mockUsers } from '../../data/mockData';
+import { ApiError } from '../../api/client';
+import {
+  AdminUser,
+  UserInput,
+  useUsersQuery,
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useUpdateUserStatusMutation,
+  useResetUserPasswordMutation,
+  useResendInviteMutation,
+  useDeleteUserMutation,
+} from '../../api/users';
+import { useClientsQuery } from '../../api/clients';
+import { useEmployeesQuery } from '../../api/employees';
 import {
   Users,
   Shield,
@@ -28,23 +41,10 @@ import {
 } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 import { Pagination } from '../../components/common/Pagination';
-import { User, UserRole } from '../../types';
+import { UserRole } from '../../types';
 
 /* ── Types ── */
-interface SystemUser extends User {
-  status: 'active' | 'inactive' | 'suspended';
-  lastLogin?: string;
-  createdAt?: string;
-}
-
-/* ── Seed Data ── */
-const seedUsers: SystemUser[] = (mockUsers as User[]).map((u, i) => ({
-  ...u,
-  phone: u.phone || '+250 788 000 00' + i,
-  status: 'active',
-  lastLogin: `2026-08-${String(15 - i).padStart(2, '0')}`,
-  createdAt: `2025-0${i + 1}-01`,
-}));
+type SystemUser = AdminUser;
 
 /* ── Role config ── */
 const ROLE_OPTIONS: { value: UserRole; label: string; color: string; icon: string }[] = [
@@ -65,14 +65,23 @@ const getRoleBadgeVariant = (role: UserRole) => {
 /* ── Empty form ── */
 const emptyUser = (): Partial<SystemUser> => ({
   name: '', email: '', phone: '', role: 'operations', status: 'active', title: '',
-  avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Math.random()}`,
 });
 
 /* ══════════════════════════════════ COMPONENT ══════════════════════════════════ */
 export const AdminUsersRolesPage: React.FC = () => {
   const { success, error, info } = useToast();
 
-  const [users, setUsers] = useState<SystemUser[]>(seedUsers);
+  const usersQuery = useUsersQuery();
+  const users = usersQuery.data ?? [];
+  const clientsQuery = useClientsQuery();
+  const employeesQuery = useEmployeesQuery();
+  const createUserMutation = useCreateUserMutation();
+  const updateUserMutation = useUpdateUserMutation();
+  const updateStatusMutation = useUpdateUserStatusMutation();
+  const resetPasswordMutation = useResetUserPasswordMutation();
+  const resendInviteMutation = useResendInviteMutation();
+  const deleteUserMutation = useDeleteUserMutation();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -107,69 +116,103 @@ export const AdminUsersRolesPage: React.FC = () => {
     setTimeout(() => setEditingUser(emptyUser()), 300);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser.name?.trim() || !editingUser.email?.trim()) {
       error('Validation Error', 'Name and email are required.');
       return;
     }
 
-    if (isCreating) {
-      const newUser: SystemUser = {
-        id: `user-${Date.now()}`,
-        name: editingUser.name!,
-        email: editingUser.email!,
-        phone: editingUser.phone || '',
-        role: editingUser.role || 'operations',
-        title: editingUser.title || '',
-        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
-        status: 'active',
-        lastLogin: '—',
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setUsers((prev) => [newUser, ...prev]);
-      success('User Created', `Account for "${editingUser.name}" created. An invitation email has been sent.`);
-    } else {
-      setUsers((prev) => prev.map((u) => u.id === editingUser.id ? { ...u, ...editingUser } as SystemUser : u));
-      success('User Updated', `Profile for "${editingUser.name}" has been saved.`);
+    const input: UserInput = {
+      name: editingUser.name!,
+      email: editingUser.email!,
+      phone: editingUser.phone || undefined,
+      role: editingUser.role || 'operations',
+      title: editingUser.title || undefined,
+      clientId: editingUser.role === 'client' ? editingUser.clientId : undefined,
+      employeeId: editingUser.role === 'household' || editingUser.role === 'operations' ? editingUser.employeeId : undefined,
+    };
+
+    try {
+      if (isCreating) {
+        await createUserMutation.mutateAsync(input);
+        success('User Created', `Account for "${input.name}" created. An invitation email has been sent.`);
+      } else {
+        await updateUserMutation.mutateAsync({ id: editingUser.id!, input });
+        // Status isn't part of UpdateUserRequest at all — it's a dedicated endpoint. Editing the
+        // status dropdown in this same panel would otherwise silently no-op on save.
+        const original = users.find((x) => x.id === editingUser.id);
+        if (original && editingUser.status && editingUser.status !== original.status) {
+          await updateStatusMutation.mutateAsync({ id: editingUser.id!, status: editingUser.status });
+        }
+        success('User Updated', `Profile for "${input.name}" has been saved.`);
+      }
+      closePanel();
+    } catch (err) {
+      error('Save Failed', err instanceof ApiError ? err.message : 'Could not save this user.');
     }
-    closePanel();
   };
 
   /* ── User actions ── */
-  const handleDeactivate = (u: SystemUser) => {
-    setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, status: 'inactive' } : x));
-    success('User Deactivated', `${u.name} can no longer log in.`);
+  const handleDeactivate = async (u: SystemUser) => {
+    try {
+      await updateStatusMutation.mutateAsync({ id: u.id, status: 'inactive' });
+      success('User Deactivated', `${u.name} can no longer log in.`);
+    } catch (err) {
+      error('Action Failed', err instanceof ApiError ? err.message : 'Could not deactivate this user.');
+    }
     setConfirmAction(null);
     setOpenDropdownId(null);
   };
 
-  const handleActivate = (u: SystemUser) => {
-    setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, status: 'active' } : x));
-    success('User Activated', `${u.name} can now log in.`);
+  const handleActivate = async (u: SystemUser) => {
+    try {
+      await updateStatusMutation.mutateAsync({ id: u.id, status: 'active' });
+      success('User Activated', `${u.name} can now log in.`);
+    } catch (err) {
+      error('Action Failed', err instanceof ApiError ? err.message : 'Could not activate this user.');
+    }
     setOpenDropdownId(null);
   };
 
-  const handleSuspend = (u: SystemUser) => {
-    setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, status: 'suspended' } : x));
-    success('User Suspended', `${u.name} has been suspended pending review.`);
+  const handleSuspend = async (u: SystemUser) => {
+    try {
+      await updateStatusMutation.mutateAsync({ id: u.id, status: 'suspended' });
+      success('User Suspended', `${u.name} has been suspended pending review.`);
+    } catch (err) {
+      error('Action Failed', err instanceof ApiError ? err.message : 'Could not suspend this user.');
+    }
     setConfirmAction(null);
     setOpenDropdownId(null);
   };
 
-  const handleResetPassword = (u: SystemUser) => {
-    info('Password Reset Sent', `A password reset link has been sent to ${u.email}.`);
+  const handleResetPassword = async (u: SystemUser) => {
+    try {
+      await resetPasswordMutation.mutateAsync(u.id);
+      info('Password Reset Sent', `A password reset link has been sent to ${u.email}.`);
+    } catch (err) {
+      error('Action Failed', err instanceof ApiError ? err.message : 'Could not send the reset link.');
+    }
     setOpenDropdownId(null);
   };
 
-  const handleResendInvite = (u: SystemUser) => {
-    info('Invitation Sent', `Invitation email resent to ${u.email}.`);
+  const handleResendInvite = async (u: SystemUser) => {
+    try {
+      await resendInviteMutation.mutateAsync(u.id);
+      info('Invitation Sent', `Invitation email resent to ${u.email}.`);
+    } catch (err) {
+      error('Action Failed', err instanceof ApiError ? err.message : 'Could not resend the invite.');
+    }
     setOpenDropdownId(null);
   };
 
-  const handleDelete = (u: SystemUser) => {
-    setUsers((prev) => prev.filter((x) => x.id !== u.id));
-    success('User Deleted', `Account for ${u.name} permanently removed.`);
+  const handleDelete = async (u: SystemUser) => {
+    try {
+      await deleteUserMutation.mutateAsync(u.id);
+      success('User Deleted', `Account for ${u.name} permanently removed.`);
+    } catch (err) {
+      error('Action Failed', err instanceof ApiError ? err.message : 'Could not delete this user.');
+    }
     setConfirmAction(null);
     setOpenDropdownId(null);
   };
@@ -207,6 +250,10 @@ export const AdminUsersRolesPage: React.FC = () => {
     { label: 'Inactive', value: users.filter(u => u.status === 'inactive').length, icon: XCircle, color: 'text-slate-400' },
     { label: 'Suspended', value: users.filter(u => u.status === 'suspended').length, icon: ShieldAlert, color: 'text-rose-600' },
   ];
+
+  if (usersQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading users…</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -611,6 +658,44 @@ export const AdminUsersRolesPage: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Linked Record — the backend links a CLIENT-role account to its leasing.Client record,
+              and a HOUSEHOLD/OPERATIONS-role account to its hr.Employee record. Previously this
+              relationship had no picker at all in the UI. */}
+          {editingUser.role === 'client' && (
+            <div>
+              <label className="block text-[10px] text-slate-400 font-bold mb-1">
+                Linked Client Record
+              </label>
+              <select
+                value={editingUser.clientId || ''}
+                onChange={(e) => setEditingUser({ ...editingUser, clientId: e.target.value || undefined })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+              >
+                <option value="">— No linked client —</option>
+                {(clientsQuery.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {(editingUser.role === 'household' || editingUser.role === 'operations') && (
+            <div>
+              <label className="block text-[10px] text-slate-400 font-bold mb-1">
+                Linked Employee Record
+              </label>
+              <select
+                value={editingUser.employeeId || ''}
+                onChange={(e) => setEditingUser({ ...editingUser, employeeId: e.target.value || undefined })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+              >
+                <option value="">— No linked employee —</option>
+                {(employeesQuery.data ?? []).map((emp) => (
+                  <option key={emp.id} value={emp.id}>{emp.name} ({emp.position})</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Account Status (edit only) */}
           {!isCreating && (

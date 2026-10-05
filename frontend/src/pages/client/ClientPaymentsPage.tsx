@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { useMyClientQuery } from '../../api/clients';
+import { useMyPaymentsQuery } from '../../api/payments';
 import confetti from 'canvas-confetti';
 import {
   Receipt,
@@ -19,22 +20,26 @@ import { Modal } from '../../components/common/Modal';
 import { Payment } from '../../types';
 
 export const ClientPaymentsPage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { clients, payments, addPayment } = useData();
+  const { data: client, isLoading } = useMyClientQuery();
+  // "My payments" is already server-scoped to the logged-in client — no client-side filter needed.
+  const { data: clientPayments = [], isLoading: paymentsLoading } = useMyPaymentsQuery();
+  const { addPayment } = useData();
   const { success } = useToast();
-
-  const client = clients.find((c) => c.id === currentUser?.clientId) || clients[0];
-  const clientPayments = payments.filter((p) => p.clientId === client.id);
 
   const [selectedReceipt, setSelectedReceipt] = useState<Payment | null>(null);
   const [payModalOpen, setPayModalOpen] = useState(false);
-  const [amount, setAmount] = useState(client.monthlyRent);
+  const [amount, setAmount] = useState(0);
   const [payType, setPayType] = useState<Payment['type']>('rent');
   const [method, setMethod] = useState<Payment['method']>('Mobile Money');
   const [isPaying, setIsPaying] = useState(false);
 
+  useEffect(() => {
+    if (client) setAmount(client.monthlyRent);
+  }, [client]);
+
   const handleMakePayment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!client) return;
     setIsPaying(true);
 
     setTimeout(() => {
@@ -66,6 +71,10 @@ export const ClientPaymentsPage: React.FC = () => {
       success('Payment Successful', `Invoice ${newPay.invoiceNumber} paid via ${method}.`);
     }, 600);
   };
+
+  if (isLoading || paymentsLoading || !client) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your payments…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

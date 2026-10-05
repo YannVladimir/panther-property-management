@@ -1,6 +1,15 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { useOperationsDashboardQuery } from '../../api/dashboards';
+import { useRevenueExpenseReportQuery, usePropertyPerformanceReportQuery } from '../../api/reports';
+import { useRoomsQuery } from '../../api/rooms';
+import { useClientsQuery } from '../../api/clients';
+import { useBookingsQuery } from '../../api/bookings';
+import { usePaymentsQuery } from '../../api/payments';
+import { useExpensesQuery } from '../../api/expenses';
+import { useRecurringBillsQuery, useMarkRecurringBillPaidMutation } from '../../api/recurringBills';
+import { usePreventiveTasksQuery } from '../../api/preventiveTasks';
+import { useEmployeesQuery } from '../../api/employees';
 import {
   Building,
   DoorOpen,
@@ -25,51 +34,64 @@ import { FinancialCalendar } from '../../components/common/FinancialCalendar';
 import { OccupancyDonut } from '../../components/charts/OccupancyDonut';
 import { RevenueExpenseArea } from '../../components/charts/RevenueExpenseArea';
 import { PropertyPerformanceBar } from '../../components/charts/PropertyPerformanceBar';
+import { useToast } from '../../context/ToastContext';
 
 export const OperationsDashboard: React.FC = () => {
-  const {
-    properties,
-    rooms,
-    clients,
-    bookings,
-    payments,
-    expenses,
-    recurringBills,
-    markRecurringBillPaid,
-    preventiveTasks,
-    maintenanceIssues,
-    activityLogs,
-    employees,
-  } = useData();
   const navigate = useNavigate();
+  const { error: toastError } = useToast();
+
+  const statsQuery = useOperationsDashboardQuery();
+  const stats = statsQuery.data;
+
+  const roomsQuery = useRoomsQuery();
+  const rooms = roomsQuery.data ?? [];
+  const clientsQuery = useClientsQuery();
+  const clients = clientsQuery.data ?? [];
+  const bookingsQuery = useBookingsQuery();
+  const bookings = bookingsQuery.data ?? [];
+  const paymentsQuery = usePaymentsQuery();
+  const payments = paymentsQuery.data ?? [];
+  const expensesQuery = useExpensesQuery();
+  const expenses = expensesQuery.data ?? [];
+  const recurringBillsQuery = useRecurringBillsQuery();
+  const recurringBills = recurringBillsQuery.data ?? [];
+  const markRecurringBillPaidMutation = useMarkRecurringBillPaidMutation();
+  const markRecurringBillPaid = (billId: string) =>
+    markRecurringBillPaidMutation.mutate(billId, {
+      onError: () => toastError('Failed', 'Could not mark this bill as paid.'),
+    });
+  const preventiveTasksQuery = usePreventiveTasksQuery();
+  const preventiveTasks = preventiveTasksQuery.data ?? [];
+  const employeesQuery = useEmployeesQuery();
+  const employees = employeesQuery.data ?? [];
+  const revenueExpenseQuery = useRevenueExpenseReportQuery(8);
+  const propertyPerformanceQuery = usePropertyPerformanceReportQuery();
 
   // All employee daily tasks
   const allStaffTasks = employees.flatMap((emp) =>
     (emp.dailyTasks || []).map((t) => ({ ...t, employeeName: emp.name, employeeAvatar: emp.avatar, employeeId: emp.id }))
   );
-  const pendingStaffTasks = allStaffTasks.filter((t) => t.status !== 'Completed');
   const completedStaffTasks = allStaffTasks.filter((t) => t.status === 'Completed');
 
-  // Metrics Calculations
+  // Room-status breakdown is real, persisted per-room data (not a duplicated backend aggregate) —
+  // legitimate to compute client-side from the real room list.
   const totalRooms = rooms.length;
   const occupiedRooms = rooms.filter((r) => r.status === 'occupied').length;
   const availableRooms = rooms.filter((r) => r.status === 'available').length;
   const reservedRooms = rooms.filter((r) => r.status === 'reserved').length;
   const maintenanceRooms = rooms.filter((r) => r.status === 'maintenance').length;
-  const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
   const pendingBookings = bookings.filter((b) => b.status === 'requested' || b.status === 'under_review');
   const outstandingPayments = payments.filter((p) => p.status === 'pending' || p.status === 'overdue');
   const outstandingAmount = outstandingPayments.reduce((acc, p) => acc + p.amount, 0);
 
-  const totalMonthlyRevenue = payments
-    .filter((p) => p.status === 'paid')
-    .reduce((acc, p) => acc + p.amount, 0);
-
-  const totalMonthlyExpenses = expenses
-    .filter((e) => e.status === 'paid')
-    .reduce((acc, e) => acc + e.amount, 0);
-
+  // Occupancy/pending-bookings/monthly-revenue come from the backend's own dashboard aggregate
+  // (GET /dashboard/operations) rather than being recomputed client-side — per the plan's
+  // correctness-trap warning about not shadowing backend-computed values. There's no equivalent
+  // aggregate for total expenses, so that (and net income) are summed from the real expenses list.
+  const occupancyRate = stats ? Math.round(stats.occupancyRatePercent) : 0;
+  const totalMonthlyRevenue = stats?.monthlyRevenue ?? 0;
+  const totalMonthlyExpenses = expenses.filter((e) => e.status === 'paid').reduce((acc, e) => acc + e.amount, 0);
   const netIncome = totalMonthlyRevenue - totalMonthlyExpenses;
 
   const flaggedPreventive = preventiveTasks.filter((t) => t.status === 'needs_attention' || t.status === 'failed');
@@ -235,7 +257,7 @@ export const OperationsDashboard: React.FC = () => {
               +$103,700 Net (Aug)
             </span>
           </div>
-          <RevenueExpenseArea />
+          <RevenueExpenseArea data={revenueExpenseQuery.data ?? []} />
         </div>
       </div>
 
@@ -343,7 +365,7 @@ export const OperationsDashboard: React.FC = () => {
               View Properties →
             </Link>
           </div>
-          <PropertyPerformanceBar properties={properties} />
+          <PropertyPerformanceBar properties={propertyPerformanceQuery.data ?? []} />
         </div>
 
         {/* Live Operational Alerts & Recent Activity */}

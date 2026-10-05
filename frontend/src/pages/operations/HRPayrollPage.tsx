@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { usePayrollRecordsQuery } from '../../api/payrollRecords';
+import { useEmployeesQuery, useCreateEmployeeMutation } from '../../api/employees';
 import {
   Briefcase,
   Users,
@@ -32,8 +33,12 @@ import { Modal } from '../../components/common/Modal';
 import { Employee, PayrollRecord } from '../../types';
 
 export const HRPayrollPage: React.FC = () => {
-  const { employees, payrollRecords, addEmployee, properties } = useData();
-  const { success } = useToast();
+  const employeesQuery = useEmployeesQuery();
+  const employees = employeesQuery.data ?? [];
+  const createEmployeeMutation = useCreateEmployeeMutation();
+  const payrollRecordsQuery = usePayrollRecordsQuery();
+  const payrollRecords = payrollRecordsQuery.data ?? [];
+  const { success, error: toastError } = useToast();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'employees' | 'payroll'>('employees');
@@ -56,7 +61,6 @@ export const HRPayrollPage: React.FC = () => {
   const [nationalId, setNationalId] = useState('');
   const [basicSalary, setBasicSalary] = useState<number>(900);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [avatar, setAvatar] = useState('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80');
 
   // Payslip Modal
   const [selectedSlip, setSelectedSlip] = useState<PayrollRecord | null>(null);
@@ -67,7 +71,7 @@ export const HRPayrollPage: React.FC = () => {
   // Calculate task completion across company
   const allTasks = employees.flatMap((e) => e.dailyTasks || []);
   const completedTasks = allTasks.filter((t) => t.status === 'Completed').length;
-  const companyTaskRate = allTasks.length > 0 ? Math.round((completedTasks / allTasks.length) * 100) : 95;
+  const companyTaskRate = allTasks.length > 0 ? Math.round((completedTasks / allTasks.length) * 100) : 0;
 
   const filteredEmployees = useMemo(() => employees.filter((emp) => {
     if (departmentFilter !== 'all' && emp.department !== departmentFilter) return false;
@@ -94,42 +98,39 @@ export const HRPayrollPage: React.FC = () => {
     return payrollRecords.slice(start, start + payPageSize);
   }, [payrollRecords, payPageIndex, payPageSize]);
 
-  const handleAddEmployee = (e: React.FormEvent) => {
+  const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newEmp = addEmployee({
-      name,
-      position,
-      department,
-      employmentStatus,
-      status: 'active',
-      contact,
-      email,
-      nationalId,
-      basicSalary: Number(basicSalary),
-      startDate,
-      avatar,
-      documents: [
-        {
-          id: `edoc-${Date.now()}`,
-          name: `${name.replace(/\s+/g, '_')}_Contract.pdf`,
-          type: 'Employment Contract',
-          fileUrl: 'https://example.com/contract.pdf',
-          uploadDate: startDate,
-          status: 'Verified',
-        },
-      ],
-      dailyTasks: [],
-      damages: [],
-    });
+    try {
+      // No auto-attached "contract" document — the real API has no bundled-creation support for
+      // documents (they're a separate endpoint), and the mock's PDF URL was never a real upload
+      // anyway. Attach a real contract via the Documents tab once the employee dossier exists.
+      const newEmp = await createEmployeeMutation.mutateAsync({
+        name,
+        position,
+        department,
+        employmentStatus,
+        contact,
+        email,
+        nationalId,
+        basicSalary: Number(basicSalary),
+        startDate,
+      });
 
-    success('Employee Registered', `Added ${newEmp.name} to the HR registry.`);
-    setAddDrawerOpen(false);
-    setName('');
-    setPosition('');
-    setContact('');
-    setEmail('');
-    setNationalId('');
+      success('Employee Registered', `Added ${newEmp.name} to the HR registry.`);
+      setAddDrawerOpen(false);
+      setName('');
+      setPosition('');
+      setContact('');
+      setEmail('');
+      setNationalId('');
+    } catch {
+      toastError('Save Failed', 'Could not register this employee.');
+    }
   };
+
+  if (payrollRecordsQuery.isLoading || employeesQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading HR & payroll data…</div>;
+  }
 
   return (
     <div className="space-y-8 pb-16">
@@ -614,32 +615,17 @@ export const HRPayrollPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                  Employment Start Date *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] text-slate-400 font-bold mb-1">
-                  Avatar Image URL
-                </label>
-                <input
-                  type="text"
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px] text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
-                />
-              </div>
+            <div>
+              <label className="block text-[10px] text-slate-400 font-bold mb-1">
+                Employment Start Date *
+              </label>
+              <input
+                type="date"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"
+              />
             </div>
           </div>
 

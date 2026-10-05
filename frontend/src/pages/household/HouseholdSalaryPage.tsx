@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
+import { useMyPayrollRecordsQuery } from '../../api/payrollRecords';
 import {
   Receipt,
   DollarSign,
@@ -15,8 +16,10 @@ import { Modal } from '../../components/common/Modal';
 import { PayrollRecord } from '../../types';
 
 export const HouseholdSalaryPage: React.FC = () => {
-  const { payrollRecords } = useData();
-  const myPayrolls = useMemo(() => payrollRecords.filter((p) => p.employeeId === 'emp-03'), [payrollRecords]);
+  const { currentUser } = useAuth();
+  // Server-scoped to the logged-in user's employeeId via the JWT — no client-side filter needed
+  // (previously hardcoded to always show employee 'emp-03' regardless of who was logged in).
+  const { data: myPayrolls = [], isLoading } = useMyPayrollRecordsQuery();
   const [selectedSlip, setSelectedSlip] = useState<PayrollRecord | null>(null);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -25,6 +28,10 @@ export const HouseholdSalaryPage: React.FC = () => {
     const start = (pageIndex - 1) * pageSize;
     return myPayrolls.slice(start, start + pageSize);
   }, [myPayrolls, pageIndex, pageSize]);
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your payslips…</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -37,7 +44,7 @@ export const HouseholdSalaryPage: React.FC = () => {
           My Salary & Payment History
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Emmanuel Habimana — Lead Facility & Maintenance Officer (Permanent Contract)
+          {currentUser?.name}{currentUser?.title ? ` — ${currentUser.title}` : ''}
         </p>
       </div>
 

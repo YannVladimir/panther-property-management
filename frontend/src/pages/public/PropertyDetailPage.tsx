@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { usePropertyQuery } from '../../api/properties';
+import { useRoomsQuery } from '../../api/rooms';
 import {
   MapPin,
   Building,
@@ -24,14 +25,33 @@ import { Modal } from '../../components/common/Modal';
 
 export const PropertyDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { properties, rooms } = useData();
-
-  const property = properties.find((p) => p.id === id) || properties[0];
-  const propertyRooms = rooms.filter((r) => r.propertyId === property.id);
+  const { data: property, isLoading, isError } = usePropertyQuery(id);
+  const { data: propertyRooms = [] } = useRoomsQuery({ propertyId: id });
   const availableRooms = propertyRooms.filter((r) => r.status === 'available');
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center text-sm text-slate-400">
+        Loading property…
+      </div>
+    );
+  }
+
+  if (isError || !property) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center space-y-4">
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">Property not found</h1>
+        <p className="text-sm text-slate-500">This listing may have been removed or is no longer available.</p>
+        <Link to="/properties" className="inline-flex items-center gap-2 text-brand-600 dark:text-brand-400 font-bold hover:underline">
+          <ArrowLeft className="w-4 h-4" />
+          Back to all properties
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">

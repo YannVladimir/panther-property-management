@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { useRecurringBillsQuery, useCreateRecurringBillMutation, useAddBillPaymentMutation } from '../../api/recurringBills';
+import { usePropertiesQuery } from '../../api/properties';
 import {
   Repeat,
   Calendar as CalendarIcon,
@@ -66,8 +67,15 @@ const CategoryPill = ({ category }: { category: RecurringBill['category'] }) => 
 /* ───────────────────────────────── */
 
 export const RecurringBillsPage: React.FC = () => {
-  const { recurringBills, properties, addRecurringBill, addBillPayment } = useData();
+  const recurringBillsQuery = useRecurringBillsQuery();
+  const propertiesQuery = usePropertiesQuery();
+  const createRecurringBillMutation = useCreateRecurringBillMutation();
+  const addBillPaymentMutation = useAddBillPaymentMutation();
   const { success, error } = useToast();
+
+  const recurringBills = recurringBillsQuery.data ?? [];
+  const properties = propertiesQuery.data ?? [];
+  const isLoading = recurringBillsQuery.isLoading || propertiesQuery.isLoading;
 
   /* Calendar state */
   const [currentYear, setCurrentYear]   = useState(2026);
@@ -84,7 +92,7 @@ export const RecurringBillsPage: React.FC = () => {
   /* Add-bill drawer */
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [newName, setNewName]             = useState('');
-  const [newPropertyId, setNewPropertyId] = useState(properties[0]?.id || 'prop-01');
+  const [newPropertyId, setNewPropertyId] = useState('');
   const [newCategory, setNewCategory]     = useState<RecurringBill['category']>('Electricity');
   const [newVendor, setNewVendor]         = useState('');
   const [newAmount, setNewAmount]         = useState<number>(500);
@@ -92,6 +100,10 @@ export const RecurringBillsPage: React.FC = () => {
   const [newNextDueDate, setNewNextDueDate] = useState('2026-08-30');
   const [newAutoRenew, setNewAutoRenew]   = useState(true);
   const [newReminderDays, setNewReminderDays] = useState(5);
+
+  useEffect(() => {
+    if (!newPropertyId && properties.length > 0) setNewPropertyId(properties[0].id);
+  }, [properties, newPropertyId]);
 
   /* Payment panel (slide-in) */
   const [payPanelBillId, setPayPanelBillId] = useState<string | null>(null);
@@ -118,23 +130,30 @@ export const RecurringBillsPage: React.FC = () => {
 
   const closePayPanel = () => setPayPanelBillId(null);
 
-  const handleRecordPayment = (e: React.FormEvent) => {
+  const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeBill) return;
     if (!payRef.trim()) { error('Reference Required', 'Please enter a transaction reference number.'); return; }
-    addBillPayment(activeBill.id, {
-      paidDate: payDate,
-      amount: payAmount,
-      method: payMethod,
-      reference: payRef.trim(),
-      notes: payNotes.trim() || undefined,
-      proofUrl: payProof || undefined,
-    });
-    success('Payment Recorded', `$${payAmount} payment for ${activeBill.name} has been logged.`);
-    setPayTab('history');
-    setPayRef('');
-    setPayNotes('');
-    setPayProof(null);
+    try {
+      await addBillPaymentMutation.mutateAsync({
+        billId: activeBill.id,
+        input: {
+          paidDate: payDate,
+          amount: payAmount,
+          method: payMethod,
+          reference: payRef.trim(),
+          notes: payNotes.trim() || undefined,
+          proofUrl: payProof || undefined,
+        },
+      });
+      success('Payment Recorded', `$${payAmount} payment for ${activeBill.name} has been logged.`);
+      setPayTab('history');
+      setPayRef('');
+      setPayNotes('');
+      setPayProof(null);
+    } catch {
+      error('Recording Failed', 'Could not record this payment. Please try again.');
+    }
   };
 
   /* Stats */
@@ -173,15 +192,35 @@ export const RecurringBillsPage: React.FC = () => {
   }, [filteredBills, pageIndex, pageSize]);
 
   /* Add bill */
-  const handleAddBillSubmit = (e: React.FormEvent) => {
+  const handleAddBillSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newVendor.trim()) { error('Validation Error', 'Please provide a bill title and vendor.'); return; }
     const prop = properties.find((p) => p.id === newPropertyId) || properties[0];
-    addRecurringBill({ propertyId: prop.id, propertyName: prop.name, name: newName.trim(), category: newCategory, vendor: newVendor.trim(), amount: Number(newAmount), frequency: newFrequency, nextDueDate: newNextDueDate, status: 'upcoming', autoRenew: newAutoRenew, reminderDays: Number(newReminderDays) });
-    success('Recurring Contract Added', `Added ${newName} ($${newAmount}/${newFrequency}) for ${prop.name}.`);
-    setAddDrawerOpen(false);
-    setNewName(''); setNewVendor('');
+    if (!prop) return;
+    try {
+      await createRecurringBillMutation.mutateAsync({
+        propertyId: prop.id,
+        name: newName.trim(),
+        category: newCategory,
+        vendor: newVendor.trim(),
+        amount: Number(newAmount),
+        frequency: newFrequency,
+        nextDueDate: newNextDueDate,
+        status: 'upcoming',
+        autoRenew: newAutoRenew,
+        reminderDays: Number(newReminderDays),
+      });
+      success('Recurring Contract Added', `Added ${newName} ($${newAmount}/${newFrequency}) for ${prop.name}.`);
+      setAddDrawerOpen(false);
+      setNewName(''); setNewVendor('');
+    } catch {
+      error('Creation Failed', 'Could not add this recurring bill. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading recurring bills…</div>;
+  }
 
   /* ─── render ─── */
   return (

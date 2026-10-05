@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: pms-backend
+  profiles:
+    active: dev
+  jackson:
+    default-property-inclusion: non_null
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+panther:
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:4173,http://localhost:5183
+  security:
+    rate-limit:
+      enabled: true
+      login-limit: 10
+      login-window-seconds: 60
+      booking-limit: 20
+      booking-window-seconds: 60
+  jwt:
+    # DEV-ONLY DEFAULT. Override via PANTHER_JWT_SECRET env var in every real environment.
+    secret: ${PANTHER_JWT_SECRET:dev-only-secret-key-change-me-please-32bytes-min}
+    access-token-ttl-minutes: 15
+    refresh-token-ttl-days: 7
+  file-storage:
+    base-dir: ${PANTHER_UPLOAD_DIR:./uploads}
+    public-url-prefix: /files
+  seed:
+    enabled: ${PANTHER_SEED_ENABLED:true}
+    admin-name: System Administrator
+    admin-email: ${PANTHER_ADMIN_EMAIL:admin@panther.rw}
+    admin-password: ${PANTHER_ADMIN_PASSWORD:ChangeMe123!}
+  legacy-seed:
+    # One-time import of real frontend mock data into the real database — see
+    # DATA_MIGRATION_PLAN.md. Off by default everywhere; enable for exactly one bootstrap run
+    # against a fresh database, then turn back off. Also skips itself if properties already exist.
+    enabled: ${PANTHER_LEGACY_SEED_ENABLED:false}

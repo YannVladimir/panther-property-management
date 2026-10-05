@@ -10,18 +10,12 @@ import {
   Legend,
 } from 'recharts';
 
-const data = [
-  { month: 'Jan', revenue: 98400, expenses: 24200, netProfit: 74200 },
-  { month: 'Feb', revenue: 104500, expenses: 26800, netProfit: 77700 },
-  { month: 'Mar', revenue: 112000, expenses: 29500, netProfit: 82500 },
-  { month: 'Apr', revenue: 118000, expenses: 31000, netProfit: 87000 },
-  { month: 'May', revenue: 126400, expenses: 34100, netProfit: 92300 },
-  { month: 'Jun', revenue: 135800, expenses: 36200, netProfit: 99600 },
-  { month: 'Jul', revenue: 139200, expenses: 38400, netProfit: 100800 },
-  { month: 'Aug', revenue: 143200, expenses: 39500, netProfit: 103700 },
-];
+interface RevenueExpenseAreaProps {
+  data: { month: string; revenue: number; expenses: number }[];
+}
 
-export const RevenueExpenseArea: React.FC = () => {
+export const RevenueExpenseArea: React.FC<RevenueExpenseAreaProps> = ({ data: rawData }) => {
+  const data = rawData.map((d) => ({ ...d, netProfit: d.revenue - d.expenses }));
   return (
     <div className="w-full h-72">
       <ResponsiveContainer width="100%" height="100%">
@@ -58,7 +52,7 @@ export const RevenueExpenseArea: React.FC = () => {
               if (active && payload && payload.length) {
                 return (
                   <div className="bg-slate-900 text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-800 space-y-1">
-                    <p className="font-bold text-slate-300 mb-1">{label} 2026</p>
+                    <p className="font-bold text-slate-300 mb-1">{label}</p>
                     <p className="text-brand-400 font-semibold">
                       Revenue: ${(payload[0].value as number)?.toLocaleString()}
                     </p>

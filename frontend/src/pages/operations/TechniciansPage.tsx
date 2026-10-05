@@ -1,6 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import {
+  useTechniciansQuery,
+  useCreateTechnicianMutation,
+  useAddWorkOrderMutation,
+  useUpdateWorkOrderMutation,
+  useAddTechDocumentMutation,
+} from '../../api/technicians';
+import { usePropertiesQuery } from '../../api/properties';
+import { useRoomsQuery } from '../../api/rooms';
+import { FileUploadButton } from '../../components/common/FileUploadButton';
 import {
   Wrench,
   Search,
@@ -99,8 +108,17 @@ type DossierTab = 'profile' | 'workorders' | 'documents';
 
 /* ─── Main Component ─── */
 export const TechniciansPage: React.FC = () => {
-  const { technicians, properties, rooms, addTechnician, addTechWorkOrder, updateTechWorkOrder, addTechDocument } = useData();
+  const techniciansQuery = useTechniciansQuery();
+  const propertiesQuery = usePropertiesQuery();
+  const createTechnicianMutation = useCreateTechnicianMutation();
+  const addWorkOrderMutation = useAddWorkOrderMutation();
+  const updateWorkOrderMutation = useUpdateWorkOrderMutation();
+  const addTechDocumentMutation = useAddTechDocumentMutation();
   const { success, error } = useToast();
+
+  const technicians = techniciansQuery.data ?? [];
+  const properties = propertiesQuery.data ?? [];
+  const isLoading = techniciansQuery.isLoading || propertiesQuery.isLoading;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [specFilter, setSpecFilter]   = useState('all');
@@ -116,8 +134,8 @@ export const TechniciansPage: React.FC = () => {
   /* ── Work Order form ── */
   const [woFormOpen, setWoFormOpen]     = useState(false);
   const [woTitle, setWoTitle]           = useState('');
-  const [woPropertyId, setWoPropertyId] = useState(properties[0]?.id || 'prop-01');
-  const [woRoomNumber, setWoRoomNumber] = useState('');
+  const [woPropertyId, setWoPropertyId] = useState('');
+  const [woRoomId, setWoRoomId]         = useState('');
   const [woCategory, setWoCategory]     = useState<TechWorkOrder['category']>('Plumbing');
   const [woPriority, setWoPriority]     = useState<TechWorkOrder['priority']>('Medium');
   const [woDescription, setWoDescription] = useState('');
@@ -142,6 +160,7 @@ export const TechniciansPage: React.FC = () => {
   const [docName, setDocName]           = useState('');
   const [docType, setDocType]           = useState<TechDocument['type']>('License');
   const [docFile, setDocFile]           = useState<string | null>(null);
+  const [docFileName, setDocFileName]   = useState<string | null>(null);
   const [docExpiry, setDocExpiry]       = useState('');
 
   /* ── Add Technician drawer ── */
@@ -159,7 +178,18 @@ export const TechniciansPage: React.FC = () => {
   const [newPayAccount, setNewPayAccount]     = useState('');
   const [newCerts, setNewCerts]               = useState('');
   const [newNotes, setNewNotes]               = useState('');
-  const [newAvatar, setNewAvatar]             = useState('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80');
+
+  const roomsQuery = useRoomsQuery({ propertyId: woPropertyId || undefined });
+  const rooms = roomsQuery.data ?? [];
+
+  useEffect(() => {
+    if (!woPropertyId && properties.length > 0) setWoPropertyId(properties[0].id);
+  }, [properties, woPropertyId]);
+
+  useEffect(() => {
+    // Clear the selected room whenever it's no longer valid for the currently-selected property.
+    if (woRoomId && !rooms.some((r) => r.id === woRoomId)) setWoRoomId('');
+  }, [rooms, woRoomId]);
 
   const filteredTechs = useMemo(() => technicians.filter((t) => {
     if (specFilter  !== 'all' && t.specialization !== specFilter)  return false;
@@ -184,85 +214,154 @@ export const TechniciansPage: React.FC = () => {
   const outstanding = totalEarned - totalPaid;
   const avgRating   = workOrders.filter((w) => w.rating).reduce((s, w, _, a) => s + (w.rating || 0) / a.length, 0);
 
-  const handleDispatchWO = (e: React.FormEvent) => {
+  const handleDispatchWO = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeTech) return;
     if (!woTitle.trim() || !woDescription.trim()) { error('Required', 'Please fill title and description.'); return; }
-    const prop = properties.find((p) => p.id === woPropertyId) || properties[0];
-    addTechWorkOrder(activeTech.id, {
-      propertyId: prop.id,
-      propertyName: prop.name,
-      roomNumber: woRoomNumber || undefined,
-      title: woTitle.trim(),
-      description: woDescription.trim(),
-      category: woCategory,
-      priority: woPriority,
-      dispatchedDate: woDispatchDate,
-      estimatedHours: woEstHours,
-      laborCost: woLaborCost,
-      materialCost: woMaterialCost,
-      totalCost: woLaborCost + woMaterialCost,
-      paymentStatus: 'Unpaid',
-      paidAmount: 0,
-      status: 'Dispatched',
-    });
-    success('Work Order Dispatched', `${woTitle} assigned to ${activeTech.name}.`);
-    setWoFormOpen(false);
-    setWoTitle(''); setWoDescription(''); setWoRoomNumber(''); setWoLaborCost(50); setWoMaterialCost(0);
+    try {
+      const created = await addWorkOrderMutation.mutateAsync({
+        technicianId: activeTech.id,
+        input: {
+          propertyId: woPropertyId,
+          roomId: woRoomId || undefined,
+          title: woTitle.trim(),
+          description: woDescription.trim(),
+          category: woCategory,
+          priority: woPriority,
+          dispatchedDate: woDispatchDate,
+          estimatedHours: woEstHours,
+        },
+      });
+      // The create endpoint has no labor/material cost fields — set them via a follow-up update.
+      if (woLaborCost || woMaterialCost) {
+        await updateWorkOrderMutation.mutateAsync({
+          technicianId: activeTech.id,
+          workOrderId: created.id,
+          input: {
+            laborCost: woLaborCost,
+            materialCost: woMaterialCost,
+            paymentStatus: created.paymentStatus,
+            paidAmount: created.paidAmount,
+            status: created.status,
+          },
+        });
+      }
+      success('Work Order Dispatched', `${woTitle} assigned to ${activeTech.name}.`);
+      setWoFormOpen(false);
+      setWoTitle(''); setWoDescription(''); setWoRoomId(''); setWoLaborCost(50); setWoMaterialCost(0);
+    } catch {
+      error('Dispatch Failed', 'Could not dispatch this work order. Please try again.');
+    }
   };
 
-  const handleSaveRating = () => {
+  const handleSaveRating = async () => {
     if (!activeTech || !ratingWo) return;
-    updateTechWorkOrder(activeTech.id, { ...ratingWo, rating: ratingValue, ratingComment: ratingComment.trim() });
-    success('Rating Saved', `Rated ${ratingValue}/5 for job ${ratingWo.jobNumber}.`);
-    setRatingWo(null); setRatingComment('');
+    try {
+      await updateWorkOrderMutation.mutateAsync({
+        technicianId: activeTech.id,
+        workOrderId: ratingWo.id,
+        input: {
+          priority: ratingWo.priority,
+          startDate: ratingWo.startDate,
+          completedDate: ratingWo.completedDate,
+          actualHours: ratingWo.actualHours,
+          laborCost: ratingWo.laborCost,
+          materialCost: ratingWo.materialCost,
+          paymentStatus: ratingWo.paymentStatus,
+          paidAmount: ratingWo.paidAmount,
+          status: ratingWo.status,
+          rating: ratingValue,
+          ratingComment: ratingComment.trim(),
+          photos: ratingWo.photos,
+          notes: ratingWo.notes,
+        },
+      });
+      success('Rating Saved', `Rated ${ratingValue}/5 for job ${ratingWo.jobNumber}.`);
+      setRatingWo(null); setRatingComment('');
+    } catch {
+      error('Save Failed', 'Could not save this rating. Please try again.');
+    }
   };
 
-  const handleRecordPayment = () => {
+  const handleRecordPayment = async () => {
     if (!activeTech || !payWo) return;
     if (!payRef.trim()) { error('Reference Required', 'Enter a transaction reference.'); return; }
     const newPaid = payWo.paidAmount + payAmount;
     const newStatus: TechWorkOrder['paymentStatus'] = newPaid >= payWo.totalCost ? 'Paid' : 'Partially Paid';
-    updateTechWorkOrder(activeTech.id, { ...payWo, paidAmount: newPaid, paymentStatus: newStatus });
-    success('Payment Recorded', `$${payAmount} settled for ${payWo.jobNumber}.`);
-    setPayWo(null); setPayRef(''); setPayAmount(0);
+    try {
+      await updateWorkOrderMutation.mutateAsync({
+        technicianId: activeTech.id,
+        workOrderId: payWo.id,
+        input: {
+          priority: payWo.priority,
+          startDate: payWo.startDate,
+          completedDate: payWo.completedDate,
+          actualHours: payWo.actualHours,
+          laborCost: payWo.laborCost,
+          materialCost: payWo.materialCost,
+          paymentStatus: newStatus,
+          paidAmount: newPaid,
+          status: payWo.status,
+          rating: payWo.rating,
+          ratingComment: payWo.ratingComment,
+          photos: payWo.photos,
+          notes: payWo.notes,
+        },
+      });
+      success('Payment Recorded', `$${payAmount} settled for ${payWo.jobNumber}.`);
+      setPayWo(null); setPayRef(''); setPayAmount(0);
+    } catch {
+      error('Save Failed', 'Could not record this payment. Please try again.');
+    }
   };
 
-  const handleAddDoc = (e: React.FormEvent) => {
+  const handleAddDoc = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeTech || !docName.trim() || !docFile) { error('Required', 'Fill name and upload a file.'); return; }
-    addTechDocument(activeTech.id, { name: docName.trim(), type: docType, fileUrl: `/docs/${docFile}`, expiryDate: docExpiry || undefined, status: 'Valid' });
-    success('Document Uploaded', `${docName} added to ${activeTech.name}'s profile.`);
-    setDocFormOpen(false); setDocName(''); setDocFile(null); setDocExpiry('');
+    try {
+      await addTechDocumentMutation.mutateAsync({
+        technicianId: activeTech.id,
+        input: { name: docName.trim(), type: docType, fileUrl: docFile, expiryDate: docExpiry || undefined, status: 'Valid' },
+      });
+      success('Document Uploaded', `${docName} added to ${activeTech.name}'s profile.`);
+      setDocFormOpen(false); setDocName(''); setDocFile(null); setDocFileName(null); setDocExpiry('');
+    } catch {
+      error('Upload Failed', 'Could not upload this document. Please try again.');
+    }
   };
 
-  const handleAddTech = (e: React.FormEvent) => {
+  const handleAddTech = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newCompany.trim() || !newContact.trim()) { error('Required', 'Fill all required fields.'); return; }
-    addTechnician({
-      name: newName.trim(),
-      company: newCompany.trim(),
-      contact: newContact.trim(),
-      email: newEmail.trim(),
-      avatar: newAvatar,
-      specialization: newSpec,
-      rating: 0,
-      availability: 'Available',
-      hourlyRate: newRate,
-      yearsExperience: newYears,
-      address: newAddress.trim() || undefined,
-      nationalId: newNationalId.trim() || undefined,
-      preferredPaymentMethod: newPayMethod,
-      payoutAccount: newPayAccount.trim() || undefined,
-      certifications: newCerts.trim() ? newCerts.split(',').map((c) => c.trim()) : [],
-      notes: newNotes.trim() || undefined,
-    });
-    success('Technician Registered', `${newName} has been added to the contractor network.`);
-    setAddDrawerOpen(false);
-    setNewName(''); setNewCompany(''); setNewContact(''); setNewEmail(''); setNewCerts(''); setNewNotes('');
+    try {
+      await createTechnicianMutation.mutateAsync({
+        name: newName.trim(),
+        company: newCompany.trim(),
+        contact: newContact.trim(),
+        email: newEmail.trim(),
+        specialization: newSpec,
+        hourlyRate: newRate,
+        yearsExperience: newYears,
+        address: newAddress.trim() || undefined,
+        nationalId: newNationalId.trim() || undefined,
+        preferredPaymentMethod: newPayMethod,
+        payoutAccount: newPayAccount.trim() || undefined,
+        certifications: newCerts.trim() ? newCerts.split(',').map((c) => c.trim()) : [],
+        notes: newNotes.trim() || undefined,
+      });
+      success('Technician Registered', `${newName} has been added to the contractor network.`);
+      setAddDrawerOpen(false);
+      setNewName(''); setNewCompany(''); setNewContact(''); setNewEmail(''); setNewCerts(''); setNewNotes('');
+    } catch {
+      error('Registration Failed', 'Could not register this technician. Please try again.');
+    }
   };
 
   /* ─── render ─── */
+  if (isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading technicians…</div>;
+  }
+
   return (
     <div className="space-y-8 pb-16">
 
@@ -578,7 +677,10 @@ export const TechniciansPage: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-[10px] text-slate-400 font-bold mb-1">Unit / Area</label>
-                          <input type="text" value={woRoomNumber} onChange={e=>setWoRoomNumber(e.target.value)} placeholder="e.g. A-204" className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all"/>
+                          <select value={woRoomId} onChange={e=>setWoRoomId(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none transition-all">
+                            <option value="">-- Whole Property / N/A --</option>
+                            {rooms.map(r=><option key={r.id} value={r.id}>Unit {r.roomNumber}</option>)}
+                          </select>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -720,13 +822,13 @@ export const TechniciansPage: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-[10px] text-slate-400 font-bold mb-1">File Upload *</label>
-                        <div className="relative">
-                          <input type="file" accept="image/*,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={e=>{const f=e.target.files?.[0]; if(f) setDocFile(f.name);}}/>
-                          <div className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl border-2 border-dashed transition-colors ${docFile ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30' : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60'}`}>
-                            <Upload className={`w-4 h-4 shrink-0 ${docFile ? 'text-emerald-500' : 'text-slate-400'}`}/>
-                            {docFile ? <span className="text-emerald-700 dark:text-emerald-300 font-bold truncate">{docFile}</span> : <span className="text-slate-500">Click to upload PDF or image</span>}
-                          </div>
-                        </div>
+                        <FileUploadButton
+                          folder="technician-documents"
+                          accept="image/*,application/pdf"
+                          label={docFileName ? docFileName : 'Choose File'}
+                          className="w-full justify-center"
+                          onUploaded={(result) => { setDocFile(result.url); setDocFileName(result.originalFilename); }}
+                        />
                       </div>
                       <button type="submit" className="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all">
                         <Upload className="w-3.5 h-3.5"/> Save Document

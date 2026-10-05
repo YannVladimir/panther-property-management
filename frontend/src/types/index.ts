@@ -35,6 +35,7 @@ export interface Property {
   featured: boolean;
   yearBuilt: number;
   monthlyRevenueEstimate: number;
+  status: PropertyStatus;
 }
 
 export interface Building {
@@ -106,7 +107,7 @@ export type BookingStatus =
 export interface Booking {
   id: string;
   bookingNumber: string;
-  clientId: string;
+  clientId?: string;
   clientName: string;
   clientEmail: string;
   clientPhone: string;

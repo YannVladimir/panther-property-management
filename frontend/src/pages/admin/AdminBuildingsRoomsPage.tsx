@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { usePropertiesQuery } from '../../api/properties';
+import { useRoomsQuery } from '../../api/rooms';
 import {
   DoorOpen,
   Building,
@@ -15,7 +16,8 @@ import { Badge } from '../../components/common/Badge';
 import { Pagination } from '../../components/common/Pagination';
 
 export const AdminBuildingsRoomsPage: React.FC = () => {
-  const { rooms, properties } = useData();
+  const { data: rooms = [], isLoading: roomsLoading } = useRoomsQuery();
+  const { data: properties = [], isLoading: propertiesLoading } = usePropertiesQuery();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,6 +44,10 @@ export const AdminBuildingsRoomsPage: React.FC = () => {
     const start = (pageIndex - 1) * pageSize;
     return filteredRooms.slice(start, start + pageSize);
   }, [filteredRooms, pageIndex, pageSize]);
+
+  if (roomsLoading || propertiesLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading rooms…</div>;
+  }
 
   return (
     <div className="space-y-8">

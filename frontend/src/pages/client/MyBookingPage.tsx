@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useData } from '../../context/DataContext';
+import { useMyClientQuery } from '../../api/clients';
+import { useMyBookingsQuery } from '../../api/bookings';
 import {
   CalendarCheck2,
   Building,
@@ -17,13 +17,13 @@ import {
 import { Badge } from '../../components/common/Badge';
 
 export const MyBookingPage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { clients, bookings, properties, rooms } = useData();
+  const { data: client, isLoading: clientLoading } = useMyClientQuery();
+  const { data: bookings, isLoading: bookingsLoading } = useMyBookingsQuery();
+  const clientBooking = bookings?.[0];
 
-  const client = clients.find((c) => c.id === currentUser?.clientId) || clients[0];
-  const clientBooking = bookings.find((b) => b.clientId === client.id) || bookings[0];
-  const property = properties.find((p) => p.id === client.currentPropertyId) || properties[0];
-  const room = rooms.find((r) => r.id === client.currentRoomId) || rooms[0];
+  if (clientLoading || bookingsLoading || !client || !clientBooking) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading your booking…</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

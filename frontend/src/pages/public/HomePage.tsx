@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { usePropertiesQuery } from '../../api/properties';
+import { useRoomsQuery } from '../../api/rooms';
+import { useRentalTypesQuery } from '../../api/rentalTypes';
 import {
   Search,
   MapPin,
@@ -87,7 +89,9 @@ const PropertyImageSlider: React.FC<{
 
 /* ─── Main Page ─── */
 export const HomePage: React.FC = () => {
-  const { properties, rooms, rentalTypes } = useData();
+  const { data: properties = [] } = usePropertiesQuery();
+  const { data: rooms = [] } = useRoomsQuery();
+  const { data: rentalTypes = [] } = useRentalTypesQuery();
   const navigate = useNavigate();
 
   const [searchLocation, setSearchLocation] = useState('All');

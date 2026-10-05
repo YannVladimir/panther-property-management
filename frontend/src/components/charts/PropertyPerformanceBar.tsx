@@ -1,21 +1,19 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Property } from '../../types';
+import { PropertyPerformancePoint } from '../../api/reports';
 
 interface PropertyPerformanceBarProps {
-  properties: Property[];
+  properties: PropertyPerformancePoint[];
 }
 
 export const PropertyPerformanceBar: React.FC<PropertyPerformanceBarProps> = ({ properties }) => {
   const data = properties.map((p) => {
-    const occupancyRate = Math.round((p.occupiedRooms / p.totalRooms) * 100);
+    const nameParts = p.propertyName.split(' ');
     return {
-      name: p.name.split(' ')[0] + ' ' + (p.name.split(' ')[1] || ''),
-      fullName: p.name,
-      occupancyRate,
-      revenueEstimate: p.monthlyRevenueEstimate,
-      rooms: p.totalRooms,
-      occupied: p.occupiedRooms,
+      name: nameParts[0] + ' ' + (nameParts[1] || ''),
+      fullName: p.propertyName,
+      occupancyRate: Math.round(p.occupancyRatePercent),
+      revenueEstimate: p.monthlyRevenue,
     };
   });
 
@@ -42,10 +40,10 @@ export const PropertyPerformanceBar: React.FC<PropertyPerformanceBarProps> = ({ 
                   <div className="bg-slate-900 text-white text-xs p-3 rounded-xl shadow-xl border border-slate-800 space-y-1">
                     <p className="font-bold text-brand-300">{item.fullName}</p>
                     <p className="font-semibold text-emerald-400">
-                      Occupancy: {item.occupancyRate}% ({item.occupied}/{item.rooms} Units)
+                      Occupancy: {item.occupancyRate}%
                     </p>
                     <p className="text-slate-300">
-                      Est. Monthly Revenue: ${item.revenueEstimate.toLocaleString()}
+                      Monthly Revenue: ${item.revenueEstimate.toLocaleString()}
                     </p>
                   </div>
                 );

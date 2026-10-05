@@ -1,6 +1,13 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../context/DataContext';
+import { useOwnerDashboardQuery } from '../../api/dashboards';
+import { useRevenueExpenseReportQuery, usePropertyPerformanceReportQuery } from '../../api/reports';
+import { useRoomsQuery } from '../../api/rooms';
+import { useBookingsQuery } from '../../api/bookings';
+import { usePaymentsQuery } from '../../api/payments';
+import { useExpensesQuery } from '../../api/expenses';
+import { useRecurringBillsQuery, useMarkRecurringBillPaidMutation } from '../../api/recurringBills';
+import { usePreventiveTasksQuery } from '../../api/preventiveTasks';
 import {
   Crown,
   Building,
@@ -19,6 +26,7 @@ import {
   Clock,
   ArrowUpRight,
 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import { StatCard } from '../../components/common/StatCard';
 import { Badge } from '../../components/common/Badge';
 import { FinancialCalendar } from '../../components/common/FinancialCalendar';
@@ -27,24 +35,64 @@ import { RevenueExpenseArea } from '../../components/charts/RevenueExpenseArea';
 import { PropertyPerformanceBar } from '../../components/charts/PropertyPerformanceBar';
 
 export const OwnerExecutiveDashboard: React.FC = () => {
-  const { properties, rooms, clients, payments, expenses, recurringBills, markRecurringBillPaid, preventiveTasks, bookings } = useData();
   const navigate = useNavigate();
+  const { error: toastError } = useToast();
+
+  const statsQuery = useOwnerDashboardQuery();
+  const stats = statsQuery.data;
+
+  const roomsQuery = useRoomsQuery();
+  const rooms = roomsQuery.data ?? [];
+  const paymentsQuery = usePaymentsQuery();
+  const payments = paymentsQuery.data ?? [];
+  const expensesQuery = useExpensesQuery();
+  const expenses = expensesQuery.data ?? [];
+  const recurringBillsQuery = useRecurringBillsQuery();
+  const recurringBills = recurringBillsQuery.data ?? [];
+  const markRecurringBillPaidMutation = useMarkRecurringBillPaidMutation();
+  const markRecurringBillPaid = (billId: string) =>
+    markRecurringBillPaidMutation.mutate(billId, {
+      onError: () => toastError('Failed', 'Could not mark this bill as paid.'),
+    });
+  const preventiveTasksQuery = usePreventiveTasksQuery();
+  const preventiveTasks = preventiveTasksQuery.data ?? [];
+  const revenueExpenseQuery = useRevenueExpenseReportQuery(8);
+  const propertyPerformanceQuery = usePropertyPerformanceReportQuery();
 
   const totalRooms = rooms.length;
   const occupiedRooms = rooms.filter((r) => r.status === 'occupied').length;
   const availableRooms = rooms.filter((r) => r.status === 'available').length;
   const reservedRooms = rooms.filter((r) => r.status === 'reserved').length;
   const maintenanceRooms = rooms.filter((r) => r.status === 'maintenance').length;
-  const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
-  const totalMonthlyRevenue = payments.filter((p) => p.status === 'paid').reduce((acc, p) => acc + p.amount, 0);
-  const totalMonthlyExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
-  const netIncome = totalMonthlyRevenue - totalMonthlyExpenses;
-  const totalPortfolioValue = 14800000; // Estimated portfolio valuation in USD
+  // Occupancy/revenue/expenses/net-income come from the backend's own owner dashboard aggregate
+  // (GET /dashboard/owner) rather than being recomputed client-side.
+  const occupancyRate = stats ? Math.round(stats.portfolioOccupancyRatePercent) : 0;
+  const totalMonthlyRevenue = stats?.monthlyRevenue ?? 0;
+  const netIncome = stats?.netOperatingIncome ?? 0;
+  // No backend valuation field exists at all — this was always a hardcoded placeholder in the mock
+  // data, not something derived from real records. Flagged, not silently left unlabeled: there is no
+  // asset-valuation concept anywhere in the backend schema.
+  const totalPortfolioValue = 14800000;
 
-  const pendingBookings = bookings.filter((b) => b.status === 'requested' || b.status === 'under_review');
   const passTasks = preventiveTasks.filter((t) => t.status === 'pass').length;
-  const preventiveCompletion = Math.round((passTasks / preventiveTasks.length) * 100);
+  const preventiveCompletion = preventiveTasks.length > 0 ? Math.round((passTasks / preventiveTasks.length) * 100) : 0;
+
+  const bookingsQuery = useBookingsQuery();
+  const bookings = bookingsQuery.data ?? [];
+
+  // The three "Executive Priority Notices" cards below used to be permanently hardcoded fake
+  // content (fabricated names "Claire Uwase"/"Dr. Arthur Rutayisire", a fake "$700"/"Week 2") that
+  // never reflected real data even in the mock version — a real bug, not a mock-vs-real gap.
+  // Replaced with the actual largest overdue balance, highest-value pending booking, and most
+  // recently passed preventive task.
+  const largestOverduePayment = [...payments]
+    .filter((p) => p.status === 'overdue' || p.status === 'pending')
+    .sort((a, b) => b.amount - a.amount)[0];
+  const highestValuePendingBooking = [...bookings]
+    .filter((b) => b.status === 'requested' || b.status === 'under_review')
+    .sort((a, b) => b.monthlyRent - a.monthlyRent)[0];
+  const latestPassedPreventiveTask = preventiveTasks.find((t) => t.status === 'pass');
 
   return (
     <div className="space-y-8">
@@ -130,7 +178,7 @@ export const OwnerExecutiveDashboard: React.FC = () => {
               Gross Yield: 11.6%
             </span>
           </div>
-          <RevenueExpenseArea />
+          <RevenueExpenseArea data={revenueExpenseQuery.data ?? []} />
         </div>
 
         <div className="glass-card p-6 rounded-3xl shadow-soft space-y-4">
@@ -170,7 +218,7 @@ export const OwnerExecutiveDashboard: React.FC = () => {
               <p className="text-xs text-slate-500">Kigali Heights vs Nyarutarama Golf View vs Vision City</p>
             </div>
           </div>
-          <PropertyPerformanceBar properties={properties} />
+          <PropertyPerformanceBar properties={propertyPerformanceQuery.data ?? []} />
         </div>
 
         {/* Executive Smart Alerts Hub */}
@@ -180,40 +228,50 @@ export const OwnerExecutiveDashboard: React.FC = () => {
               Executive Priority Notices
             </h3>
             <span className="text-xs bg-amber-50 text-amber-600 dark:bg-amber-950 px-2 py-0.5 rounded-full font-bold">
-              3 Alerts
+              {[largestOverduePayment, highestValuePendingBooking, latestPassedPreventiveTask].filter(Boolean).length} Alerts
             </span>
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-1">
-              <div className="flex justify-between font-bold text-amber-900 dark:text-amber-300">
-                <span>Large Outstanding Balance</span>
-                <span className="font-mono">$700</span>
+            {largestOverduePayment && (
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-1">
+                <div className="flex justify-between font-bold text-amber-900 dark:text-amber-300">
+                  <span>Large Outstanding Balance</span>
+                  <span className="font-mono">${largestOverduePayment.amount.toLocaleString()}</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                  {largestOverduePayment.clientName} (Unit {largestOverduePayment.roomNumber}) — {largestOverduePayment.status} rent notice.
+                </p>
               </div>
-              <p className="text-slate-600 dark:text-slate-300 text-[11px]">
-                Claire Uwase (Room A-404) overdue rent notice dispatched by operations.
-              </p>
-            </div>
+            )}
 
-            <div className="p-3.5 rounded-2xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 space-y-1">
-              <div className="flex justify-between font-bold text-brand-900 dark:text-brand-300">
-                <span>High-Value Lease Pending</span>
-                <span className="font-mono">$1,350/mo</span>
+            {highestValuePendingBooking && (
+              <div className="p-3.5 rounded-2xl bg-brand-50/70 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-800 space-y-1">
+                <div className="flex justify-between font-bold text-brand-900 dark:text-brand-300">
+                  <span>High-Value Lease Pending</span>
+                  <span className="font-mono">${highestValuePendingBooking.monthlyRent.toLocaleString()}/mo</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                  {highestValuePendingBooking.clientName} submitted application for {highestValuePendingBooking.propertyName}.
+                </p>
               </div>
-              <p className="text-slate-600 dark:text-slate-300 text-[11px]">
-                Dr. Arthur Rutayisire submitted application for 3BR Executive Suite (A-301).
-              </p>
-            </div>
+            )}
 
-            <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1">
-              <div className="flex justify-between font-bold text-emerald-900 dark:text-emerald-300">
-                <span>Preventive Standards Checked</span>
-                <span>Week 2</span>
+            {latestPassedPreventiveTask && (
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-1">
+                <div className="flex justify-between font-bold text-emerald-900 dark:text-emerald-300">
+                  <span>Preventive Standards Checked</span>
+                  <span>Week {latestPassedPreventiveTask.scheduleWeek}</span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                  {latestPassedPreventiveTask.taskName} completed by {latestPassedPreventiveTask.assignedStaffName}.
+                </p>
               </div>
-              <p className="text-slate-600 dark:text-slate-300 text-[11px]">
-                Week 2 facility audit completed by lead technician Emmanuel Habimana.
-              </p>
-            </div>
+            )}
+
+            {!largestOverduePayment && !highestValuePendingBooking && !latestPassedPreventiveTask && (
+              <p className="text-slate-400 text-center py-4">No priority notices right now.</p>
+            )}
           </div>
 
           <Link

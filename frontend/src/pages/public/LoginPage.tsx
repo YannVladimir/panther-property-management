@@ -9,13 +9,19 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ShieldCheck,
-  UserCheck,
-  Crown,
-  Wrench,
   Sparkles,
 } from 'lucide-react';
 import { UserRole } from '../../types';
+import { ApiError } from '../../api/client';
+
+const ROLE_HOME: Record<UserRole, string> = {
+  public: '/',
+  client: '/client',
+  operations: '/operations',
+  owner: '/owner',
+  household: '/household',
+  admin: '/admin',
+};
 
 export const LoginPage: React.FC = () => {
   const { login, demoAccounts } = useAuth();
@@ -23,27 +29,43 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('••••••••');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email);
-    success('Welcome Back!', 'Logged in successfully.');
-    navigate('/operations');
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      success('Welcome Back!', 'Logged in successfully.');
+      navigate('/operations');
+    } catch (err) {
+      setFormError(
+        err instanceof ApiError && err.status === 401
+          ? 'Incorrect email or password.'
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleQuickDemoLogin = (role: UserRole) => {
+  const handleQuickDemoLogin = async (role: UserRole) => {
     const demo = demoAccounts.find((d) => d.role === role);
-    if (demo) {
-      login(demo.user.email, role);
-      success(`Logged in as ${demo.label}`, `Active persona: ${demo.user.name}`);
-      if (role === 'client') navigate('/client');
-      else if (role === 'operations') navigate('/operations');
-      else if (role === 'owner') navigate('/owner');
-      else if (role === 'household') navigate('/household');
-      else if (role === 'admin') navigate('/admin');
+    if (!demo) return;
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      await login(demo.email, 'password@123');
+      success(`Logged in as ${demo.label}`, `Active persona: ${demo.email}`);
+      navigate(ROLE_HOME[role]);
+    } catch {
+      setFormError('Quick demo login failed.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -65,6 +87,11 @@ export const LoginPage: React.FC = () => {
 
         {/* Login Form Card */}
         <div className="glass-card p-6 sm:p-8 rounded-3xl shadow-premium space-y-6">
+          {formError && (
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs font-semibold">
+              {formError}
+            </div>
+          )}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
               <label className="block text-[10px] text-slate-400 font-bold mb-1">
@@ -106,16 +133,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded text-brand-600 focus:ring-brand-500"
-                />
-                <span>Remember me</span>
-              </label>
+            <div className="flex items-center justify-end text-xs">
               <a href="#forgot" className="text-brand-600 dark:text-brand-400 font-bold hover:underline">
                 Forgot password?
               </a>
@@ -123,21 +141,23 @@ export const LoginPage: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
-              <span>Sign In</span>
+              <span>{submitting ? 'Signing in…' : 'Sign In'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Instant Demo Account Selector */}
+          {/* Dev-only quick demo login — real accounts, real password (password@123) */}
+          {import.meta.env.DEV && (
           <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-                1-Click Demo Personas
+                Dev Quick Login
               </span>
-              <span className="text-[10px] text-slate-400">Instant login</span>
+              <span className="text-[10px] text-slate-400">Real login, shared password</span>
             </div>
 
             <div className="space-y-2">
@@ -145,27 +165,22 @@ export const LoginPage: React.FC = () => {
                 <button
                   key={demo.role}
                   type="button"
+                  disabled={submitting}
                   onClick={() => handleQuickDemoLogin(demo.role)}
-                  className="w-full text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-950/40 transition-all flex items-center justify-between group"
+                  className="w-full text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-950/40 transition-all flex items-center justify-between group disabled:opacity-50"
                 >
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={demo.user.avatar}
-                      alt={demo.user.name}
-                      className="w-8 h-8 rounded-full object-cover border"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
-                        {demo.label}
-                      </p>
-                      <p className="text-[10px] text-slate-500 truncate">{demo.user.name} • {demo.user.email}</p>
-                    </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                      {demo.label}
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate">{demo.email}</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-brand-500 transform group-hover:translate-x-0.5 transition-all" />
                 </button>
               ))}
             </div>
           </div>
+          )}
         </div>
 
         <p className="text-center text-xs text-slate-500">

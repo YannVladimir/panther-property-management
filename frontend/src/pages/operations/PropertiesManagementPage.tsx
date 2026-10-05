@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useData } from '../../context/DataContext';
+import React, { useEffect, useState } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { usePropertiesQuery } from '../../api/properties';
+import { useRoomsQuery, useUpdateRoomStatusMutation } from '../../api/rooms';
 import {
   Building,
   DoorOpen,
@@ -19,34 +20,46 @@ import { Modal } from '../../components/common/Modal';
 import { Room, RoomStatus } from '../../types';
 
 export const PropertiesManagementPage: React.FC = () => {
-  const { properties, rooms, updateRoom } = useData();
-  const { success } = useToast();
+  const { data: properties = [], isLoading: propertiesLoading } = usePropertiesQuery();
+  const { data: rooms = [], isLoading: roomsLoading } = useRoomsQuery();
+  const updateRoomStatus = useUpdateRoomStatusMutation();
+  const { success, error } = useToast();
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string>(properties[0]?.id || 'prop-01');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [newStatus, setNewStatus] = useState<RoomStatus>('available');
 
+  useEffect(() => {
+    if (!selectedPropertyId && properties.length > 0) {
+      setSelectedPropertyId(properties[0].id);
+    }
+  }, [properties, selectedPropertyId]);
+
   const activeProperty = properties.find((p) => p.id === selectedPropertyId) || properties[0];
-  const propertyRooms = rooms.filter((r) => r.propertyId === activeProperty.id);
+  const propertyRooms = activeProperty ? rooms.filter((r) => r.propertyId === activeProperty.id) : [];
 
   const filteredRooms = propertyRooms.filter((r) => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;
     return true;
   });
 
-  const handleUpdateRoomStatus = (e: React.FormEvent) => {
+  const handleUpdateRoomStatus = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoom) return;
 
-    updateRoom({
-      ...selectedRoom,
-      status: newStatus,
-    });
-
-    success('Room Updated', `Unit ${selectedRoom.roomNumber} status changed to ${newStatus.toUpperCase()}.`);
-    setSelectedRoom(null);
+    try {
+      await updateRoomStatus.mutateAsync({ id: selectedRoom.id, status: newStatus });
+      success('Room Updated', `Unit ${selectedRoom.roomNumber} status changed to ${newStatus.toUpperCase()}.`);
+      setSelectedRoom(null);
+    } catch {
+      error('Update Failed', `Could not update unit ${selectedRoom.roomNumber}. Please try again.`);
+    }
   };
+
+  if (propertiesLoading || roomsLoading || !activeProperty) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading properties…</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -253,9 +266,10 @@ export const PropertiesManagementPage: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all"
+                disabled={updateRoomStatus.isPending}
+                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition-all disabled:opacity-60"
               >
-                Save Room Status
+                {updateRoomStatus.isPending ? 'Saving…' : 'Save Room Status'}
               </button>
             </div>
           </form>

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 import { useToast } from '../../context/ToastContext';
+import { useClientsQuery, useUpdateClientStatusMutation } from '../../api/clients';
 import {
   Users,
   Search,
@@ -34,8 +35,11 @@ import { Modal } from '../../components/common/Modal';
 import { Client } from '../../types';
 
 export const ClientsManagementPage: React.FC = () => {
-  const { clients, payments, damages, updateClientStatus } = useData();
-  const { success, info } = useToast();
+  const { payments, damages } = useData();
+  const clientsQuery = useClientsQuery();
+  const clients = clientsQuery.data ?? [];
+  const updateClientStatusMutation = useUpdateClientStatusMutation();
+  const { success, info, error } = useToast();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,20 +74,28 @@ export const ClientsManagementPage: React.FC = () => {
     return filteredClients.slice(start, start + pageSize);
   }, [filteredClients, pageIndex, pageSize]);
 
-  const handleStatusSubmit = (e: React.FormEvent) => {
+  const handleStatusSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!statusModalClient) return;
 
-    updateClientStatus(statusModalClient.id, newStatus, statusReason);
-    if (newStatus === 'active') {
-      success('Client Reactivated', `${statusModalClient.name}'s profile is now Active.`);
-    } else {
-      info(
-        'Status Updated',
-        `${statusModalClient.name} is now marked as ${newStatus.toUpperCase()} (${statusReason}).`
-      );
+    try {
+      await updateClientStatusMutation.mutateAsync({
+        id: statusModalClient.id,
+        status: newStatus,
+        reason: statusReason,
+      });
+      if (newStatus === 'active') {
+        success('Client Reactivated', `${statusModalClient.name}'s profile is now Active.`);
+      } else {
+        info(
+          'Status Updated',
+          `${statusModalClient.name} is now marked as ${newStatus.toUpperCase()} (${statusReason}).`
+        );
+      }
+      setStatusModalClient(null);
+    } catch {
+      error('Update Failed', 'Could not update this client’s status. Please try again.');
     }
-    setStatusModalClient(null);
   };
 
   const getClientStatusBadge = (status: Client['status']) => {
@@ -99,6 +111,10 @@ export const ClientsManagementPage: React.FC = () => {
         return <Badge variant="warning" size="sm" dot>INACTIVE</Badge>;
     }
   };
+
+  if (clientsQuery.isLoading) {
+    return <div className="py-24 text-center text-sm text-slate-400">Loading clients…</div>;
+  }
 
   return (
     <div className="space-y-8 pb-12">
