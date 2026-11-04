@@ -13,6 +13,11 @@ backend.zip
 .env
 .env.*
 !.env.example
+# .env.test is not a secret: it just points VITE_API_BASE_URL at a deliberately
+# unreachable host so the MSW-mocked test suite proves it intercepted the request
+# (see frontend/src/test/mocks/handlers.ts). Without this committed, `npm test`
+# fails on every fresh clone because the client falls back to localhost:8080.
+!.env.test
 
 # Logs
 logs
